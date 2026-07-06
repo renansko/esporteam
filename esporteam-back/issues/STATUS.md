@@ -9,12 +9,12 @@ Atualizado em 2026-07-06.
 | 01 - Sport Profile Onboarding | Done | `sport_profiles`, `GET /api/profile`, `PUT /api/profile`, coordenada aproximada no service/resource, testes de isolamento por `user_id`. |
 | 02 - Sports And Preferences | Done | Seeder de modalidades, `GET /api/sports`, `profile_sports`, `PUT /api/profile/sports`, enums de nivel e objetivo. |
 | 03 - Availability Windows | Done | `availability_windows`, `PUT /api/profile/availability`, validacao de dia/horario e filtro basico de sobreposicao em discovery. |
+| 04 - Discovery Feed | Done | `GET /api/discovery` com filtros de modalidade, distancia, nivel e disponibilidade; ranking deterministico; exclusao de perfil proprio, oculto e bloqueado; cards de pessoa/professor; testes de privacidade de localizacao. |
 
 ## Partial
 
 | Issue | Status | Done | Still missing |
 | --- | --- | --- | --- |
-| 04 - Discovery Feed | Partial | `GET /api/discovery` existe com filtro de disponibilidade e remove o proprio perfil. | Filtros de modalidade/distancia/nivel, ranking deterministico completo, exclusao por bloqueio, payload diferenciado para professor/sessao e testes de privacidade de localizacao. |
 | 06 - Teachers And Classes | Partial | `teacher_profiles`, `PUT /api/teacher-profile` e relacao professor/aluno existem. | `class_offerings`, `POST /api/classes`, `GET /api/classes` e fluxo de interesse em aula. |
 | 07 - Connections And Safety | Partial | `connections`, `POST /api/connections`, `PATCH /api/connections/{id}` e bloqueio removendo amizade existem. | `reports`, `POST /api/reports` e remocao de discovery baseada em bloqueios. |
 | 08 - Demo Seed Dataset | Partial | Seeder cria 12 modalidades iniciais. | 40 perfis, 8 professores, 15 aulas, 20 sessoes abertas, convites, participantes, bloqueios e denuncias. |
