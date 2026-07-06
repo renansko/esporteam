@@ -22,4 +22,5 @@ IA nao deve ser dependencia para a primeira tela funcionar.
 - [x] `php -l app/Http/Controllers/DiscoveryController.php`
 - [x] `php -l tests/Feature/Api/DiscoveryTest.php`
 - [x] `./vendor/bin/pint --test app/Services/DiscoveryService.php app/Http/Requests/IndexDiscoveryRequest.php app/Http/Resources/DiscoveryCardResource.php app/Http/Controllers/DiscoveryController.php tests/Feature/Api/DiscoveryTest.php`
-- [ ] `php artisan test tests/Feature/Api/DiscoveryTest.php` bloqueado no ambiente local: PHP nao tem driver SQLite, e Docker Desktop nao esta acessivel pelo WSL.
+- [x] Docker: `php artisan test tests/Feature/Api/DiscoveryTest.php`
+- [x] Docker: `php artisan test`

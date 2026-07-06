@@ -20,4 +20,4 @@ Esse modulo alimenta discovery, sessoes e professores.
 - [x] `php -l app/Http/Requests/UpdateProfileSportsRequest.php`
 - [x] `php -l tests/Feature/Api/SportProfileTest.php`
 - [x] `./vendor/bin/pint --test app/Enums/SportGoal.php app/Http/Requests/UpdateProfileSportsRequest.php tests/Feature/Api/SportProfileTest.php`
-- [ ] `php artisan test tests/Feature/Api/SportProfileTest.php` bloqueado no ambiente local: PHP nao tem driver SQLite, e Docker Desktop nao esta acessivel pelo WSL.
+- [x] Docker: `php artisan test tests/Feature/Api/SportProfileTest.php`

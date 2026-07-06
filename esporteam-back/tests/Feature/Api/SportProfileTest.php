@@ -8,7 +8,7 @@ it('seeds the initial active sports idempotently', function () {
     $this->seed(DemoSeeder::class);
     $this->seed(DemoSeeder::class);
 
-    expect(Sport::query())->toHaveCount(12)
+    expect(Sport::query()->count())->toBe(12)
         ->and(Sport::query()->where('slug', 'futebol')->where('is_active', true)->exists())->toBeTrue()
         ->and(Sport::query()->where('slug', 'beach-tennis')->where('is_active', true)->exists())->toBeTrue();
 });
@@ -70,7 +70,7 @@ it('updates the authenticated users existing sport profile', function () {
         ->assertJsonPath('data.city', 'Campinas')
         ->assertJsonPath('data.visibility', 'hidden');
 
-    expect(SportProfile::query()->where('user_id', 77))->toHaveCount(1);
+    expect(SportProfile::query()->where('user_id', 77)->count())->toBe(1);
 });
 
 it('isolates sport profiles by authenticated user id', function () {

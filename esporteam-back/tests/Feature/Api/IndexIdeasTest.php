@@ -2,13 +2,15 @@
 
 use App\Enums\IdeaSource;
 use App\Models\Idea;
+use App\Models\RoadmapItem;
 
 beforeEach(function () {
-    $now = now();
+    $roadmapItem = RoadmapItem::factory()->create(['workspace_id' => 10]);
+
     // Workspace 10 — 3 ideias, fontes variadas
     Idea::create(['workspace_id' => 10, 'source' => IdeaSource::Manual,     'description' => 'A1']);
     Idea::create(['workspace_id' => 10, 'source' => IdeaSource::Csv,        'description' => 'A2']);
-    Idea::create(['workspace_id' => 10, 'source' => IdeaSource::PublicForm, 'description' => 'A3', 'roadmap_item_id' => 999]);
+    Idea::create(['workspace_id' => 10, 'source' => IdeaSource::PublicForm, 'description' => 'A3', 'roadmap_item_id' => $roadmapItem->id]);
 
     // Workspace 20 — 3 ideias, devem NUNCA aparecer pra workspace 10
     Idea::create(['workspace_id' => 20, 'source' => IdeaSource::Manual, 'description' => 'B1']);

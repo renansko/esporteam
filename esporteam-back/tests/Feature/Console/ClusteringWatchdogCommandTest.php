@@ -8,13 +8,13 @@ it('marks stuck runs as failed', function () {
 
     $oldRun = ClusteringRun::factory()->create([
         'workspace_id' => 1,
-        'status'       => ClusteringRunStatus::Running->value,
-        'started_at'   => now()->subMinutes(20),
+        'status' => ClusteringRunStatus::Running->value,
+        'started_at' => now()->subMinutes(20),
     ]);
     $freshRun = ClusteringRun::factory()->create([
-        'workspace_id' => 1,
-        'status'       => ClusteringRunStatus::Running->value,
-        'started_at'   => now()->subSeconds(10),
+        'workspace_id' => 2,
+        'status' => ClusteringRunStatus::Running->value,
+        'started_at' => now()->subSeconds(10),
     ]);
 
     $this->artisan('clustering:watchdog')

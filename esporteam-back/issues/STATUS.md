@@ -32,5 +32,4 @@ Atualizado em 2026-07-06.
 
 ## Verification Notes
 
-- Testes de feature nao rodam neste ambiente local porque o PHP disponivel nao tem driver SQLite, enquanto `phpunit.xml` usa `DB_CONNECTION=sqlite` e `DB_DATABASE=:memory:`.
-- Docker Desktop tambem nao esta acessivel pelo WSL neste momento, entao a suite precisa ser rodada em ambiente com `pdo_sqlite` ou container disponivel.
+- Docker: `php artisan test` passou em 2026-07-06 com 120 testes e 415 assertions.

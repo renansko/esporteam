@@ -19,4 +19,4 @@ Primeiro corte deve ser simples. Nada de matching antes do perfil existir.
 - [x] `php -l app/Services/SportProfileService.php`
 - [x] `php -l tests/Feature/Api/SportProfileTest.php`
 - [x] `./vendor/bin/pint --test app/Services/SportProfileService.php tests/Feature/Api/SportProfileTest.php`
-- [ ] `php artisan test tests/Feature/Api/SportProfileTest.php` bloqueado no ambiente local: PHP nao tem driver SQLite, e Docker Desktop nao esta acessivel pelo WSL.
+- [x] Docker: `php artisan test tests/Feature/Api/SportProfileTest.php`
