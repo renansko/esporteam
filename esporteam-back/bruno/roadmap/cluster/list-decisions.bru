@@ -1,0 +1,46 @@
+meta {
+  name: List Run Decisions
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/roadmap/cluster/runs/:id/decisions?cursor=
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 1
+}
+
+params:query {
+  ~cursor:
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/roadmap/cluster/runs/{id}/decisions no esporteam-back.
+
+  Lista as decisões individuais (Idea → RoadmapItem) tomadas em uma run.
+  Cada decisão traz `action` (`assign` ou `create`), `rationale` e os
+  recursos relacionados aninhados:
+
+    - idea         → { id, title, description }
+    - roadmap_item → { id, title, score }
+
+  Isolamento: 404 se a run não pertencer ao workspace do JWT.
+
+  Query params:
+    - cursor: token devolvido em `meta.next_cursor` da página anterior
+
+  Paginação: cursor-based, 50 decisões por página, ordenadas por id ASC
+  (ordem cronológica de processamento dentro da run).
+
+  Resposta:
+    200 → { success: true, data: [Decision...], meta: { next_cursor, prev_cursor } }
+    404 → run inexistente ou de outro workspace
+}

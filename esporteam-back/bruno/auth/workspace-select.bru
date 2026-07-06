@@ -1,0 +1,37 @@
+meta {
+  name: Workspace Select
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{authServiceUrl}}/api/workspace/select
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "workspace_id": 1
+  }
+}
+
+script:post-response {
+  if (res.getStatus() < 300 && res.getBody()?.data?.token) {
+    bru.setVar("jwtToken", res.getBody().data.token);
+  }
+}
+
+docs {
+  POST /api/workspace/select no esporteam-auth.
+
+  Troca o JWT atual por um novo com workspace_id no claim. esporteam-auth valida a
+  membership via service-to-service com esporteam-workspace (precisa de
+  WORKSPACE_SERVICE_URL=http://esporteam-workspace:8000 no .env do auth).
+
+  O script:post-response sobrescreve jwtToken com o token escopado.
+}

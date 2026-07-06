@@ -1,0 +1,30 @@
+meta {
+  name: Create Workspace
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{workspaceServiceUrl}}/api/workspaces
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "name": "Loja da Ana"
+  }
+}
+
+docs {
+  POST /api/workspaces no esporteam-workspace.
+
+  Cria workspace novo. Requer permissions & 1 (can_create_workspace) — bit
+  setado por default em "Register". Slug é auto-gerado (slugify(name) + 6 chars).
+
+  Owner é o portador do JWT — membership "owner" criada automaticamente.
+}

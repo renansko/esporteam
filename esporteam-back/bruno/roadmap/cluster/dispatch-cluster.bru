@@ -1,0 +1,44 @@
+meta {
+  name: Dispatch Clustering
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/roadmap/cluster
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  POST /api/roadmap/cluster no esporteam-back.
+
+  Dispara o fluxo "Analisar com IA": agrupa as Ideas não-clusterizadas do
+  workspace do JWT em RoadmapItems via LLM (com fallback determinístico).
+
+  Body: vazio. O workspace é inferido do claim do JWT.
+
+  Sem entrada porque a operação é assíncrona — o response devolve um `run_id`
+  para acompanhar via `Show Clustering Run` ou pelo broadcast em
+  `private-workspaces.{workspace_id}.clustering` (evento clustering.run.completed).
+
+  Guards aplicados (em ordem):
+    1. Cost guard:   402 se o budget mensal de tokens já estourou.
+    2. Lock:         409 se já existe run com status=running para o workspace.
+    3. Sanity:       422 se não há Ideas com roadmap_item_id=null.
+    4. Rate limit:   429 — throttle:clustering (10 disparos / 60 min, por workspace).
+
+  Resposta:
+    202 → { success: true, data: { run_id, status: "running" } }
+    402 → budget mensal estourado (detail: null)
+    409 → { detail: { existing_run_id, started_at } }
+    422 → sem ideias para analisar
+    429 → rate limit atingido
+
+  Observação: o Job (`ClusterIdeasJob`) roda na queue `clustering` (tries=1,
+  timeout=180s). Watchdog agendado a cada minuto reciclam runs travadas.
+}

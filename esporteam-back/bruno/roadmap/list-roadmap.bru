@@ -1,0 +1,44 @@
+meta {
+  name: List Roadmap
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/roadmap?cursor=
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+params:query {
+  ~status: planejado
+  ~origin: clustered
+  ~visibility: public
+  ~cursor:
+}
+
+docs {
+  GET /api/roadmap no esporteam-back.
+
+  Lista RoadmapItems do workspace do JWT, ordenados por:
+    score DESC, votes_count DESC, id DESC.
+
+  Cada item traz `ideas_count` (via withCount), mas NÃO inclui o array de
+  ideias — use `Show Roadmap Item` para drilldown completo.
+
+  Query params (descomenta pra usar):
+    - status:     em_analise | planejado | em_desenvolvimento | lancado
+    - origin:     manual | clustered | fallback | competitor_gap
+    - visibility: internal | public
+    - cursor:     token devolvido em `meta.next_cursor` da página anterior
+
+  Paginação: cursor-based, 50 itens por página (fixo).
+
+  Resposta (envelope padrão):
+    200 → { success: true, data: [...], meta: { next_cursor, prev_cursor } }
+    422 → filtro fora do enum
+}

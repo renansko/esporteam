@@ -1,0 +1,40 @@
+meta {
+  name: Register
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{authServiceUrl}}/api/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Ana Teste",
+    "email": "ana@teste.app",
+    "password": "Ana12345",
+    "password_confirmation": "Ana12345"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() < 300 && res.getBody()?.data?.token) {
+    bru.setVar("jwtToken", res.getBody().data.token);
+  }
+}
+
+docs {
+  POST /api/auth/register no esporteam-auth.
+
+  Cria um user novo com permissions=1 (can_create_workspace) e devolve um JWT
+  SEM workspace_id no claim. Sequência típica:
+
+    1. Register
+    2. Workspaces → Create Workspace
+    3. Auth → Workspace Select  (com o workspace_id retornado acima)
+    4. Me → Get Me
+
+  O script:post-response salva o token em jwtToken automaticamente.
+}

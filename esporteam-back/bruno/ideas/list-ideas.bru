@@ -1,0 +1,32 @@
+meta {
+  name: List Ideas
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/ideas?per_page=50
+  body: none
+  auth: bearer
+}
+
+params:query {
+  per_page: 50
+  ~source: manual
+  ~unclustered: 1
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/ideas no esporteam-back.
+
+  Lista Ideas do workspace do JWT, ordem created_at DESC, paginado.
+
+  Query params (descomenta pra usar):
+    - source: manual | csv | public_form
+    - unclustered: 1  (só Ideas que ainda não viraram RoadmapItem)
+    - per_page: 1..200 (default 50)
+}

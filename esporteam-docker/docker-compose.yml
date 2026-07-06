@@ -1,0 +1,153 @@
+services:
+  esporteam-postgres:
+    image: pgvector/pgvector:pg17
+    container_name: esporteam-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: esporteam
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: esporteam
+    ports:
+      - "5433:5432"
+    volumes:
+      - esporteam-pgdata:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U esporteam"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  esporteam-auth:
+    build:
+      context: ../esporteam-auth
+    container_name: esporteam-auth
+    working_dir: /var/www
+    user: appuser
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: esporteam-postgres
+      DB_PORT: 5432
+      DB_DATABASE: esporteam_auth
+      DB_USERNAME: esporteam
+      DB_PASSWORD: secret
+      CACHE_STORE: file
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+      BROADCAST_CONNECTION: log
+      WORKSPACE_SERVICE_URL: http://esporteam-workspace:8000
+    command: >
+      sh -c "
+      [ -f vendor/autoload.php ] || composer install --no-interaction --prefer-dist;
+      [ -f .env ] || cp .env.example .env;
+      grep -q '^APP_KEY=base64:' .env || php artisan key:generate --force;
+      php artisan migrate --force --no-interaction || true;
+      php artisan serve --host=0.0.0.0 --port=8000
+      "
+    volumes:
+      - ../esporteam-auth:/var/www
+      - esporteam-auth-vendor:/var/www/vendor
+    ports:
+      - "8001:8000"
+    depends_on:
+      esporteam-postgres:
+        condition: service_healthy
+
+  esporteam-workspace:
+    build:
+      context: ../esporteam-workspace
+    container_name: esporteam-workspace
+    working_dir: /var/www
+    user: appuser
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: esporteam-postgres
+      DB_PORT: 5432
+      DB_DATABASE: esporteam_workspace
+      DB_USERNAME: esporteam
+      DB_PASSWORD: secret
+      CACHE_STORE: file
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+      BROADCAST_CONNECTION: log
+      AUTH_SERVICE_URL: http://esporteam-auth:8000
+      AUTH_SERVICE_TOKEN: dev-service-token
+    command: >
+      sh -c "
+      [ -f vendor/autoload.php ] || composer install --no-interaction --prefer-dist;
+      [ -f .env ] || cp .env.example .env;
+      grep -q '^APP_KEY=base64:' .env || php artisan key:generate --force;
+      php artisan migrate --force --no-interaction || true;
+      php artisan serve --host=0.0.0.0 --port=8000
+      "
+    volumes:
+      - ../esporteam-workspace:/var/www
+      - esporteam-workspace-vendor:/var/www/vendor
+    ports:
+      - "8002:8000"
+    depends_on:
+      esporteam-postgres:
+        condition: service_healthy
+
+  esporteam-back:
+    build:
+      context: ../esporteam-back
+      dockerfile: ../esporteam-docker/dockerfiles/back.Dockerfile
+    container_name: esporteam-back
+    working_dir: /var/www
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: esporteam-postgres
+      DB_PORT: 5432
+      DB_DATABASE: esporteam_back
+      DB_USERNAME: esporteam
+      DB_PASSWORD: secret
+      CACHE_STORE: file
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+      BROADCAST_CONNECTION: log
+      AUTH_SERVICE_URL: http://esporteam-auth:8000
+      WORKSPACE_SERVICE_URL: http://esporteam-workspace:8000
+    command: >
+      sh -c "
+      [ -f vendor/autoload.php ] || composer install --no-interaction --prefer-dist;
+      [ -f .env ] || cp .env.example .env;
+      grep -q '^APP_KEY=base64:' .env || php artisan key:generate --force;
+      php artisan migrate --force --no-interaction || true;
+      php artisan serve --host=0.0.0.0 --port=8000
+      "
+    volumes:
+      - ../esporteam-back:/var/www
+      - esporteam-back-vendor:/var/www/vendor
+    ports:
+      - "8000:8000"
+    depends_on:
+      esporteam-postgres:
+        condition: service_healthy
+
+  esporteam-front:
+    build:
+      context: ../esporteam-front
+      dockerfile: ../esporteam-docker/dockerfiles/front.Dockerfile
+    container_name: esporteam-front
+    working_dir: /app
+    environment:
+      VITE_API_TARGET: http://esporteam-back:8000
+      VITE_AUTH_TARGET: http://esporteam-auth:8000
+      VITE_WORKSPACE_TARGET: http://esporteam-workspace:8000
+    volumes:
+      - ../esporteam-front:/app
+      - esporteam-front-node:/app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - esporteam-back
+      - esporteam-auth
+      - esporteam-workspace
+
+volumes:
+  esporteam-pgdata:
+  esporteam-auth-vendor:
+  esporteam-workspace-vendor:
+  esporteam-back-vendor:
+  esporteam-front-node:

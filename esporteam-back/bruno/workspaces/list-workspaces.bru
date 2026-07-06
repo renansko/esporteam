@@ -1,0 +1,23 @@
+meta {
+  name: List Workspaces
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{workspaceServiceUrl}}/api/workspaces
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/workspaces no esporteam-workspace.
+
+  Lista os workspaces aos quais o portador do JWT pertence. Usado pelo front
+  entre "Login" e "Workspace Select" pra descobrir quais workspace_ids são
+  válidos pra esse usuário.
+}

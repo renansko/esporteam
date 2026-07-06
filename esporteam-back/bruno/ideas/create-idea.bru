@@ -1,0 +1,22 @@
+meta {
+  name: Create Idea
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/ideas
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "title": "Minha primeira ideia",
+    "description": "Descrição da ideia versionada via Bruno"
+  }
+}

@@ -1,0 +1,35 @@
+meta {
+  name: Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{authServiceUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "eduardo@mesa.app",
+    "password": "demo1234"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() < 300 && res.getBody()?.data?.token) {
+    bru.setVar("jwtToken", res.getBody().data.token);
+  }
+}
+
+docs {
+  POST /api/auth/login no esporteam-auth.
+
+  Retorna JWT SEM workspace_id no claim. Use "Workspace Select" depois pra
+  obter um token escopado.
+
+  Credenciais padrão (DemoSeeder do esporteam-auth): eduardo@mesa.app / demo1234.
+
+  O script:post-response salva o token em jwtToken automaticamente.
+}

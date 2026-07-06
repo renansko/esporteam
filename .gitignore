@@ -1,0 +1,49 @@
+# Local environment
+**/.env
+**/.env.backup
+**/.env.production
+**/*.local
+
+# Dependencies and build output
+**/vendor/
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/public/build/
+**/public/hot
+
+# Logs and caches
+**/*.log
+**/.phpunit.cache/
+**/.phpunit.result.cache
+**/storage/logs/*
+!**/storage/logs/.gitignore
+**/storage/framework/cache/*
+!**/storage/framework/cache/.gitignore
+**/storage/framework/sessions/*
+!**/storage/framework/sessions/.gitignore
+**/storage/framework/views/*
+!**/storage/framework/views/.gitignore
+
+# Secrets and generated keys
+**/auth.json
+**/keys/*
+!**/keys/.gitkeep
+**/storage/*.key
+
+# Editors and OS files
+.DS_Store
+Thumbs.db
+**/.idea/
+**/.vscode/
+**/.zed/
+**/.fleet/
+**/.cursor/
+**/.nova/
+
+# Agent/runtime local state
+.codex/
+**/.claude/agent-memory/
+
+# Local working documents
+document_work/

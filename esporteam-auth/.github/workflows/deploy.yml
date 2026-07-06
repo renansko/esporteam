@@ -1,0 +1,177 @@
+name: Deploy
+
+# ─────────────────────────────────────────────────────────────
+# Pipeline standalone do esporteam-auth.
+#
+# Etapas:
+#   1. Testes Pest no runner do GH Actions (postgres + redis
+#      service containers — sem EC2 staging).
+#   2. Build da imagem + push pro ECR (tag SHA + latest).
+#   3. Dispatch pra infraestrutura fazer o deploy em prod
+#      (que tem o SSH key, cuida do `docker pull` e recreate).
+#
+# Substituiu o trigger-ci.yml. Concurrency per-serviço, então
+# múltiplos serviços rodam em paralelo no GH (cada um no seu
+# runner). Pushes consecutivos no mesmo serviço enfileiram.
+# ─────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'CLAUDE.md'
+      - '.claude/**'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-esporteam-auth
+  cancel-in-progress: false
+
+env:
+  SERVICE_NAME: esporteam-auth
+  AWS_REGION: sa-east-1
+
+jobs:
+  # ───────────────────────────────────────────────────────────
+  # 1) Pest no runner do GH (postgres + redis service container)
+  # ───────────────────────────────────────────────────────────
+  test:
+    name: Pest tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: esporteam
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: esporteam_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U esporteam -d esporteam_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, redis, mbstring, exif, pcntl, bcmath, sockets
+
+      # .env DEVE existir antes do composer install, porque package:discover
+      # boota Laravel e quebra se BROADCAST_CONNECTION=reverb sem APP_SECRET.
+      - name: Render .env e .env.testing de CI
+        run: |
+          # Macro: ajusta DB pro postgres service container (127.0.0.1) e
+          # FORÇA broadcast=log (sem reverb no CI runner). config/broadcasting
+          # de alguns serviços tem default 'reverb' — então sed não basta,
+          # precisa appendar (ou sobrescrever) a chave incondicionalmente.
+          fixenv() {
+            local f="$1"
+            [ -f "$f" ] || return 0
+            sed -i 's|^DB_HOST=.*|DB_HOST=127.0.0.1|;
+                    s|^DB_DATABASE=.*|DB_DATABASE=esporteam_test|;
+                    s|^DB_USERNAME=.*|DB_USERNAME=esporteam|;
+                    s|^DB_PASSWORD=.*|DB_PASSWORD=secret|;
+                    s|^REDIS_HOST=.*|REDIS_HOST=127.0.0.1|;
+                    /^BROADCAST_CONNECTION=/d;
+                    /^APP_LOCALE=/d' "$f"
+            # Appends idempotentes (deletamos as linhas acima antes).
+            # APP_LOCALE=pt_BR garante que mensagens traduzidas no
+            # assertJson dos testes batam com o que a app emite.
+            {
+              echo "BROADCAST_CONNECTION=log"
+              echo "APP_LOCALE=pt_BR"
+            } >> "$f"
+          }
+          cp .env.example .env
+          php -r "echo 'APP_KEY=base64:'.base64_encode(random_bytes(32)).PHP_EOL;" >> .env
+          fixenv .env
+          # .env.testing (se comitado) sobrescreve .env quando APP_ENV=testing.
+          fixenv .env.testing
+
+      - name: Composer cache dir
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Gerar chaves JWT efêmeras pro CI
+        # JwtService lê /var/www/keys/{private,public}.pem (paths fixos do
+        # config/jwt.php — usados em prod via entrypoint Docker). No runner
+        # do GH não tem container nem entrypoint, então geramos par RSA
+        # descartável só pra esta run. Tests verificam encode↔decode com
+        # par consistente; não dependem de chave específica.
+        run: |
+          sudo mkdir -p /var/www/keys
+          sudo openssl genrsa -out /var/www/keys/private.pem 2048 2>/dev/null
+          sudo openssl rsa -in /var/www/keys/private.pem -pubout \
+                          -out /var/www/keys/public.pem 2>/dev/null
+          sudo chown -R "$(whoami)" /var/www/keys
+
+      - run: ./vendor/bin/pest --colors=never
+
+  # ───────────────────────────────────────────────────────────
+  # 2) Build, push ECR, dispatch deploy pra infraestrutura
+  # ───────────────────────────────────────────────────────────
+  build-and-dispatch:
+    name: Build & dispatch deploy
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: meta
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push ECR
+        env:
+          REGISTRY: ${{ secrets.ECR_REGISTRY }}
+          SHA:      ${{ steps.meta.outputs.sha }}
+        run: |
+          IMAGE="$REGISTRY/$SERVICE_NAME"
+          docker build -f Dockerfile.prod \
+            --build-arg APP_GIT_SHA="$SHA" \
+            -t "$IMAGE:$SHA" -t "$IMAGE:latest" .
+          docker push "$IMAGE:$SHA"
+          docker push "$IMAGE:latest"
+
+      - name: Dispatch deploy
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.CI_DISPATCH_PAT }}
+          repository: ${{ secrets.CI_DISPATCH_REPO }}
+          event-type: service-deploy
+          client-payload: |
+            {
+              "service": "${{ env.SERVICE_NAME }}",
+              "sha":     "${{ steps.meta.outputs.sha }}",
+              "commit":  "${{ github.sha }}",
+              "actor":   "${{ github.actor }}"
+            }

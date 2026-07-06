@@ -1,0 +1,32 @@
+meta {
+  name: List Discovery
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/discovery?weekday=2&starts_at=19:00&ends_at=20:00
+  body: none
+  auth: bearer
+}
+
+params:query {
+  weekday: 2
+  starts_at: 19:00
+  ends_at: 20:00
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/discovery no esporteam-back.
+
+  Lista Perfis Esportivos publicos para descoberta.
+
+  Filtro de disponibilidade:
+    - weekday: 0..6
+    - starts_at: HH:mm
+    - ends_at: HH:mm
+}

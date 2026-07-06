@@ -1,0 +1,11 @@
+# Each service has its own repo
+/esporteam/
+/esporteam-front/
+/esporteam-workspace/
+/esporteam-auth/
+
+# Local
+.DS_Store
+*.log
+.idea/
+.vscode/

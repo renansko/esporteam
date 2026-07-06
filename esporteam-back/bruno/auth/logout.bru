@@ -1,0 +1,36 @@
+meta {
+  name: Logout
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{authServiceUrl}}/api/auth/logout
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+script:post-response {
+  if (res.getStatus() < 300) {
+    bru.setVar("jwtToken", "");
+  }
+}
+
+docs {
+  POST /api/auth/logout no esporteam-auth.
+
+  Marca users.tokens_revoked_at = now() pro usuário do JWT. O middleware
+  AuthenticateJwt do esporteam-auth passa a rejeitar com 401 "Token revoked"
+  qualquer token desse usuário cujo iat seja anterior ao revoked_at.
+
+  Limitation: Esporteam e workspace continuam aceitando o token até ele expirar
+  (JWT_TTL=1y por default) — não têm acesso à tabela users. Cobertura real
+  cross-service exigiria refresh tokens ou Redis compartilhado.
+
+  O script:post-response limpa jwtToken — depois disso, requests autenticados
+  voltam a falhar até nova Login.
+}

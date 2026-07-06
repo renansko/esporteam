@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Esporteam — Mockup low-fi (workspace: Patinhas)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --bg: #fafafa;
+    --ink: #222;
+    --muted: #777;
+    --line: #bbb;
+    --line-strong: #444;
+    --accent: #2a5d9f;
+    --accent-soft: #e6efff;
+    --warn: #b45309;
+    --ok: #166534;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    font-size: 14px;
+  }
+  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  aside {
+    border-right: 1px dashed var(--line);
+    padding: 16px;
+    background: #fff;
+  }
+  aside h1 { font-size: 16px; margin: 0 0 4px; }
+  aside .tag { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  aside .ws { font-size: 12px; color: var(--ink); border:1px dashed var(--line); padding:6px 8px; border-radius:4px; margin-bottom:16px; }
+  nav button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 1px dashed var(--line);
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    border-radius: 4px;
+  }
+  nav button.active {
+    border: 1px solid var(--line-strong);
+    background: var(--accent-soft);
+  }
+  nav .group { font-size: 11px; color: var(--muted); margin: 12px 0 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  main { padding: 24px 32px; }
+  h2 { margin: 0 0 4px; font-size: 20px; }
+  .subtitle { color: var(--muted); margin-bottom: 20px; font-size: 13px; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .card {
+    border: 1px dashed var(--line);
+    background: #fff;
+    padding: 14px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .card.solid { border-style: solid; }
+  table { width: 100%; border-collapse: collapse; background: #fff; }
+  th, td {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px dashed var(--line);
+    font-size: 13px;
+    vertical-align: top;
+  }
+  th { background: #f3f3f3; font-weight: 600; font-size: 12px; }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .pill.ai { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .pill.ok { border-color: var(--ok); color: var(--ok); }
+  .pill.warn { border-color: var(--warn); color: var(--warn); }
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button.ghost {
+    background: #fff;
+    border: 1px dashed var(--line-strong);
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .kanban-col { border: 1px dashed var(--line); padding: 10px; border-radius: 4px; background: #fff; }
+  .kanban-col h3 { font-size: 13px; margin: 0 0 8px; display: flex; justify-content: space-between; }
+  .ticket { border: 1px dashed var(--line); padding: 8px; border-radius: 4px; margin-bottom: 8px; font-size: 12px; background: #fff; }
+  .score-box { display: inline-flex; gap: 8px; margin-top: 4px; font-size: 11px; color: var(--muted); }
+  .score-box span b { color: var(--ink); }
+  .hint { font-size: 11px; color: var(--muted); font-style: italic; }
+  .view { display: none; }
+  .view.active { display: block; }
+  .breadcrumb { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .ideia-fonte {
+    border-left: 2px dashed var(--line);
+    padding: 4px 8px;
+    margin: 4px 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  textarea, input[type=text], select {
+    width: 100%;
+    padding: 8px;
+    border: 1px dashed var(--line);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    background: #fff;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  label { font-size: 11px; color: var(--muted); display: block; margin: 8px 0 4px; }
+  .public-banner {
+    background: #f0f9ff;
+    border: 1px dashed #0369a1;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: #0369a1;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+  .vote-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px dashed var(--line); }
+  .vote-count { font-size: 22px; font-weight: 600; color: var(--accent); }
+  .stepper { display: flex; gap: 6px; font-size: 11px; color: var(--muted); margin-bottom: 16px; flex-wrap: wrap; }
+  .stepper span { padding: 4px 8px; border: 1px dashed var(--line); border-radius: 999px; }
+  .stepper span.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <h1>Esporteam</h1>
+    <div class="tag">mockup low-fi · v0</div>
+    <div class="ws"><strong>Workspace:</strong> Patinhas<br/><span class="hint">SaaS pet · carteira digital + agenda vet</span></div>
+
+    <div class="group">Workspace interno</div>
+    <nav>
+      <button data-view="ideias" class="active">1. Ideias (inbox)</button>
+      <button data-view="demandas">2. Demandas (IA)</button>
+      <button data-view="sprint">4. Sprint (sele&ccedil;&atilde;o)</button>
+      <button data-view="prd">5. An&aacute;lise / PRD</button>
+      <button data-view="time">7. Time</button>
+    </nav>
+
+    <div class="group">P&uacute;blico (tutor)</div>
+    <nav>
+      <button data-view="votacao">3. Vota&ccedil;&atilde;o p&uacute;blica</button>
+      <button data-view="kanban">6. Kanban p&uacute;blico</button>
+    </nav>
+
+    <div class="group" style="margin-top:20px">Fluxo</div>
+    <div class="hint" style="font-size:11px; line-height:1.5">
+      Ideias &rarr; IA agrupa em Demandas &rarr; tutor vota (RICE recalcula) &rarr; time monta Sprint &rarr; PRD por demanda &rarr; Kanban p&uacute;blico
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- 1. IDEIAS -->
+    <section class="view active" id="view-ideias">
+      <div class="breadcrumb">Workspace Patinhas &rsaquo; Inbox</div>
+      <h2>Ideias</h2>
+      <div class="subtitle">Tudo que entrou no sistema, vindo de qualquer fonte. Input cru, antes da IA agrupar.</div>
+
+      <div class="row" style="margin-bottom:16px">
+        <button class="primary">Analisar com IA (38 pendentes)</button>
+        <button class="ghost">+ Adicionar manual</button>
+        <button class="ghost">Importar CSV</button>
+        <span class="hint">Fontes conectadas: form. tutor, form. cl&iacute;nica, Sentry, Trello, App Store, planilha NPS</span>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:100px">Fonte</th>
+            <th>Texto</th>
+            <th style="width:150px">Autor / origem</th>
+            <th style="width:90px">Data</th>
+            <th style="width:110px">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="pill">Form. tutor</span></td><td>Queria receber lembrete por WhatsApp quando a vacina do meu cachorro estiver chegando</td><td>marina@gmail.com</td><td>13/05</td><td><span class="pill warn">pendente</span></td></tr>
+          <tr><td><span class="pill">Sentry</span></td><td>Erro 500 ao gerar PDF da carteira de vacina&ccedil;&atilde;o para pets com 10+ vacinas</td><td>auto-captura</td><td>13/05</td><td><span class="pill warn">pendente</span></td></tr>
+          <tr><td><span class="pill">Form. cl&iacute;nica</span></td><td>Veterin&aacute;rios da nossa cl&iacute;nica querem ver o prontu&aacute;rio compartilhado entre todos os profissionais</td><td>VetAmigos (cl&iacute;nica)</td><td>12/05</td><td><span class="pill warn">pendente</span></td></tr>
+          <tr><td><span class="pill">Form. tutor</span></td><td>Lembrete do verm&iacute;fugo do meu gato &mdash; sempre esque&ccedil;o a data</td><td>carla@hotmail.com</td><td>12/05</td><td><span class="pill warn">pendente</span></td></tr>
+          <tr><td><span class="pill">App Store</span></td><td>App muito bom mas falta op&ccedil;&atilde;o de agendar banho e tosa direto pelo app &#11088;&#11088;&#11088;&#11088;</td><td>review @petlover</td><td>12/05</td><td><span class="pill warn">pendente</span></td></tr>
+          <tr><td><span class="pill">Trello</span></td><td>Sincronizar agenda da cl&iacute;nica com Google Calendar</td><td>Card #312</td><td>11/05</td><td><span class="pill warn">pendente</span></td></tr>
+          <tr><td><span class="pill">Manual</span></td><td>Call Cl&iacute;nica PetCare: pediram multi-veterin&aacute;rio no mesmo prontu&aacute;rio + campo de peso hist&oacute;rico</td><td>jeff (PM)</td><td>11/05</td><td><span class="pill warn">pendente</span></td></tr>
+          <tr><td><span class="pill">Form. tutor</span></td><td>Queria ver o hist&oacute;rico de peso do meu gato em gr&aacute;fico</td><td>ricardo@uol.com</td><td>10/05</td><td><span class="pill warn">pendente</span></td></tr>
+          <tr><td><span class="pill">Sentry</span></td><td>Crash ao adicionar foto de pet em iPhones antigos (iOS &lt; 15)</td><td>auto-captura</td><td>10/05</td><td><span class="pill warn">pendente</span></td></tr>
+          <tr><td><span class="pill">Form. tutor</span></td><td>WhatsApp pra confirmar consulta seria muito &uacute;til</td><td>juliana@gmail.com</td><td>10/05</td><td><span class="pill warn">pendente</span></td></tr>
+          <tr><td><span class="pill">Trello</span></td><td>App lento ao abrir prontu&aacute;rio com muitas consultas (mais de 30)</td><td>Card #305</td><td>09/05</td><td><span class="pill warn">pendente</span></td></tr>
+          <tr><td><span class="pill">Planilha NPS</span></td><td>Cl&iacute;nica Animalia: PDF da carteira muito feio, n&atilde;o serve pra viagem internacional</td><td>nps_abril.xlsx</td><td>08/05</td><td><span class="pill ok">analisada</span></td></tr>
+          <tr><td><span class="pill">Form. tutor</span></td><td>App s&oacute; abre pra cachorro e gato &mdash; tenho coelho tamb&eacute;m!</td><td>pri@gmail.com</td><td>08/05</td><td><span class="pill ok">analisada</span></td></tr>
+        </tbody>
+      </table>
+      <div class="hint" style="margin-top:8px">[mockup] "Analisar com IA" dispara o clustering: agrupa ideias similares, deduplica e gera/atualiza Demandas.</div>
+    </section>
+
+    <!-- 2. DEMANDAS -->
+    <section class="view" id="view-demandas">
+      <div class="breadcrumb">Workspace Patinhas &rsaquo; Demandas priorizadas</div>
+      <h2>Demandas</h2>
+      <div class="subtitle">Output da IA: ideias similares agrupadas, deduplicadas, resumidas e priorizadas com RICE. Cada demanda mant&eacute;m link com as ideias-fonte.</div>
+
+      <div class="row" style="margin-bottom:16px">
+        <button class="ghost">Reanalisar tudo</button>
+        <span class="hint">7 demandas ativas · &uacute;ltima an&aacute;lise: hoje 10:32 · 38 ideias agrupadas</span>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <strong>#1 — Lembretes autom&aacute;ticos por WhatsApp (vacinas, verm&iacute;fugo, consultas)</strong>
+            <span class="pill ai">IA</span>
+          </div>
+          <div><span class="pill">RICE 168</span> · <span class="pill">47 votos</span></div>
+        </div>
+        <p style="margin:8px 0; color:var(--muted)">
+          Tutores recorrentemente esquecem datas de vacina, verm&iacute;fugo e consultas. Email n&atilde;o &eacute; lido. Pedido aparece em 14 ideias diferentes (form. tutor + App Store + planilha NPS).
+        </p>
+        <div class="score-box">
+          <span>Reach: <b>2800</b></span> <span>Impact: <b>3</b></span> <span>Confidence: <b>0.9</b></span> <span>Effort: <b>3</b></span>
+        </div>
+        <details style="margin-top:8px">
+          <summary class="hint">14 ideias-fonte (resumo das 5 principais)</summary>
+          <div class="ideia-fonte">[Form. tutor] "Queria receber lembrete por WhatsApp quando a vacina do meu cachorro estiver chegando" — marina@gmail.com</div>
+          <div class="ideia-fonte">[Form. tutor] "Lembrete do verm&iacute;fugo do meu gato — sempre esque&ccedil;o a data" — carla@hotmail.com</div>
+          <div class="ideia-fonte">[Form. tutor] "WhatsApp pra confirmar consulta seria muito &uacute;til" — juliana@gmail.com</div>
+          <div class="ideia-fonte">[App Store] "Faltam lembretes, sempre perco a vacina" — review @doglover</div>
+          <div class="ideia-fonte">[Planilha NPS] "Email de lembrete eu n&atilde;o vejo, WhatsApp eu veria" — NPS abril</div>
+        </details>
+        <div class="row" style="margin-top:10px">
+          <button class="primary">Adicionar &agrave; Sprint</button>
+          <button class="ghost">Editar</button>
+          <button class="ghost">Ver hist&oacute;rico de votos</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <strong>#2 — Carteira de vacina&ccedil;&atilde;o digital com PDF profissional (v&aacute;lido p/ viagem)</strong>
+            <span class="pill ai">IA</span>
+          </div>
+          <div><span class="pill">RICE 132</span> · <span class="pill">31 votos</span></div>
+        </div>
+        <p style="margin:8px 0; color:var(--muted)">
+          Combina bug do PDF (Sentry) + pedido de PDF reconhecido p/ tr&acirc;nsito internacional + assinatura digital do vet. Cl&iacute;nicas e tutores pedindo.
+        </p>
+        <div class="score-box">
+          <span>Reach: <b>1500</b></span> <span>Impact: <b>3</b></span> <span>Confidence: <b>0.85</b></span> <span>Effort: <b>3</b></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div><strong>#3 — Prontu&aacute;rio compartilhado entre veterin&aacute;rios da mesma cl&iacute;nica</strong> <span class="pill ai">IA</span></div>
+          <div><span class="pill">RICE 98</span> · <span class="pill">19 votos</span></div>
+        </div>
+        <p style="margin:8px 0; color:var(--muted)">Cl&iacute;nicas com m&uacute;ltiplos veterin&aacute;rios pedem acesso compartilhado ao mesmo pet, com hist&oacute;rico unificado.</p>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div><strong>#4 — Performance do app mobile (Android antigo + iOS &lt; 15)</strong> <span class="pill ai">IA</span></div>
+          <div><span class="pill">RICE 84</span> · <span class="pill">12 votos</span></div>
+        </div>
+        <p style="margin:8px 0; color:var(--muted)">Crashes em iOS antigo (Sentry) + lentid&atilde;o ao abrir prontu&aacute;rios longos. Afeta base mais antiga e classes C/D.</p>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div><strong>#5 — Gr&aacute;fico de hist&oacute;rico de sa&uacute;de (peso, vacinas, consultas)</strong> <span class="pill ai">IA</span></div>
+          <div><span class="pill">RICE 62</span> · <span class="pill">8 votos</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div><strong>#6 — Integra&ccedil;&atilde;o com Google Calendar (agenda da cl&iacute;nica)</strong> <span class="pill ai">IA</span></div>
+          <div><span class="pill">RICE 48</span> · <span class="pill">4 votos</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div><strong>#7 — Marketplace de banho/tosa/passeio integrado ao app</strong> <span class="pill ai">IA</span></div>
+          <div><span class="pill">RICE 36</span> · <span class="pill">2 votos</span></div>
+        </div>
+      </div>
+
+      <div class="hint" style="margin-top:12px">[mockup] cada voto p&uacute;blico de tutor recalcula o RICE de TODAS as demandas, mudando a ordena&ccedil;&atilde;o automaticamente.</div>
+    </section>
+
+    <!-- 3. VOTAÇÃO PÚBLICA -->
+    <section class="view" id="view-votacao">
+      <div class="public-banner">[P&Uacute;BLICO] URL: patinhas.app/roadmap/votar</div>
+      <h2>&#128062; Ajude a priorizar o pr&oacute;ximo Patinhas</h2>
+      <div class="subtitle">O que voc&ecirc;, tutor, gostaria de ver primeiro no app? Seu voto pesa no nosso ranking.</div>
+
+      <div class="row" style="margin-bottom:16px">
+        <input type="text" placeholder="seu@email.com (pra n&atilde;o duplicar voto)" style="max-width:280px" />
+        <button class="primary">Confirmar email</button>
+      </div>
+
+      <div class="card solid">
+        <div class="vote-row">
+          <div>
+            <strong>Lembretes por WhatsApp de vacina, verm&iacute;fugo e consulta</strong>
+            <div class="hint">Receba aviso antes da data, sem precisar abrir o app.</div>
+          </div>
+          <div style="text-align:right">
+            <div class="vote-count">47</div>
+            <button class="primary">&#9650; Votar</button>
+          </div>
+        </div>
+        <div class="vote-row">
+          <div>
+            <strong>Carteira de vacina&ccedil;&atilde;o digital em PDF v&aacute;lido p/ viagem</strong>
+            <div class="hint">PDF profissional, assinado pelo vet, aceito em viagens nacionais e internacionais.</div>
+          </div>
+          <div style="text-align:right">
+            <div class="vote-count">31</div>
+            <button class="primary">&#9650; Votar</button>
+          </div>
+        </div>
+        <div class="vote-row">
+          <div>
+            <strong>Prontu&aacute;rio compartilhado entre veterin&aacute;rios</strong>
+            <div class="hint">Quando seu pet for atendido por outro vet, ele j&aacute; v&ecirc; todo o hist&oacute;rico.</div>
+          </div>
+          <div style="text-align:right">
+            <div class="vote-count">19</div>
+            <button class="primary">&#9650; Votar</button>
+          </div>
+        </div>
+        <div class="vote-row">
+          <div>
+            <strong>App mais r&aacute;pido em celulares antigos</strong>
+            <div class="hint">Menos travamento e crash em Android antigo / iOS antigo.</div>
+          </div>
+          <div style="text-align:right">
+            <div class="vote-count">12</div>
+            <button class="ghost">&#10003; J&aacute; votei</button>
+          </div>
+        </div>
+        <div class="vote-row">
+          <div>
+            <strong>Gr&aacute;fico de peso e sa&uacute;de do meu pet</strong>
+            <div class="hint">Acompanhar evolu&ccedil;&atilde;o de peso, vacinas e consultas ao longo do tempo.</div>
+          </div>
+          <div style="text-align:right">
+            <div class="vote-count">8</div>
+            <button class="primary">&#9650; Votar</button>
+          </div>
+        </div>
+        <div class="vote-row">
+          <div>
+            <strong>Agendar banho e tosa direto pelo app</strong>
+            <div class="hint">Marketplace com pet shops parceiros.</div>
+          </div>
+          <div style="text-align:right">
+            <div class="vote-count">2</div>
+            <button class="primary">&#9650; Votar</button>
+          </div>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:12px">[mockup] dedupe por email · cada voto re-rankeia internamente as demandas via RICE em tempo real.</div>
+    </section>
+
+    <!-- 4. SPRINT -->
+    <section class="view" id="view-sprint">
+      <div class="breadcrumb">Workspace Patinhas &rsaquo; Sprint atual</div>
+      <h2>Sprint 24 — 13 a 27/maio</h2>
+      <div class="subtitle">O time seleciona, do topo da lista priorizada, o que vai entrar nesta sprint.</div>
+
+      <div class="grid-2">
+        <div>
+          <h3 style="font-size:14px">Demandas dispon&iacute;veis (top RICE)</h3>
+          <div class="card">
+            <strong>#1 Lembretes por WhatsApp</strong> <span class="pill">RICE 168</span>
+            <div class="hint">47 votos · 14 ideias-fonte</div>
+            <button class="ghost" style="margin-top:6px">Adicionar &rarr;</button>
+          </div>
+          <div class="card">
+            <strong>#3 Prontu&aacute;rio compartilhado</strong> <span class="pill">RICE 98</span>
+            <div class="hint">19 votos · 7 ideias-fonte</div>
+            <button class="ghost" style="margin-top:6px">Adicionar &rarr;</button>
+          </div>
+          <div class="card">
+            <strong>#5 Gr&aacute;fico de sa&uacute;de</strong> <span class="pill">RICE 62</span>
+            <div class="hint">8 votos · 3 ideias-fonte</div>
+            <button class="ghost" style="margin-top:6px">Adicionar &rarr;</button>
+          </div>
+        </div>
+        <div>
+          <h3 style="font-size:14px">Sprint atual (selecionadas)</h3>
+          <div class="card solid" style="background:var(--accent-soft)">
+            <strong>#1 Lembretes por WhatsApp</strong>
+            <div class="hint">PRD: em redação · Resp.: n&atilde;o atribu&iacute;do</div>
+            <button class="primary" style="margin-top:6px">Abrir an&aacute;lise (PRD)</button>
+          </div>
+          <div class="card solid" style="background:var(--accent-soft)">
+            <strong>#2 Carteira PDF v&aacute;lida p/ viagem</strong>
+            <div class="hint">PRD: aprovado · Resp.: Diego</div>
+            <button class="ghost" style="margin-top:6px">Abrir PRD</button>
+          </div>
+          <div class="card solid" style="background:var(--accent-soft)">
+            <strong>#4 Performance mobile</strong>
+            <div class="hint">PRD: em redação · Resp.: Mariana</div>
+            <button class="ghost" style="margin-top:6px">Abrir PRD</button>
+          </div>
+          <div class="hint" style="margin-top:8px">Capacidade estimada: 3 / ~3 demandas (baseado no esfor&ccedil;o RICE).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. PRD / ANÁLISE -->
+    <section class="view" id="view-prd">
+      <div class="breadcrumb">Sprint 24 &rsaquo; Demanda #1 &rsaquo; An&aacute;lise</div>
+      <h2>PRD — Lembretes por WhatsApp (vacinas, verm&iacute;fugo, consultas)</h2>
+      <div class="subtitle">A IA redige um rascunho do PRD usando as 14 ideias-fonte. PMO revisa, ajusta, designa respons&aacute;vel.</div>
+
+      <div class="stepper">
+        <span class="active">1. Contexto</span>
+        <span>2. Problem statement</span>
+        <span>3. Solu&ccedil;&atilde;o proposta</span>
+        <span>4. Crit&eacute;rios de aceite</span>
+        <span>5. Designa&ccedil;&atilde;o</span>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <label>T&iacute;tulo</label>
+          <input type="text" value="Lembretes autom&aacute;ticos por WhatsApp" />
+
+          <label>Problem statement <span class="pill ai">sugerido pela IA</span></label>
+          <textarea>Tutores esquecem datas cr&iacute;ticas (vacina, verm&iacute;fugo, consultas) e recorrem ao app s&oacute; quando lembram &mdash; o que gera atraso em prote&ccedil;&atilde;o sanit&aacute;ria do pet e churn perceb&iacute;vel. Emails de lembrete t&ecirc;m abertura abaixo de 12%. Em 14 ideias-fonte (App Store, formul&aacute;rio, NPS), o pedido por WhatsApp aparece explicitamente.</textarea>
+
+          <label>Solu&ccedil;&atilde;o proposta <span class="pill ai">rascunho IA</span></label>
+          <textarea>Configurar fluxo de envio via WhatsApp Business API:
+- T-30 dias, T-7 dias e T-1 dia antes da data prevista de vacina/verm&iacute;fugo/consulta
+- Tutor pode responder "OK" / "remarcar" / "j&aacute; fiz" direto pelo WhatsApp (webhook)
+- Pet com data em atraso recebe lembrete di&aacute;rio at&eacute; confirma&ccedil;&atilde;o
+- Configur&aacute;vel por tipo (alguns tutores s&oacute; querem vacina, n&atilde;o verm&iacute;fugo)</textarea>
+
+          <label>Crit&eacute;rios de aceite</label>
+          <textarea>- Tutor recebe lembrete WhatsApp em T-7 e T-1
+- Resposta "j&aacute; fiz" atualiza a data no app sem precisar abrir
+- Configura&ccedil;&atilde;o de tipos est&aacute; em /perfil/notifica&ccedil;&otilde;es
+- Fallback: se WhatsApp falhar, dispara push notification</textarea>
+
+          <div class="row" style="margin-top:12px">
+            <button class="primary">Salvar PRD</button>
+            <button class="ghost">Pedir nova sugest&atilde;o &agrave; IA</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <strong>Ideias-fonte (contexto pra IA)</strong>
+            <div class="ideia-fonte">"Queria receber lembrete por WhatsApp quando a vacina do meu cachorro estiver chegando" — marina@gmail.com</div>
+            <div class="ideia-fonte">"Lembrete do verm&iacute;fugo do meu gato — sempre esque&ccedil;o a data" — carla@hotmail.com</div>
+            <div class="ideia-fonte">"WhatsApp pra confirmar consulta seria muito &uacute;til" — juliana@gmail.com</div>
+            <div class="ideia-fonte">"Email de lembrete eu n&atilde;o vejo, WhatsApp eu veria" — NPS abril</div>
+            <div class="ideia-fonte">"Faltam lembretes, sempre perco a vacina" — App Store @doglover</div>
+            <div class="ideia-fonte hint">+ 9 ideias adicionais</div>
+          </div>
+
+          <div class="card">
+            <strong>Designa&ccedil;&atilde;o</strong>
+            <label>Respons&aacute;vel</label>
+            <select>
+              <option>— selecionar —</option>
+              <option>Mariana (frontend mobile)</option>
+              <option selected>Diego (full-stack)</option>
+              <option>Renata (backend)</option>
+              <option>Pedro (designer)</option>
+            </select>
+            <label>Reviewer</label>
+            <select>
+              <option>Jeff (PM)</option>
+            </select>
+            <label>Estimativa (dias)</label>
+            <input type="text" value="5" />
+            <button class="primary" style="margin-top:10px">Atribuir e mover pra "Em desenvolvimento"</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. KANBAN PÚBLICO -->
+    <section class="view" id="view-kanban">
+      <div class="public-banner">[P&Uacute;BLICO] URL: patinhas.app/roadmap</div>
+      <h2>&#128062; O que estamos construindo no Patinhas</h2>
+      <div class="subtitle">Acompanhe o que est&aacute; sendo desenvolvido. Atualizado em tempo real conforme o time avan&ccedil;a.</div>
+
+      <div class="grid-4">
+        <div class="kanban-col">
+          <h3>Backlog da Sprint <span class="pill">2</span></h3>
+          <div class="ticket"><strong>Lembretes por WhatsApp</strong><div class="hint">47 votos</div></div>
+          <div class="ticket"><strong>Gr&aacute;fico de sa&uacute;de do pet</strong><div class="hint">8 votos</div></div>
+        </div>
+        <div class="kanban-col">
+          <h3>Em an&aacute;lise <span class="pill">1</span></h3>
+          <div class="ticket"><strong>Carteira PDF p/ viagem</strong><div class="hint">PRD em redação · 31 votos</div></div>
+        </div>
+        <div class="kanban-col">
+          <h3>Em desenvolvimento <span class="pill">1</span></h3>
+          <div class="ticket"><strong>Performance mobile</strong><div class="hint">Resp.: Mariana · 12 votos</div></div>
+        </div>
+        <div class="kanban-col">
+          <h3>Pronto <span class="pill ok">3</span></h3>
+          <div class="ticket"><strong>Login com Google/Apple</strong><div class="hint">publicado em 08/05</div></div>
+          <div class="ticket"><strong>Cadastro de m&uacute;ltiplos pets</strong><div class="hint">publicado em 02/05</div></div>
+          <div class="ticket"><strong>Foto de perfil do pet</strong><div class="hint">publicado em 28/04</div></div>
+        </div>
+      </div>
+
+      <div class="hint" style="margin-top:16px">[mockup] quando uma demanda entra em "Pronto", os tutores que votaram nela recebem push/WhatsApp avisando.</div>
+    </section>
+
+    <!-- 7. TIME -->
+    <section class="view" id="view-time">
+      <div class="breadcrumb">Workspace Patinhas &rsaquo; Time</div>
+      <h2>Time</h2>
+      <div class="subtitle">Pessoas que podem ser designadas a demandas da sprint.</div>
+
+      <div class="row" style="margin-bottom:16px">
+        <button class="primary">+ Adicionar membro</button>
+      </div>
+
+      <table>
+        <thead><tr><th>Nome</th><th>Email</th><th>Papel</th><th>Em sprint</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>Jeff</td><td>jeff@patinhas.app</td><td><span class="pill">PM</span></td><td>—</td><td><button class="ghost">Editar</button></td></tr>
+          <tr><td>Mariana Souza</td><td>mari@patinhas.app</td><td><span class="pill">Frontend mobile</span></td><td>Performance mobile</td><td><button class="ghost">Editar</button></td></tr>
+          <tr><td>Diego Castro</td><td>diego@patinhas.app</td><td><span class="pill">Full-stack</span></td><td>Carteira PDF</td><td><button class="ghost">Editar</button></td></tr>
+          <tr><td>Renata Lima</td><td>renata@patinhas.app</td><td><span class="pill">Backend</span></td><td>—</td><td><button class="ghost">Editar</button></td></tr>
+          <tr><td>Pedro Alves</td><td>pedro@patinhas.app</td><td><span class="pill">Designer</span></td><td>—</td><td><button class="ghost">Editar</button></td></tr>
+          <tr><td>Dra. Camila</td><td>camila@patinhas.app</td><td><span class="pill">Vet consultora</span></td><td>Carteira PDF (review)</td><td><button class="ghost">Editar</button></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  const buttons = document.querySelectorAll('nav button');
+  const views = document.querySelectorAll('.view');
+  buttons.forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.view;
+    buttons.forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    views.forEach(x => x.classList.toggle('active', x.id === 'view-' + v));
+    window.scrollTo(0, 0);
+  }));
+</script>
+</body>
+</html>

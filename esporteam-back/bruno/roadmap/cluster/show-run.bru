@@ -1,0 +1,37 @@
+meta {
+  name: Show Clustering Run
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/roadmap/cluster/runs/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 1
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/roadmap/cluster/runs/{id} no esporteam-back.
+
+  Retorna uma run específica do workspace do JWT, com todas as métricas
+  (mesmas do `List Clustering Runs`), incluindo `cost_usd` computado a
+  partir de token_usage_in/out * preço do `llm_model`.
+
+  Isolamento: 404 se a run não pertencer ao workspace do JWT.
+
+  Útil para:
+    - Polling de status enquanto a run está `running` (alternativa ao broadcast)
+    - Auditoria pós-execução (custo, fallback_used, failure_reason, summary)
+
+  Resposta:
+    200 → { success: true, data: { id, status, ..., cost_usd, ... } }
+    404 → run inexistente ou de outro workspace
+}

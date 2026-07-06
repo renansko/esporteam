@@ -1,0 +1,66 @@
+FROM php:8.4-fpm-alpine
+
+# Instalar dependências + nginx + supervisord
+RUN apk add --no-cache \
+    curl \
+    libxml2-dev \
+    zip \
+    unzip \
+    git \
+    oniguruma-dev \
+    postgresql-dev \
+    nginx \
+    supervisor \
+    linux-headers \
+    $PHPIZE_DEPS \
+    && docker-php-ext-install \
+    pdo_pgsql \
+    pgsql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    opcache \
+    && pecl install redis \
+    && docker-php-ext-enable redis
+
+# Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www
+
+# Dependências (cache de layers)
+COPY composer.json composer.lock ./
+RUN composer install --no-scripts --no-autoloader --prefer-dist --no-dev
+
+# Código
+COPY . .
+RUN composer dump-autoload --optimize
+
+# OPcache habilitado em produção
+RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.memory_consumption=64" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.max_accelerated_files=4000" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini
+
+# Nginx config
+RUN mkdir -p /run/nginx
+COPY docker/nginx.prod.conf /etc/nginx/http.d/default.conf
+
+# Supervisord config (nginx + php-fpm)
+COPY docker/supervisord.conf /etc/supervisord.conf
+
+# Permissões
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+
+# Entrypoint
+COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ARG APP_GIT_SHA=unknown
+ENV APP_GIT_SHA=$APP_GIT_SHA
+
+EXPOSE 80
+
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]

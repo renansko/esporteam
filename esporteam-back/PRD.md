@@ -1,0 +1,177 @@
+# PRD - Esporteam Mobile (MVP)
+
+> App mobile para encontrar pessoas, professores, aulas e grupos praticando esportes perto de voce.
+
+**Status:** Draft pivot
+**Stack:** Laravel API + auth/workspace services + mobile app
+**Identidade:** JWT RS256 emitido pelo `esporteam-auth`; perfis e recursos do app vivem no `esporteam-back`
+**Principio tecnico:** manter a estrutura atual do backend, incluindo `app/brain`, camadas Service/Model/Resource/Request e o hub de LLM.
+
+## Problema
+
+Quem quer praticar esporte depende de grupos soltos em WhatsApp, indicacoes informais e buscas manuais. A pessoa nao sabe quem joga perto, quais professores estao disponiveis, onde existem aulas abertas, ou se algum amigo quer treinar hoje.
+
+Professores e organizadores tambem sofrem: precisam divulgar aulas, confirmar presenca, responder perguntas repetidas e preencher turmas sem uma vitrine local confiavel.
+
+## Solucao
+
+Um app mobile de descoberta esportiva local:
+
+- encontrar pessoas proximas que praticam os mesmos esportes;
+- encontrar professores, personal trainers, tecnicos e aulas;
+- criar ou entrar em partidas, treinos e grupos;
+- convidar amigos;
+- receber recomendacoes por proximidade, esporte, horario, nivel e objetivo;
+- usar IA para melhorar matching, onboarding e sugestoes.
+
+## Publico
+
+- praticantes casuais que querem companhia para jogar ou treinar;
+- atletas amadores procurando grupos recorrentes;
+- professores e tecnicos oferecendo aulas;
+- organizadores de arenas, quadras, clubes e comunidades;
+- amigos que querem combinar atividades com menos atrito.
+
+## Vocabulario
+
+- **Perfil esportivo:** perfil publico do usuario dentro do app, com cidade/bairro aproximado, esportes, nivel, objetivos e disponibilidade.
+- **Esporte:** modalidade praticada, como futebol, corrida, tenis, beach tennis, musculacao, volei, basquete, ciclismo ou luta.
+- **Sessao esportiva:** evento pontual ou recorrente: partida, treino, corrida em grupo, aula aberta ou encontro.
+- **Professor:** usuario com perfil profissional, modalidades, preco, locais de atendimento e horarios.
+- **Aula:** oferta criada por professor ou organizador, individual ou em grupo.
+- **Conexao:** relacao entre usuarios: amigo, interesse, convite, bloqueio ou match.
+- **Descoberta:** feed/lista/mapa de pessoas, aulas e sessoes proximas.
+- **Workspace:** fica como fronteira tecnica herdada para auth/membership/admin; nao deve contaminar o dominio mobile com linguagem B2B.
+
+## MVP
+
+O MVP precisa provar o loop principal:
+
+1. usuario cria perfil esportivo;
+2. escolhe esportes, nivel e disponibilidade;
+3. ve pessoas, aulas e sessoes proximas;
+4. envia convite ou entra em uma sessao;
+5. professor cria uma aula e recebe interessados;
+6. app recomenda matches melhores conforme uso.
+
+## User Stories
+
+1. Como praticante, quero escolher meus esportes, nivel e disponibilidade, para receber recomendacoes relevantes.
+2. Como praticante, quero ver pessoas proximas que praticam o mesmo esporte, para chamar alguem para jogar ou treinar.
+3. Como praticante, quero filtrar por distancia, esporte, nivel e horario, para encontrar opcoes que realmente servem para mim.
+4. Como praticante, quero criar uma sessao esportiva, para convidar pessoas para uma partida, treino ou corrida.
+5. Como praticante, quero entrar em uma sessao aberta, para participar sem depender de grupos externos.
+6. Como praticante, quero convidar amigos para uma atividade, para combinar esporte rapidamente.
+7. Como professor, quero criar meu perfil profissional, para aparecer nas buscas.
+8. Como professor, quero cadastrar aulas com preco, local, horario e vagas, para receber interessados.
+9. Como aluno, quero encontrar professores proximos por modalidade, preco e avaliacao, para marcar uma aula.
+10. Como usuario, quero bloquear ou denunciar pessoas, para manter o ambiente seguro.
+11. Como usuario, quero controlar minha visibilidade de localizacao, para nao expor meu endereco exato.
+12. Como operador/admin, quero moderar perfis, sessoes e denuncias, para proteger a comunidade.
+
+## Decisoes De Produto
+
+- Localizacao deve ser aproximada por padrao. Nunca expor coordenada exata de residencia.
+- Matching inicial combina distancia, esportes em comum, nivel, disponibilidade e tipo de intencao.
+- Professores e aulas devem coexistir com praticantes comuns no mesmo app, mas com filtros e cards distintos.
+- Chat pode entrar depois do MVP; no primeiro corte, convite/interesse com status ja valida demanda.
+- Pagamento, reserva de quadra e assinatura ficam fora do MVP.
+- O backend pode reaproveitar o hub de LLM para embeddings, recomendacao e explicacao de matches.
+
+## Modelo De Dados Proposto
+
+Primeiro corte, preservando a separacao por camadas:
+
+- `sport_profiles`: user_id, display_name, bio, city, region, latitude_approx, longitude_approx, visibility, avatar_url.
+- `sports`: name, slug, category.
+- `profile_sports`: profile_id, sport_id, level, goals, preferred_positions, is_primary.
+- `availability_windows`: profile_id, weekday, starts_at, ends_at.
+- `teacher_profiles`: profile_id, headline, credentials, hourly_price_cents, service_radius_km, verified_at.
+- `class_offerings`: teacher_profile_id, sport_id, title, description, price_cents, location_label, starts_at, recurrence, capacity.
+- `sport_sessions`: creator_profile_id, sport_id, title, description, type, starts_at, location_label, latitude_approx, longitude_approx, capacity, visibility, status.
+- `session_participants`: session_id, profile_id, status.
+- `connections`: requester_profile_id, target_profile_id, type, status.
+- `reports`: reporter_profile_id, reported_profile_id, reason, details, status.
+
+## API Proposta
+
+Autenticado:
+
+- `GET /api/me`
+- `GET /api/sports`
+- `GET /api/profile`
+- `PUT /api/profile`
+- `PUT /api/profile/sports`
+- `PUT /api/profile/availability`
+- `GET /api/discovery`
+- `GET /api/profiles/{id}`
+- `POST /api/connections`
+- `PATCH /api/connections/{id}`
+- `POST /api/sessions`
+- `GET /api/sessions`
+- `GET /api/sessions/{id}`
+- `POST /api/sessions/{id}/join`
+- `PATCH /api/sessions/{id}/participants/{profileId}`
+- `PUT /api/teacher-profile`
+- `POST /api/classes`
+- `GET /api/classes`
+- `POST /api/reports`
+
+Admin:
+
+- `GET /api/admin/reports`
+- `PATCH /api/admin/reports/{id}`
+- `PATCH /api/admin/profiles/{id}/status`
+
+## IA E Brain
+
+O `app/brain` permanece como memoria tecnica do backend.
+
+Usos de IA que fazem sentido para o novo produto:
+
+- gerar embeddings de bio, esportes, objetivos e preferencias;
+- ranquear discovery com explicacao curta;
+- detectar perfis ou mensagens suspeitas;
+- sugerir sessoes, aulas e grupos com base no historico;
+- normalizar esportes escritos livremente no onboarding;
+- ajudar professor a criar descricao de aula.
+
+O clustering atual do projeto antigo nao deve ser removido sem uma migracao planejada. Ele vira referencia tecnica para o novo matching/recommendation pipeline: execucoes auditaveis, fallback deterministico, custo controlado e testes com fake LLM.
+
+## Regras De Seguranca
+
+- Coordenadas precisas ficam privadas; listagens usam distancia aproximada.
+- Usuario pode ocultar perfil da descoberta.
+- Bloqueio impede descoberta, convite e interacao futura entre as partes.
+- Denuncia deve congelar o contexto minimo para moderacao.
+- Dados de professor verificado precisam ter trilha de auditoria.
+
+## Fora Do MVP
+
+- pagamento in-app;
+- reserva de quadras;
+- chat realtime completo;
+- ranking competitivo;
+- integracao com wearables;
+- assinatura premium;
+- agenda externa Google/Apple;
+- marketplace de produtos esportivos.
+
+## Seeds De Demo
+
+- 40 perfis de praticantes em uma cidade;
+- 12 esportes;
+- 8 professores;
+- 15 aulas;
+- 20 sessoes esportivas abertas;
+- alguns convites e participantes para mostrar estados reais.
+
+## Primeiro Plano De Implementacao
+
+1. Introduzir entidades base: esporte, perfil esportivo, esportes do perfil e disponibilidade.
+2. Criar discovery simples por esporte + distancia aproximada.
+3. Criar sessoes esportivas e participacao.
+4. Criar perfil de professor e aulas.
+5. Adicionar conexoes/convites.
+6. Adicionar denuncias/bloqueios.
+7. Evoluir IA de clustering antigo para matching/recommendation auditavel.

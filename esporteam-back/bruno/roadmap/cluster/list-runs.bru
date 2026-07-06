@@ -1,0 +1,45 @@
+meta {
+  name: List Clustering Runs
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/roadmap/cluster/runs?cursor=
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+params:query {
+  ~status: done
+  ~fallback_used: false
+  ~cursor:
+}
+
+docs {
+  GET /api/roadmap/cluster/runs no esporteam-back.
+
+  Histórico de execuções de clustering do workspace do JWT, ordenadas por
+  started_at DESC, id DESC.
+
+  Cada run inclui métricas calculadas:
+    - cost_usd (via CostCalculator, usa o llm_model da run)
+    - cache_hit_rate, pre_cluster_bundles_count
+    - ideas_processed, items_created, items_assigned
+    - fallback_used, failure_reason, summary
+
+  Query params (descomenta pra usar):
+    - status:        running | done | failed
+    - fallback_used: true | false | 1 | 0  (coerced via Request::boolean)
+    - cursor:        token devolvido em `meta.next_cursor` da página anterior
+
+  Paginação: cursor-based, 50 runs por página (fixo).
+
+  Resposta:
+    200 → { success: true, data: [Run...], meta: { next_cursor, prev_cursor } }
+    422 → filtro `status` fora do enum
+}

@@ -1,0 +1,56 @@
+<?php
+
+use App\Http\Controllers\ClusteringRunController;
+use App\Http\Controllers\ConnectionController;
+use App\Http\Controllers\DiscoveryController;
+use App\Http\Controllers\IdeaController;
+use App\Http\Controllers\MeController;
+use App\Http\Controllers\RoadmapController;
+use App\Http\Controllers\SportController;
+use App\Http\Controllers\SportGroupController;
+use App\Http\Controllers\SportProfileController;
+use App\Http\Controllers\TeacherProfileController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/health', fn () => response()->json(['status' => 'ok']));
+
+Route::middleware('auth.service')->group(function () {
+    Route::get('/me', MeController::class);
+
+    Route::get('/sports', [SportController::class, 'index']);
+    Route::get('/discovery', [DiscoveryController::class, 'index']);
+    Route::get('/profile', [SportProfileController::class, 'show']);
+    Route::put('/profile', [SportProfileController::class, 'upsert']);
+    Route::put('/profile/sports', [SportProfileController::class, 'sports']);
+    Route::put('/profile/availability', [SportProfileController::class, 'availability']);
+
+    Route::get('/teacher-profile', [TeacherProfileController::class, 'show']);
+    Route::put('/teacher-profile', [TeacherProfileController::class, 'upsert']);
+    Route::get('/teacher-profile/students', [TeacherProfileController::class, 'students']);
+    Route::post('/teacher-profile/students', [TeacherProfileController::class, 'addStudent']);
+    Route::delete('/teacher-profile/students/{studentProfile}', [TeacherProfileController::class, 'removeStudent']);
+
+    Route::get('/groups', [SportGroupController::class, 'index']);
+    Route::post('/groups', [SportGroupController::class, 'store']);
+    Route::get('/groups/{group}', [SportGroupController::class, 'show']);
+    Route::post('/groups/{group}/members', [SportGroupController::class, 'addMember']);
+    Route::delete('/groups/{group}/members/{profile}', [SportGroupController::class, 'removeMember']);
+
+    Route::post('/connections', [ConnectionController::class, 'store']);
+    Route::patch('/connections/{connection}', [ConnectionController::class, 'update']);
+
+    Route::get('/ideas', [IdeaController::class, 'index']);
+    Route::post('/ideas', [IdeaController::class, 'store']);
+
+    // Roadmap (#7)
+    Route::get('/roadmap', [RoadmapController::class, 'index']);
+    Route::get('/roadmap/cluster/runs', [ClusteringRunController::class, 'index']);
+    Route::get('/roadmap/cluster/runs/{id}', [ClusteringRunController::class, 'show'])
+        ->whereNumber('id');
+    Route::get('/roadmap/cluster/runs/{id}/decisions', [ClusteringRunController::class, 'decisions'])
+        ->whereNumber('id');
+    Route::post('/roadmap/cluster', [ClusteringRunController::class, 'store'])
+        ->middleware('throttle:clustering');
+    Route::get('/roadmap/{id}', [RoadmapController::class, 'show'])
+        ->whereNumber('id');
+});

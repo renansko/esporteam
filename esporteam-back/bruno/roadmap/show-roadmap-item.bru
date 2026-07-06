@@ -1,0 +1,35 @@
+meta {
+  name: Show Roadmap Item
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/roadmap/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 1
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/roadmap/{id} no esporteam-back.
+
+  Drilldown de um RoadmapItem com:
+    - todos os campos do item (score, score_breakdown, votes_count, ideas_count, ...)
+    - lista de `ideas` agrupadas nesse item
+    - para cada Idea, `cluster_decision` (action, rationale, run_id) — `null`
+      quando a Idea foi vinculada manualmente (não veio de uma run)
+
+  Isolamento: 404 se o item não pertencer ao workspace do JWT.
+
+  Resposta:
+    200 → { success: true, data: { id, title, ..., ideas: [...] } }
+    404 → item inexistente ou de outro workspace
+}
