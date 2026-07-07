@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\StoreReportRequest;
+use App\Http\Resources\ReportResource;
+use App\Services\ReportService;
+use Illuminate\Http\JsonResponse;
+
+class ReportController extends Controller
+{
+    public function __construct(
+        private readonly ReportService $reports,
+    ) {}
+
+    public function store(StoreReportRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+
+        $report = $this->reports->createForUser(
+            (int) $request->user()->id,
+            (int) $data['reported_profile_id'],
+            $data['reason'],
+            $data['details'] ?? null,
+        );
+
+        return $this->createdResponse(new ReportResource($report), 'Report created.');
+    }
+}

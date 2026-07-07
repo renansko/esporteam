@@ -1,0 +1,27 @@
+meta {
+  name: Create Report
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/reports
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "reported_profile_id": 2,
+    "reason": "harassment",
+    "details": "Mensagem agressiva no convite."
+  }
+}
+
+docs {
+  POST /api/reports cria uma denuncia contra outro Perfil Esportivo e congela contexto minimo para moderacao.
+}

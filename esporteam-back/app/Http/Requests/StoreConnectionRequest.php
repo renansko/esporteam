@@ -11,7 +11,7 @@ class StoreConnectionRequest extends FormRequest
     {
         return [
             'target_profile_id' => ['required', 'integer', Rule::exists('sport_profiles', 'id')],
-            'type' => ['required', Rule::in(['friendship', 'block'])],
+            'type' => ['required', Rule::in(['friendship', 'interest', 'block'])],
         ];
     }
 }

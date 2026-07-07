@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Connection;
+use App\Models\Report;
 use App\Models\SportGroup;
 use App\Models\SportProfile;
 use App\Models\TeacherProfile;
@@ -298,4 +299,75 @@ it('removes active friendship between profiles when a block is created', functio
             'type' => 'friendship',
         ])
         ->assertUnprocessable();
+});
+
+it('creates one-way profile interest connections without requiring acceptance', function () {
+    $requester = createSportProfileForUser(77, 'Requester');
+    $target = createSportProfileForUser(88, 'Target');
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/connections', [
+            'target_profile_id' => $target->id,
+            'type' => 'interest',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.requester_profile_id', $requester->id)
+        ->assertJsonPath('data.target_profile_id', $target->id)
+        ->assertJsonPath('data.type', 'interest')
+        ->assertJsonPath('data.status', 'interested');
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/connections', [
+            'target_profile_id' => $target->id,
+            'type' => 'interest',
+        ])
+        ->assertUnprocessable();
+});
+
+it('creates reports with moderation context for the authenticated sport profile', function () {
+    $reporter = createSportProfileForUser(77, 'Reporter');
+    $reported = createSportProfileForUser(88, 'Reported');
+    createSportProfileForUser(99, 'Other');
+
+    $reportId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/reports', [
+            'reported_profile_id' => $reported->id,
+            'reason' => 'harassment',
+            'details' => 'Mensagem agressiva no convite.',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.reporter_profile_id', $reporter->id)
+        ->assertJsonPath('data.reported_profile_id', $reported->id)
+        ->assertJsonPath('data.reason', 'harassment')
+        ->assertJsonPath('data.status', 'open')
+        ->assertJsonPath('data.context.reporter.id', $reporter->id)
+        ->assertJsonPath('data.context.reported.id', $reported->id)
+        ->json('data.id');
+
+    $report = Report::query()->findOrFail($reportId);
+
+    expect($report->context['reporter']['display_name'])->toBe('Reporter')
+        ->and($report->context['reported']['display_name'])->toBe('Reported');
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->postJson('/api/reports', [
+            'reported_profile_id' => $reporter->id,
+            'reason' => 'spam',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.details', null);
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/reports', [
+            'reported_profile_id' => $reporter->id,
+            'reason' => 'self',
+        ])
+        ->assertUnprocessable();
+
+    actingAsWorkspace(1, ['id' => 100])
+        ->postJson('/api/reports', [
+            'reported_profile_id' => $reported->id,
+            'reason' => 'spam',
+        ])
+        ->assertNotFound();
 });

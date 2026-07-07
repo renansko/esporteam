@@ -30,6 +30,8 @@ roadmap/* + roadmap/cluster/*            → roadmap e clustering com IA
 - `auth/` — endpoints de identidade no `esporteam-auth` (register, login, workspace/select)
 - `workspaces/` — endpoints de workspace no `esporteam-workspace` (list, create)
 - `me/` — `/api/me` do Esporteam
+- `connections/` — convites, interesses e bloqueios entre perfis esportivos
+- `reports/` — denuncias para moderacao
 - `ideas/` — CRUD de ideias no Esporteam
 - `roadmap/` — listagem e drilldown de RoadmapItems
 - `roadmap/cluster/` — dispatch e auditoria de runs de clustering com IA

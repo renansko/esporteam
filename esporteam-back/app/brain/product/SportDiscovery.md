@@ -47,4 +47,4 @@ IA entra depois para melhorar ranking e explicar recomendacoes, mas nunca deve s
 - Coordenada precisa nao aparece em payload publico.
 - Perfil pode sair da descoberta.
 - Bloqueios removem ambos os lados da descoberta.
-- Denuncias precisam preservar contexto suficiente para moderacao.
+- Denuncias preservam contexto minimo de moderacao: reporter/reported com ids, `user_id`, nome, cidade, regiao e visibilidade no momento do reporte.

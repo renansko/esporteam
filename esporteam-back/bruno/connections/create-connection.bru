@@ -1,0 +1,28 @@
+meta {
+  name: Create Connection
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/connections
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "target_profile_id": 2,
+    "type": "friendship"
+  }
+}
+
+docs {
+  POST /api/connections cria uma Conexao para o Perfil Esportivo autenticado.
+
+  Tipos: friendship, interest, block.
+}

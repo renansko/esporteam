@@ -23,8 +23,8 @@ class ConnectionService
                 Connection::query()
                     ->where('profile_low_id', $lowId)
                     ->where('profile_high_id', $highId)
-                    ->where('type', 'friendship')
-                    ->whereIn('status', ['pending', 'accepted'])
+                    ->whereIn('type', ['friendship', 'interest'])
+                    ->whereIn('status', ['pending', 'accepted', 'interested'])
                     ->delete();
 
                 $connection = Connection::query()->updateOrCreate(
@@ -47,7 +47,7 @@ class ConnectionService
         $existing = Connection::query()
             ->where('profile_low_id', $lowId)
             ->where('profile_high_id', $highId)
-            ->whereIn('type', ['friendship', 'block'])
+            ->whereIn('type', ['friendship', 'interest', 'block'])
             ->first();
 
         if ($existing) {
@@ -59,8 +59,8 @@ class ConnectionService
             'target_profile_id' => $targetProfileId,
             'profile_low_id' => $lowId,
             'profile_high_id' => $highId,
-            'type' => 'friendship',
-            'status' => 'pending',
+            'type' => $type,
+            'status' => $type === 'interest' ? 'interested' : 'pending',
         ]);
 
         return $connection->load(['requester', 'target']);

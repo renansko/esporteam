@@ -6,6 +6,7 @@ use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\DiscoveryController;
 use App\Http\Controllers\IdeaController;
 use App\Http\Controllers\MeController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoadmapController;
 use App\Http\Controllers\SportController;
 use App\Http\Controllers\SportGroupController;
@@ -48,6 +49,7 @@ Route::middleware('auth.service')->group(function () {
 
     Route::post('/connections', [ConnectionController::class, 'store']);
     Route::patch('/connections/{connection}', [ConnectionController::class, 'update']);
+    Route::post('/reports', [ReportController::class, 'store']);
 
     Route::get('/ideas', [IdeaController::class, 'index']);
     Route::post('/ideas', [IdeaController::class, 'store']);

@@ -15,6 +15,7 @@ it('protects every teacher group and connection route with auth service middlewa
         'api/groups/{group}/members/{profile}',
         'api/connections',
         'api/connections/{connection}',
+        'api/reports',
     ];
 
     foreach ($protectedRoutes as $uri) {

@@ -1,6 +1,6 @@
 # Issue Status
 
-Atualizado em 2026-07-06.
+Atualizado em 2026-07-07.
 
 ## Done
 
@@ -12,12 +12,12 @@ Atualizado em 2026-07-06.
 | 04 - Discovery Feed | Done | `GET /api/discovery` com filtros de modalidade, distancia, nivel e disponibilidade; ranking deterministico; exclusao de perfil proprio, oculto e bloqueado; cards de pessoa/professor; testes de privacidade de localizacao. |
 | 05 - Sport Sessions | Done | `sport_sessions`, `session_participants`, `POST /api/sessions`, `GET /api/sessions`, `POST /api/sessions/{id}/join`, regras de capacidade/status e testes HTTP. |
 | 06 - Teachers And Classes | Done | `teacher_profiles`, `class_offerings`, `PUT /api/teacher-profile`, `POST /api/classes`, `GET /api/classes`, interesse de aluno em aula e testes HTTP. |
+| 07 - Connections And Safety | Done | `connections`, `POST /api/connections`, `PATCH /api/connections/{id}`, amizade/convite, interesse, bloqueio removendo relacionamentos, bloqueados fora da discovery, `reports` e `POST /api/reports` com contexto minimo de moderacao. |
 
 ## Partial
 
 | Issue | Status | Done | Still missing |
 | --- | --- | --- | --- |
-| 07 - Connections And Safety | Partial | `connections`, `POST /api/connections`, `PATCH /api/connections/{id}` e bloqueio removendo amizade existem. | `reports`, `POST /api/reports` e remocao de discovery baseada em bloqueios. |
 | 08 - Demo Seed Dataset | Partial | Seeder cria 12 modalidades iniciais. | 40 perfis, 8 professores, 15 aulas, 20 sessoes abertas, convites, participantes, bloqueios e denuncias. |
 
 ## Planned
@@ -38,3 +38,4 @@ Atualizado em 2026-07-06.
 - Docker: `php artisan test tests/Feature/Api/ClassOfferingTest.php` passou em 2026-07-06 com 4 testes e 22 assertions.
 - Docker: `php artisan test tests/Unit/Security/NewSocialRoutesAuthTest.php` passou em 2026-07-06 com 1 teste e 26 assertions.
 - Docker: `php artisan test` passou em 2026-07-06 com 129 testes e 468 assertions.
+- Docker: `php artisan test` passou em 2026-07-07 com 131 testes e 489 assertions.
