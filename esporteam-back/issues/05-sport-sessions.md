@@ -21,4 +21,6 @@ Tipos iniciais: partida, treino, corrida, aula_aberta e encontro.
 - [x] `php -l app/Http/Controllers/SportSessionController.php`
 - [x] `php -l app/Http/Resources/SportSessionResource.php`
 - [x] `php -l tests/Feature/Api/SportSessionTest.php`
+- [x] `./vendor/bin/pint --test ...`
 - [x] Docker: `php artisan test tests/Feature/Api/SportSessionTest.php`
+- [x] Docker: `php artisan cache:clear && php artisan test`

@@ -34,3 +34,4 @@ Atualizado em 2026-07-06.
 
 - Docker: `php artisan test` passou em 2026-07-06 com 120 testes e 415 assertions.
 - Docker: `php artisan test tests/Feature/Api/SportSessionTest.php` passou em 2026-07-06 com 4 testes e 23 assertions.
+- Docker: `php artisan cache:clear && php artisan test` passou em 2026-07-06 com 124 testes e 438 assertions.
