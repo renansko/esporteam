@@ -25,6 +25,7 @@
 
 - [`services/DiscoveryService.md`](services/DiscoveryService.md) — Descoberta determinística por modos de pessoas, sessões e locais
 - [`services/SportSessionService.md`](services/SportSessionService.md) — criacao, listagem aberta, participacao e match em grupo de Sessoes Esportivas
+- [`services/PostMatchSportActionService.md`](services/PostMatchSportActionService.md) — proximas acoes, horario/local e sessao depois de match aceito
 - [`services/IdeaIngestionService.md`](services/IdeaIngestionService.md) — ponto único de criação de Ideas (gera embedding)
 - [`services/ClusteringService.md`](services/ClusteringService.md) — orquestrador da run (LLM + fallback)
 - [`services/LlmFactory.md`](services/LlmFactory.md) — hub multi-provider de LLM/Embedding
@@ -33,6 +34,7 @@
 
 - [`functions/DiscoveryService.md`](functions/DiscoveryService.md) — `discoverForUser`, `profilesForUser`, modos e filtros compartilhados
 - [`functions/SportSessionService.md`](functions/SportSessionService.md) — `createForUser`, `openSessions`, recomendacoes, convites, decisoes e `join`
+- [`functions/PostMatchSportActionService.md`](functions/PostMatchSportActionService.md) — `actionsForUser` e `saveSessionForUser`
 - [`functions/IdeaIngestionService.md`](functions/IdeaIngestionService.md) — contratos das funções públicas
 - [`functions/ClusteringService.md`](functions/ClusteringService.md) — `executeRun` e side effects
 

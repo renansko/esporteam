@@ -6,6 +6,7 @@ use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\DiscoveryController;
 use App\Http\Controllers\IdeaController;
 use App\Http\Controllers\MeController;
+use App\Http\Controllers\PostMatchSportActionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoadmapController;
 use App\Http\Controllers\SportController;
@@ -50,6 +51,8 @@ Route::middleware('auth.service')->group(function () {
     Route::patch('/sessions/{session}/invite', [SportSessionController::class, 'respondToInvite']);
     Route::patch('/sessions/{session}/participants/{profile}', [SportSessionController::class, 'updateParticipant']);
     Route::post('/sessions/{session}/join', [SportSessionController::class, 'join']);
+    Route::get('/post-match-actions', [PostMatchSportActionController::class, 'index']);
+    Route::post('/post-match-actions/session', [PostMatchSportActionController::class, 'saveSession']);
 
     Route::post('/connections', [ConnectionController::class, 'store']);
     Route::patch('/connections/{connection}', [ConnectionController::class, 'update']);

@@ -1,0 +1,25 @@
+meta {
+  name: List Post Match Actions
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/post-match-actions?connection_id=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  connection_id: 1
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/post-match-actions lista proximas acoes depois de um match 1:1 aceito ou de um match em grupo.
+
+  Envie connection_id para amizade aceita ou session_id para sessao com participacao ativa.
+}

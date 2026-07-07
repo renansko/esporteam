@@ -15,6 +15,8 @@ it('protects every teacher group and connection route with auth service middlewa
         'api/groups/{group}/members/{profile}',
         'api/connections',
         'api/connections/{connection}',
+        'api/post-match-actions',
+        'api/post-match-actions/session',
         'api/reports',
     ];
 

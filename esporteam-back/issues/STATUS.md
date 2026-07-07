@@ -17,6 +17,7 @@ Atualizado em 2026-07-07.
 | 09 - Discovery Modes And Empty States | Done | `GET /api/discovery` aceita `mode=people|sessions|places`, aplica filtros compartilhados de modalidade, distancia, nivel, objetivo e disponibilidade, retorna cards tipados sem expor capacidade/vagas de sessoes e inclui `empty_state` com acoes produtivas. |
 | 10 - Hosted Group Match | Done | Sessoes hospedadas aceitam `requires_approval`, recomendacoes do anfitriao, convites, aceite/recusa, pedidos `interested`, decisao do anfitriao e estados `invited`, `approved`, `declined`, `removed`; capacidade, bloqueio, visibilidade e ausencia de cobranca cobertos por testes. |
 | 11 - Public Sessions Without Match | Done | `entry_mode` permite `convite`, `publica_direta` e `publica_aprovacao`; `GET /api/sessions` filtra por modalidade, distancia, nivel, horario e disponibilidade interna de vagas; `next_action` comunica `entrar`, `pedir_vaga` ou `indisponivel` sem expor vagas restantes. |
+| 12 - Post Match Sport Action | Done | `GET /api/post-match-actions` retorna proximas acoes para conexao aceita ou grupo ativo; `POST /api/post-match-actions/session` cria sessao privada gratuita de match 1:1 ou vincula/atualiza sessao de grupo; payload inclui sugestoes de horario/local e motivos. |
 
 ## Partial
 
@@ -27,7 +28,6 @@ Atualizado em 2026-07-07.
 
 | Issue | Status | Notes |
 | --- | --- | --- |
-| 12 - Post Match Sport Action | Planned | Issue criada; depende de disponibilidade, sessoes e match em grupo. |
 | 13 - Trust And Safety In Discovery | Planned | Issue criada; depende de discovery, sessoes e conexoes/denuncias. |
 
 ## Verification Notes
@@ -49,3 +49,7 @@ Atualizado em 2026-07-07.
 - Docker: `php artisan test` passou em 2026-07-07 com 138 testes e 613 assertions.
 - Docker: `php artisan test tests/Feature/Api/SportSessionTest.php` passou em 2026-07-07 com 11 testes e 120 assertions.
 - Docker: `php artisan test` passou em 2026-07-07 com 141 testes e 651 assertions.
+- Docker: `php artisan test tests/Feature/Api/PostMatchSportActionTest.php` passou em 2026-07-07 com 4 testes e 56 assertions.
+- Docker: `php artisan test tests/Feature/Api/SportSessionTest.php` passou em 2026-07-07 com 11 testes e 120 assertions.
+- Docker: `php artisan test tests/Unit/Security/NewSocialRoutesAuthTest.php` passou em 2026-07-07 com 1 teste e 32 assertions.
+- Docker: `php artisan test` passou em 2026-07-07 com 146 testes e 723 assertions.

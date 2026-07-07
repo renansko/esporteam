@@ -1,0 +1,30 @@
+meta {
+  name: Save Post Match Session
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/post-match-actions/session
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "connection_id": 1,
+    "starts_at": "2026-07-10T19:00:00-03:00",
+    "location_label": "Quadra 3",
+    "city": "Sao Paulo"
+  }
+}
+
+docs {
+  POST /api/post-match-actions/session cria uma Sessao Esportiva gratuita a partir de um match 1:1 aceito ou vincula/atualiza a sessao de um grupo ativo.
+
+  Sessoes criadas a partir de connection_id ficam privadas, por convite, com os perfis do match como participantes.
+}

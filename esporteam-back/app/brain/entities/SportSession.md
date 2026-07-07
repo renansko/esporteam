@@ -30,6 +30,8 @@ Sessoes hospedadas usam o anfitriao (`creator_profile_id`) para listar recomenda
 
 Sessoes publicas sem match previo usam `entry_mode`: `publica_direta` permite entrada `joined`, `publica_aprovacao` cria pedido `interested`, e `convite` rejeita entrada publica pelo endpoint de join. O payload HTTP inclui `next_action` com `entrar`, `pedir_vaga` ou `indisponivel`.
 
+Depois de match 1:1 aceito, `PostMatchSportActionService` pode criar uma sessao privada `convite` e adicionar o outro Perfil Esportivo como `approved`. Depois de match em grupo, o mesmo service pode vincular/atualizar a sessao existente com horario e local escolhidos pelos participantes ativos.
+
 Cards publicos de Descoberta de sessoes mostram `participant_count`, mas nao mostram `capacity`, vagas restantes ou lotacao. Capacidade continua sendo regra interna para match, convite, entrada e aprovacao.
 
 Sessoes esportivas sao sempre gratuitas para participantes. Campos de cobranca como `price_cents`, `fee_cents`, `is_paid`, `payment_required` e `currency` nao pertencem a `sport_sessions` e devem ser rejeitados na criacao. Assinaturas de organizador/entusiasta sao billing da plataforma, nao taxa de evento.
