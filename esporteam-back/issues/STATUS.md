@@ -13,12 +13,12 @@ Atualizado em 2026-07-07.
 | 05 - Sport Sessions | Done | `sport_sessions`, `session_participants`, `POST /api/sessions`, `GET /api/sessions`, `POST /api/sessions/{id}/join`, regras de capacidade/status e testes HTTP. |
 | 06 - Teachers And Classes | Done | `teacher_profiles`, `class_offerings`, `PUT /api/teacher-profile`, `POST /api/classes`, `GET /api/classes`, interesse de aluno em aula e testes HTTP. |
 | 07 - Connections And Safety | Done | `connections`, `POST /api/connections`, `PATCH /api/connections/{id}`, amizade/convite, interesse, bloqueio removendo relacionamentos, bloqueados fora da discovery, `reports` e `POST /api/reports` com contexto minimo de moderacao. |
+| 08 - Demo Seed Dataset | Done | `DemoSeeder` cria 12 modalidades, 40 perfis esportivos, 8 professores, 15 aulas, 20 sessoes abertas gratuitas, participantes, conexoes, bloqueios e denuncias; teste de idempotencia cobre as contagens. |
 
 ## Partial
 
 | Issue | Status | Done | Still missing |
 | --- | --- | --- | --- |
-| 08 - Demo Seed Dataset | Partial | Seeder cria 12 modalidades iniciais. | 40 perfis, 8 professores, 15 aulas, 20 sessoes abertas, convites, participantes, bloqueios e denuncias. |
 
 ## Planned
 
@@ -39,3 +39,5 @@ Atualizado em 2026-07-07.
 - Docker: `php artisan test tests/Unit/Security/NewSocialRoutesAuthTest.php` passou em 2026-07-06 com 1 teste e 26 assertions.
 - Docker: `php artisan test` passou em 2026-07-06 com 129 testes e 468 assertions.
 - Docker: `php artisan test` passou em 2026-07-07 com 131 testes e 489 assertions.
+- Docker: `php artisan test tests/Feature/Seeders/DemoSeederTest.php` passou em 2026-07-07 com 1 teste e 22 assertions.
+- Docker: `php artisan test` passou em 2026-07-07 com 132 testes e 511 assertions.

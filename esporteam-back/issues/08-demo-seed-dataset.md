@@ -4,12 +4,12 @@ Popular dados realistas para demonstrar o app.
 
 ## Acceptance
 
-- [ ] 12 esportes iniciais.
-- [ ] 40 perfis de praticantes.
-- [ ] 8 professores.
-- [ ] 15 aulas.
-- [ ] 20 sessoes abertas gratuitas.
-- [ ] Convites, participantes e alguns bloqueios/denuncias.
+- [x] 12 esportes iniciais.
+- [x] 40 perfis de praticantes.
+- [x] 8 professores.
+- [x] 15 aulas.
+- [x] 20 sessoes abertas gratuitas.
+- [x] Convites, participantes e alguns bloqueios/denuncias.
 
 ## Notes
 

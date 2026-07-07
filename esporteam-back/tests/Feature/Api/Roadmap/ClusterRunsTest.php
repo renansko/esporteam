@@ -9,6 +9,10 @@ use App\Models\Idea;
 use App\Models\RoadmapItem;
 use Illuminate\Support\Facades\Bus;
 
+beforeEach(function () {
+    config()->set('llm.rate_limit.max_attempts', 1000);
+});
+
 it('dispatches a new run and returns 202 with run_id', function () {
     Bus::fake();
     Idea::factory()->create(['workspace_id' => 1]);

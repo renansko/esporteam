@@ -9,3 +9,4 @@
 | 2026-07-06 | #03   | AvailabilityWindow documentada + Descoberta com filtro basico de sobreposicao de disponibilidade |
 | 2026-07-06 | #05   | SportSession + SessionParticipant + endpoints de criar/listar/entrar em sessoes |
 | 2026-07-07 | #07   | Connections and Safety: interest em conexoes, reports, POST /api/reports, contexto minimo congelado para moderacao e status da issue concluido. |
+| 2026-07-07 | #08   | DemoSeeder completo: 40 perfis, 8 professores, 15 aulas, 20 sessoes abertas gratuitas, participantes, conexoes, bloqueios e denuncias. |
