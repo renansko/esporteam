@@ -12,6 +12,7 @@ Permitir que uma sessao esportiva tenha um anfitriao que monta um grupo a partir
 - [ ] Um perfil convidado consegue aceitar ou recusar o convite da sessao.
 - [ ] O anfitriao consegue aprovar ou recusar pedidos de vaga quando a sessao exigir aprovacao.
 - [ ] Capacidade, bloqueios e visibilidade impedem convite ou aprovacao invalida.
+- [ ] Match em grupo nao introduz cobranca por vaga; a sessao hospedada continua gratuita para participantes.
 - [ ] Testes cobrem match em grupo, transicoes de status e regras de seguranca.
 
 ## Blocked by
@@ -19,4 +20,3 @@ Permitir que uma sessao esportiva tenha um anfitriao que monta um grupo a partir
 - esporteam-back/issues/04-discovery-feed.md
 - esporteam-back/issues/05-sport-sessions.md
 - esporteam-back/issues/07-connections-safety.md
-

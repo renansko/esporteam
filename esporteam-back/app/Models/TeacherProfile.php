@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TeacherProfile extends Model
 {
@@ -34,5 +35,10 @@ class TeacherProfile extends Model
             ->using(TeacherStudent::class)
             ->withPivot(['status', 'started_at', 'ended_at'])
             ->withTimestamps();
+    }
+
+    public function classOfferings(): HasMany
+    {
+        return $this->hasMany(ClassOffering::class);
     }
 }

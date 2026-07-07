@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ClassOfferingController;
 use App\Http\Controllers\ClusteringRunController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\DiscoveryController;
@@ -30,6 +31,10 @@ Route::middleware('auth.service')->group(function () {
     Route::get('/teacher-profile/students', [TeacherProfileController::class, 'students']);
     Route::post('/teacher-profile/students', [TeacherProfileController::class, 'addStudent']);
     Route::delete('/teacher-profile/students/{studentProfile}', [TeacherProfileController::class, 'removeStudent']);
+
+    Route::get('/classes', [ClassOfferingController::class, 'index']);
+    Route::post('/classes', [ClassOfferingController::class, 'store']);
+    Route::post('/classes/{classOffering}/interest', [ClassOfferingController::class, 'interest']);
 
     Route::get('/groups', [SportGroupController::class, 'index']);
     Route::post('/groups', [SportGroupController::class, 'store']);

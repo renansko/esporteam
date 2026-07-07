@@ -7,6 +7,8 @@ it('protects every teacher group and connection route with auth service middlewa
         'api/teacher-profile',
         'api/teacher-profile/students',
         'api/teacher-profile/students/{studentProfile}',
+        'api/classes',
+        'api/classes/{classOffering}/interest',
         'api/groups',
         'api/groups/{group}',
         'api/groups/{group}/members',

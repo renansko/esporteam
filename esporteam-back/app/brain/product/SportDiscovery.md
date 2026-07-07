@@ -20,11 +20,12 @@ O backend deve continuar seguindo a estrutura existente:
 - `Sport`: modalidade.
 - `ProfileSport`: relacao perfil/modalidade com nivel e objetivos.
 - `AvailabilityWindow`: janelas de disponibilidade.
-- `SportSession`: partida, treino, corrida, aula aberta ou encontro.
+- `SportSession`: partida, treino, corrida, aula aberta ou encontro gratuito para participantes.
 - `TeacherProfile`: perfil profissional.
 - `ClassOffering`: aula individual ou em grupo.
 - `Connection`: convite, amizade, interesse, bloqueio.
 - `Report`: denuncia/moderacao.
+- `ProfileSubscription`: assinatura futura de plataforma para organizadores ou entusiastas, confirmada por billing externo; nao e preco de sessao.
 
 ## Matching inicial
 

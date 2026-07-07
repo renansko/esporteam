@@ -12,10 +12,10 @@ Permitir que o anfitriao crie uma sessao publica em que perfis elegiveis possam 
 - [ ] Um perfil elegivel consegue pedir vaga em uma sessao publica com aprovacao do anfitriao.
 - [ ] Sessoes publicas respeitam capacidade, status, bloqueios, faixa de nivel e visibilidade.
 - [ ] O payload da sessao comunica claramente se a proxima acao e `entrar`, `pedir vaga` ou `indisponivel`.
+- [ ] Sessoes publicas nao aceitam preco, taxa, ingresso ou pagamento obrigatorio.
 - [ ] Testes cobrem entrada direta, pedido de vaga, capacidade cheia e bloqueios.
 
 ## Blocked by
 
 - esporteam-back/issues/05-sport-sessions.md
 - esporteam-back/issues/07-connections-safety.md
-

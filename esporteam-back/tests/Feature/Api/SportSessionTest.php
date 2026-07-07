@@ -45,6 +45,20 @@ it('creates a sport session for the authenticated sport profile', function () {
         ->exists())->toBeTrue();
 });
 
+it('rejects paid fields when creating a sport session', function () {
+    createSessionSportProfileForUser(77, 'Creator');
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'title' => 'Treino pago',
+            'type' => 'treino',
+            'starts_at' => now()->addDay()->setSecond(0)->toISOString(),
+            'price_cents' => 5000,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['price_cents']);
+});
+
 it('lists open public sport sessions by filters', function () {
     $sport = Sport::query()->create(['name' => 'Corrida', 'slug' => 'corrida']);
     $otherSport = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);

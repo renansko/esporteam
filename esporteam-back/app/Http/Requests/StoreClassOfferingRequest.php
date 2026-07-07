@@ -2,34 +2,28 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\SportSessionStatus;
-use App\Enums\SportSessionType;
+use App\Enums\ClassOfferingStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreSportSessionRequest extends FormRequest
+class StoreClassOfferingRequest extends FormRequest
 {
     public function rules(): array
     {
         return [
-            'sport_id' => ['nullable', 'integer', Rule::exists('sports', 'id')->where('is_active', true)],
+            'sport_id' => ['required', 'integer', Rule::exists('sports', 'id')->where('is_active', true)],
             'title' => ['required', 'string', 'max:160'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'type' => ['required', Rule::in(SportSessionType::values())],
+            'price_cents' => ['nullable', 'integer', 'min:0', 'max:100000000'],
             'starts_at' => ['required', 'date'],
+            'recurrence' => ['nullable', 'string', 'max:80'],
             'location_label' => ['nullable', 'string', 'max:160'],
             'city' => ['nullable', 'string', 'max:120'],
             'region' => ['nullable', 'string', 'max:120'],
             'latitude_approx' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude_approx' => ['nullable', 'numeric', 'between:-180,180'],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:10000'],
-            'visibility' => ['nullable', Rule::in(['public', 'private'])],
-            'status' => ['nullable', Rule::in(SportSessionStatus::values())],
-            'price_cents' => ['prohibited'],
-            'fee_cents' => ['prohibited'],
-            'is_paid' => ['prohibited'],
-            'payment_required' => ['prohibited'],
-            'currency' => ['prohibited'],
+            'status' => ['nullable', Rule::in(ClassOfferingStatus::values())],
         ];
     }
 }

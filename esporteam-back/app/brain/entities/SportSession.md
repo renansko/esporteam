@@ -22,3 +22,5 @@ Sessao esportiva pontual criada por um Perfil Esportivo para partida, treino, co
 ## Regras
 
 `SportSessionService` cria a sessao, adiciona o criador como participante `joined` e bloqueia entrada quando status nao e `open` ou a capacidade esta cheia.
+
+Sessoes esportivas sao sempre gratuitas para participantes. Campos de cobranca como `price_cents`, `fee_cents`, `is_paid`, `payment_required` e `currency` nao pertencem a `sport_sessions` e devem ser rejeitados na criacao. Assinaturas de organizador/entusiasta sao billing da plataforma, nao taxa de evento.

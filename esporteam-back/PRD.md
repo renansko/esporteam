@@ -38,6 +38,8 @@ Um app mobile de descoberta esportiva local:
 - **Esporte:** modalidade praticada, como futebol, corrida, tenis, beach tennis, musculacao, volei, basquete, ciclismo ou luta.
 - **Sessao esportiva:** evento pontual ou recorrente: partida, treino, corrida em grupo, aula aberta ou encontro.
 - **Professor:** usuario com perfil profissional, modalidades, preco, locais de atendimento e horarios.
+- **Organizador:** perfil esportivo que cria sessoes, grupos ou atividades locais. Pode ter assinatura da plataforma, mas nao cobra participantes pela sessao esportiva.
+- **Assinatura da plataforma:** relacao comercial do perfil/organizador com o Esporteam, possivelmente confirmada no futuro por microservico de pagamentos. Nao representa taxa, ingresso ou preco de uma sessao esportiva.
 - **Aula:** oferta criada por professor ou organizador, individual ou em grupo.
 - **Conexao:** relacao entre usuarios: amigo, interesse, convite, bloqueio ou match.
 - **Descoberta:** feed/lista/mapa de pessoas, aulas e sessoes proximas.
@@ -74,8 +76,11 @@ O MVP precisa provar o loop principal:
 - Localizacao deve ser aproximada por padrao. Nunca expor coordenada exata de residencia.
 - Matching inicial combina distancia, esportes em comum, nivel, disponibilidade e tipo de intencao.
 - Professores e aulas devem coexistir com praticantes comuns no mesmo app, mas com filtros e cards distintos.
+- Sessoes esportivas sao gratuitas para participantes. Instrutores, organizadores e entusiastas podem ter assinatura da plataforma, mas essa assinatura nao transforma a sessao em evento pago.
+- Preco pertence a perfil profissional/aula (`teacher_profiles`, `class_offerings`), nao a `sport_sessions`.
 - Chat pode entrar depois do MVP; no primeiro corte, convite/interesse com status ja valida demanda.
-- Pagamento, reserva de quadra e assinatura ficam fora do MVP.
+- Checkout, reserva de quadra e cobranca por participante ficam fora do MVP.
+- Assinaturas de organizadores/entusiastas podem ser modeladas depois em tabela propria e confirmadas por microservico de pagamentos.
 - O backend pode reaproveitar o hub de LLM para embeddings, recomendacao e explicacao de matches.
 
 ## Modelo De Dados Proposto
@@ -92,6 +97,12 @@ Primeiro corte, preservando a separacao por camadas:
 - `session_participants`: session_id, profile_id, status.
 - `connections`: requester_profile_id, target_profile_id, type, status.
 - `reports`: reporter_profile_id, reported_profile_id, reason, details, status.
+
+Futuro billing de plataforma:
+
+- `profile_subscriptions`: profile_id, plan, status, external_subscription_id, current_period_ends_at, verified_at.
+- A fonte de verdade de pagamento deve vir do microservico de pagamentos; o backend de esporte guarda apenas estado necessario para autorizacao e descoberta.
+- Nenhum campo de preco deve ser adicionado a `sport_sessions`.
 
 ## API Proposta
 

@@ -16,9 +16,17 @@ _Avoid_: Aluno, atleta, usuario comum
 A sport profile that offers professional guidance for one or more sports. A teacher is also a sport profile and may participate socially outside the teacher role.
 _Avoid_: Instrutor, treinador, coach
 
+**Organizador**:
+A sport profile that hosts sport sessions, groups, or local activities. An organizer may have a platform subscription, but cannot charge participants through a sport session.
+_Avoid_: Dono do evento, promotor, vendedor de vaga
+
 **Aluno**:
 A sport profile that has an explicit learning relationship with a teacher. A sport profile should not be called a student merely because it wants to learn something.
 _Avoid_: Cliente, estudante, aprendiz
+
+**Assinatura da Plataforma**:
+The commercial relationship that may unlock organizer or enthusiast capabilities in Esporteam. A subscription is account/platform billing and must not be modeled as a participant fee for a sport session.
+_Avoid_: Taxa da sessao, ingresso, pagamento do evento
 
 **Modalidade**:
 A sport or physical practice that people can discover, teach, learn, or organize around.

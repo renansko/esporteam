@@ -7,6 +7,7 @@ Criar e participar de partidas, treinos e encontros.
 - [x] Migration `sport_sessions`.
 - [x] Migration `session_participants`.
 - [x] `POST /api/sessions` cria sessao.
+- [x] Sessao esportiva nao aceita campos de cobranca; eventos de esporte sao gratuitos para participantes.
 - [x] `GET /api/sessions` lista sessoes abertas por filtros.
 - [x] `POST /api/sessions/{id}/join` registra interesse/participacao.
 - [x] Capacidade e status impedem entrada invalida.
@@ -14,6 +15,8 @@ Criar e participar de partidas, treinos e encontros.
 ## Notes
 
 Tipos iniciais: partida, treino, corrida, aula_aberta e encontro.
+
+Regra de produto: instrutor, organizador ou entusiasta pode ter assinatura da plataforma em tabela propria no futuro, possivelmente confirmada por microservico de pagamentos. Essa assinatura nao permite informar que uma `SportSession` e paga. Preco pertence a aulas/ofertas profissionais, nao a sessoes esportivas.
 
 ## Verification
 

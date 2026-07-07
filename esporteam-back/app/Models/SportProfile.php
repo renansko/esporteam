@@ -77,6 +77,14 @@ class SportProfile extends Model
             ->withTimestamps();
     }
 
+    public function interestedClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(ClassOffering::class, 'class_interests', 'sport_profile_id', 'class_offering_id')
+            ->using(ClassInterest::class)
+            ->withPivot(['status'])
+            ->withTimestamps();
+    }
+
     public function requestedConnections(): HasMany
     {
         return $this->hasMany(Connection::class, 'requester_profile_id');
