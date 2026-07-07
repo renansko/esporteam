@@ -9,6 +9,7 @@ use App\Http\Controllers\RoadmapController;
 use App\Http\Controllers\SportController;
 use App\Http\Controllers\SportGroupController;
 use App\Http\Controllers\SportProfileController;
+use App\Http\Controllers\SportSessionController;
 use App\Http\Controllers\TeacherProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,10 @@ Route::middleware('auth.service')->group(function () {
     Route::get('/groups/{group}', [SportGroupController::class, 'show']);
     Route::post('/groups/{group}/members', [SportGroupController::class, 'addMember']);
     Route::delete('/groups/{group}/members/{profile}', [SportGroupController::class, 'removeMember']);
+
+    Route::get('/sessions', [SportSessionController::class, 'index']);
+    Route::post('/sessions', [SportSessionController::class, 'store']);
+    Route::post('/sessions/{session}/join', [SportSessionController::class, 'join']);
 
     Route::post('/connections', [ConnectionController::class, 'store']);
     Route::patch('/connections/{connection}', [ConnectionController::class, 'update']);

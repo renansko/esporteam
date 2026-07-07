@@ -1,0 +1,21 @@
+meta {
+  name: Join Session
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/sessions/1/join
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  POST /api/sessions/{id}/join registra participacao do Perfil Esportivo autenticado.
+
+  Falha quando a sessao nao esta aberta, esta cheia ou o perfil ja entrou.
+}

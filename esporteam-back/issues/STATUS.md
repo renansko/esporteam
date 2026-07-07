@@ -10,6 +10,7 @@ Atualizado em 2026-07-06.
 | 02 - Sports And Preferences | Done | Seeder de modalidades, `GET /api/sports`, `profile_sports`, `PUT /api/profile/sports`, enums de nivel e objetivo. |
 | 03 - Availability Windows | Done | `availability_windows`, `PUT /api/profile/availability`, validacao de dia/horario e filtro basico de sobreposicao em discovery. |
 | 04 - Discovery Feed | Done | `GET /api/discovery` com filtros de modalidade, distancia, nivel e disponibilidade; ranking deterministico; exclusao de perfil proprio, oculto e bloqueado; cards de pessoa/professor; testes de privacidade de localizacao. |
+| 05 - Sport Sessions | Done | `sport_sessions`, `session_participants`, `POST /api/sessions`, `GET /api/sessions`, `POST /api/sessions/{id}/join`, regras de capacidade/status e testes HTTP. |
 
 ## Partial
 
@@ -23,7 +24,6 @@ Atualizado em 2026-07-06.
 
 | Issue | Status | Notes |
 | --- | --- | --- |
-| 05 - Sport Sessions | Planned | Ainda nao ha `sport_sessions`, `session_participants` ou endpoints `/api/sessions`. |
 | 09 - Discovery Modes And Empty States | Planned | Issue criada a partir da pesquisa; depende de discovery mais completo. |
 | 10 - Hosted Group Match | Planned | Issue criada; depende de discovery, sessoes e seguranca. |
 | 11 - Public Sessions Without Match | Planned | Issue criada; depende de sessoes e seguranca. |
@@ -33,3 +33,4 @@ Atualizado em 2026-07-06.
 ## Verification Notes
 
 - Docker: `php artisan test` passou em 2026-07-06 com 120 testes e 415 assertions.
+- Docker: `php artisan test tests/Feature/Api/SportSessionTest.php` passou em 2026-07-06 com 4 testes e 23 assertions.

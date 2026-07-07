@@ -1,0 +1,33 @@
+meta {
+  name: List Sessions
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/sessions?sport_id=1&type=treino&city=Sao%20Paulo
+  body: none
+  auth: bearer
+}
+
+params:query {
+  sport_id: 1
+  type: treino
+  city: Sao Paulo
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/sessions lista sessoes publicas e abertas.
+
+  Filtros:
+    - sport_id ou sport_slug
+    - type
+    - city
+    - region
+    - starts_after
+    - starts_before
+}

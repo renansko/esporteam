@@ -56,11 +56,24 @@ class SportProfile extends Model
         return $this->hasMany(SportGroup::class, 'creator_profile_id');
     }
 
+    public function createdSessions(): HasMany
+    {
+        return $this->hasMany(SportSession::class, 'creator_profile_id');
+    }
+
     public function groups(): BelongsToMany
     {
         return $this->belongsToMany(SportGroup::class, 'sport_group_members', 'sport_profile_id', 'sport_group_id')
             ->using(SportGroupMember::class)
             ->withPivot(['role', 'status'])
+            ->withTimestamps();
+    }
+
+    public function sessions(): BelongsToMany
+    {
+        return $this->belongsToMany(SportSession::class, 'session_participants', 'sport_profile_id', 'sport_session_id')
+            ->using(SessionParticipant::class)
+            ->withPivot(['status'])
             ->withTimestamps();
     }
 

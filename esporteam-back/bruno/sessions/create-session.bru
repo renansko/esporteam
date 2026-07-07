@@ -1,0 +1,38 @@
+meta {
+  name: Create Session
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/sessions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "sport_id": 1,
+    "title": "Treino de saque",
+    "description": "Quadra reservada para treino.",
+    "type": "treino",
+    "starts_at": "2026-07-10T19:00:00-03:00",
+    "location_label": "Parque municipal",
+    "city": "Sao Paulo",
+    "region": "SP",
+    "latitude_approx": -23.55,
+    "longitude_approx": -46.63,
+    "capacity": 8,
+    "visibility": "public"
+  }
+}
+
+docs {
+  POST /api/sessions cria uma Sessao Esportiva para o Perfil Esportivo autenticado.
+
+  Tipos iniciais: partida, treino, corrida, aula_aberta, encontro.
+}

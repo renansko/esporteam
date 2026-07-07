@@ -22,4 +22,9 @@ class Sport extends Model
     {
         return $this->hasMany(ProfileSport::class);
     }
+
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(SportSession::class);
+    }
 }
