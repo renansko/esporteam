@@ -248,11 +248,13 @@ it('differentiates teacher cards and hides precise coordinate fields', function 
         ->json('data.0');
 
     expect($payload['profile'])->not->toHaveKeys(['latitude', 'longitude'])
-        ->and($payload['profile']['location'])->toHaveKeys(['latitude_approx', 'longitude_approx'])
-        ->and($payload['profile']['location'])->not->toHaveKeys(['latitude', 'longitude']);
+        ->and($payload['profile'])->not->toHaveKey('location')
+        ->and($payload['trust_signals'])->toHaveKey('profile_complete')
+        ->and($payload['safety_actions'])->toHaveKeys(['block', 'report'])
+        ->and($payload['profile']['safety_actions'])->toHaveKeys(['block', 'report']);
 });
 
-it('returns typed session discovery cards without exposing vacancy or payment fields', function () {
+it('returns typed session discovery cards with trust safety and approved participant signals', function () {
     $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
     $running = Sport::query()->create(['name' => 'Corrida', 'slug' => 'corrida']);
 
@@ -353,15 +355,19 @@ it('returns typed session discovery cards without exposing vacancy or payment fi
         ->assertJsonPath('data.0.session.sport.slug', 'tenis')
         ->assertJsonPath('data.0.host.display_name', 'Session host')
         ->assertJsonPath('data.0.entry_rule', 'approval_required')
+        ->assertJsonPath('data.0.vacancy_status', 'available')
         ->assertJsonPath('data.0.participant_count', 1)
         ->assertJsonPath('data.0.session.participant_count', 1)
         ->assertJsonPath('data.0.session.requires_approval', true)
+        ->assertJsonPath('data.0.session.location_label_public', 'Quadra Pinheiros')
+        ->assertJsonPath('data.0.session.approved_participants.0.id', $host->id)
         ->json('data.0');
 
     expect($payload)->not->toHaveKeys(['price', 'price_cents', 'payment_url', 'slots', 'capacity', 'available'])
         ->and($payload['session'])->not->toHaveKeys(['price', 'price_cents', 'payment_url', 'slots', 'capacity', 'available'])
-        ->and($payload['session']['location'])->toHaveKeys(['latitude_approx', 'longitude_approx'])
-        ->and($payload['session']['location'])->not->toHaveKeys(['latitude', 'longitude']);
+        ->and($payload['session'])->not->toHaveKey('location')
+        ->and($payload['host'])->not->toHaveKey('location')
+        ->and($payload['safety_actions'])->toHaveKeys(['block', 'report']);
 });
 
 it('returns place discovery cards from open public sessions', function () {
@@ -406,7 +412,7 @@ it('returns place discovery cards from open public sessions', function () {
         'status' => 'open',
     ]);
 
-    actingAsWorkspace(1, ['id' => 77])
+    $payload = actingAsWorkspace(1, ['id' => 77])
         ->getJson('/api/discovery?mode=places&sport_slug=tenis&distance_km=5')
         ->assertOk()
         ->assertJsonPath('mode', 'places')
@@ -415,7 +421,10 @@ it('returns place discovery cards from open public sessions', function () {
         ->assertJsonPath('data.0.place.label', 'Quadra Pinheiros')
         ->assertJsonPath('data.0.place.city', 'Sao Paulo')
         ->assertJsonPath('data.0.place.sports.0.slug', 'tenis')
-        ->assertJsonPath('data.0.place.open_session_count', 1);
+        ->assertJsonPath('data.0.place.open_session_count', 1)
+        ->json('data.0.place');
+
+    expect($payload)->not->toHaveKey('location');
 });
 
 it('returns actionable empty state suggestions for discovery modes', function () {

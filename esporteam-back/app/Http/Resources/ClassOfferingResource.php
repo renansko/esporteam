@@ -35,7 +35,7 @@ class ClassOfferingResource extends JsonResource
             'interest_count' => $this->interest_count ?? $this->interests_count,
             'teacher' => $this->whenLoaded('teacher', fn () => new TeacherProfileResource($this->teacher)),
             'sport' => $this->whenLoaded('sport', fn () => new SportResource($this->sport)),
-            'interested_profiles' => SportProfileResource::collection($this->whenLoaded('interestedProfiles')),
+            'interested_profiles' => PublicSportProfileResource::collection($this->whenLoaded('interestedProfiles')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

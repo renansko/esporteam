@@ -21,8 +21,8 @@ class TeacherProfileResource extends JsonResource
             'hourly_price_cents' => $this->hourly_price_cents,
             'service_radius_km' => $this->service_radius_km,
             'verified_at' => $this->verified_at?->toISOString(),
-            'profile' => $this->whenLoaded('profile', fn () => new SportProfileResource($this->profile)),
-            'students' => SportProfileResource::collection($this->whenLoaded('students')),
+            'profile' => $this->whenLoaded('profile', fn () => new PublicSportProfileResource($this->profile)),
+            'students' => PublicSportProfileResource::collection($this->whenLoaded('students')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

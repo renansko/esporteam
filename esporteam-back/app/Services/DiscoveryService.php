@@ -79,7 +79,7 @@ class DiscoveryService
         $blockedProfileIds = $currentProfile === null ? [] : $this->blockedProfileIds($currentProfile->id);
 
         $sessions = SportSession::query()
-            ->with(['creator.sports.sport', 'creator.availabilityWindows', 'sport'])
+            ->with(['creator.sports.sport', 'creator.availabilityWindows', 'participants', 'sport'])
             ->withCount(['participants as participant_count' => fn (Builder $query) => $query->whereIn('session_participants.status', SessionParticipantStatus::activeValues())])
             ->where('status', SportSessionStatus::Open->value)
             ->where('visibility', 'public')
@@ -220,6 +220,7 @@ class DiscoveryService
             'availability_summary' => $this->availabilitySummary($profile),
             'location_label' => $this->locationLabel($profile->city, $profile->region),
             'recommendation_reason' => $this->recommendationReason($reasons),
+            'trust_signals' => $this->trustSignals($profile),
         ];
     }
 
@@ -272,6 +273,7 @@ class DiscoveryService
             'host' => $session->creator,
             'entry_rule' => $entryRule,
             'participant_count' => $participantCount,
+            'vacancy_status' => $this->vacancyStatus($session, $participantCount),
             'recommendation_reason' => $this->recommendationReason($reasons),
         ];
     }
@@ -298,10 +300,7 @@ class DiscoveryService
                 'label' => $session->location_label ?: $this->locationLabel($session->city, $session->region) ?: 'Local a definir',
                 'city' => $session->city,
                 'region' => $session->region,
-                'location' => [
-                    'latitude_approx' => $session->latitude_approx,
-                    'longitude_approx' => $session->longitude_approx,
-                ],
+                'location_label_public' => $session->location_label ?: $this->locationLabel($session->city, $session->region),
                 'sports' => $cards
                     ->pluck('session.sport')
                     ->filter()
@@ -621,6 +620,28 @@ class DiscoveryService
             'window_count' => $profile->availabilityWindows->count(),
             'windows' => $windows,
         ];
+    }
+
+    private function trustSignals(SportProfile $profile): array
+    {
+        return [
+            'profile_complete' => $this->completenessScore($profile) >= 12,
+            'has_avatar' => filled($profile->avatar_url),
+            'has_bio' => filled($profile->bio),
+            'has_public_location' => filled($profile->city) || filled($profile->region),
+            'has_sports' => $profile->sports->isNotEmpty(),
+            'has_availability' => $profile->availabilityWindows->isNotEmpty(),
+            'teacher_verified' => $profile->teacherProfile?->verified_at !== null,
+        ];
+    }
+
+    private function vacancyStatus(SportSession $session, int $participantCount): string
+    {
+        if ($session->capacity === null) {
+            return 'unlimited';
+        }
+
+        return $participantCount >= $session->capacity ? 'full' : 'available';
     }
 
     private function locationLabel(?string $city, ?string $region): ?string

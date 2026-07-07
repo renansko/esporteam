@@ -38,10 +38,11 @@ class SportSessionResource extends JsonResource
             'participant_count' => $this->participant_count ?? $this->participants_count,
             'distance_km' => $this->when($this->getAttribute('distance_km') !== null, $this->getAttribute('distance_km')),
             'next_action' => $this->getAttribute('next_action') ?? 'indisponivel',
-            'creator' => $this->whenLoaded('creator', fn () => new SportProfileResource($this->creator)),
+            'safety_actions' => $this->whenLoaded('creator', fn () => $this->safetyActions($request)),
+            'creator' => $this->whenLoaded('creator', fn () => new PublicSportProfileResource($this->creator)),
             'sport' => $this->whenLoaded('sport', fn () => new SportResource($this->sport)),
             'participation' => SessionParticipantResource::collection($this->whenLoaded('participationRecords')),
-            'participants' => SportProfileResource::collection($this->whenLoaded('participants')),
+            'participants' => PublicSportProfileResource::collection($this->whenLoaded('participants')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
@@ -54,5 +55,30 @@ class SportSessionResource extends JsonResource
         }
 
         return (int) $this->creator->user_id === (int) $request->user()?->id;
+    }
+
+    private function safetyActions(Request $request): array
+    {
+        if (! $this->relationLoaded('creator') || $this->creator === null || $this->isOwnedByRequester($request)) {
+            return [];
+        }
+
+        return [
+            'block_host' => [
+                'method' => 'POST',
+                'endpoint' => '/api/connections',
+                'payload' => [
+                    'target_profile_id' => $this->creator_profile_id,
+                    'type' => 'block',
+                ],
+            ],
+            'report_host' => [
+                'method' => 'POST',
+                'endpoint' => '/api/reports',
+                'payload' => [
+                    'reported_profile_id' => $this->creator_profile_id,
+                ],
+            ],
+        ];
     }
 }

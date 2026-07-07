@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\SessionParticipantStatus;
 use App\Models\Connection;
 use App\Models\SportProfile;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,8 @@ class ConnectionService
                     ->whereIn('type', ['friendship', 'interest'])
                     ->whereIn('status', ['pending', 'accepted', 'interested'])
                     ->delete();
+
+                $this->removeSessionWorkflowsBetween($requester->id, $targetProfileId);
 
                 $connection = Connection::query()->updateOrCreate(
                     [
@@ -96,5 +99,44 @@ class ConnectionService
             min($firstProfileId, $secondProfileId),
             max($firstProfileId, $secondProfileId),
         ];
+    }
+
+    private function removeSessionWorkflowsBetween(int $firstProfileId, int $secondProfileId): void
+    {
+        $sessionIdsCreatedByFirst = DB::table('sport_sessions')
+            ->where('creator_profile_id', $firstProfileId)
+            ->pluck('id');
+
+        $sessionIdsCreatedBySecond = DB::table('sport_sessions')
+            ->where('creator_profile_id', $secondProfileId)
+            ->pluck('id');
+
+        DB::table('session_participants')
+            ->whereIn('sport_session_id', $sessionIdsCreatedByFirst)
+            ->where('sport_profile_id', $secondProfileId)
+            ->whereIn('status', [
+                SessionParticipantStatus::Joined->value,
+                SessionParticipantStatus::Invited->value,
+                SessionParticipantStatus::Interested->value,
+                SessionParticipantStatus::Approved->value,
+            ])
+            ->update([
+                'status' => SessionParticipantStatus::Removed->value,
+                'updated_at' => now(),
+            ]);
+
+        DB::table('session_participants')
+            ->whereIn('sport_session_id', $sessionIdsCreatedBySecond)
+            ->where('sport_profile_id', $firstProfileId)
+            ->whereIn('status', [
+                SessionParticipantStatus::Joined->value,
+                SessionParticipantStatus::Invited->value,
+                SessionParticipantStatus::Interested->value,
+                SessionParticipantStatus::Approved->value,
+            ])
+            ->update([
+                'status' => SessionParticipantStatus::Removed->value,
+                'updated_at' => now(),
+            ]);
     }
 }

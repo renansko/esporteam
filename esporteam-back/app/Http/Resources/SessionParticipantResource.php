@@ -16,7 +16,7 @@ class SessionParticipantResource extends JsonResource
         return [
             'id' => $this->id,
             'status' => $this->status?->value,
-            'profile' => $this->whenLoaded('profile', fn () => new SportProfileResource($this->profile)),
+            'profile' => $this->whenLoaded('profile', fn () => new PublicSportProfileResource($this->profile)),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

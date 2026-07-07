@@ -21,8 +21,8 @@ class ReportResource extends JsonResource
             'details' => $this->details,
             'status' => $this->status,
             'context' => $this->context,
-            'reporter' => $this->whenLoaded('reporter', fn () => new SportProfileResource($this->reporter)),
-            'reported' => $this->whenLoaded('reported', fn () => new SportProfileResource($this->reported)),
+            'reporter' => $this->whenLoaded('reporter', fn () => new PublicSportProfileResource($this->reporter)),
+            'reported' => $this->whenLoaded('reported', fn () => new PublicSportProfileResource($this->reported)),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

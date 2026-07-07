@@ -433,7 +433,7 @@ it('lets the host list compatible recommendations and invite profiles to a sessi
         ->getJson("/api/sessions/{$sessionId}/recommendations")
         ->assertForbidden();
 
-    actingAsWorkspace(1, ['id' => 77])
+    $recommendationPayload = actingAsWorkspace(1, ['id' => 77])
         ->getJson("/api/sessions/{$sessionId}/recommendations?level=intermediate&goal=jogar&distance_km=5")
         ->assertOk()
         ->assertJsonCount(1, 'data')
@@ -441,7 +441,11 @@ it('lets the host list compatible recommendations and invite profiles to a sessi
         ->assertJsonPath('data.0.reasons.0', 'same_sport')
         ->assertJsonPath('data.0.reasons.1', 'compatible_level')
         ->assertJsonPath('data.0.reasons.2', 'compatible_goal')
-        ->assertJsonPath('data.0.reasons.3', 'available');
+        ->assertJsonPath('data.0.reasons.3', 'available')
+        ->json('data.0.profile');
+
+    expect($recommendationPayload)->not->toHaveKey('location')
+        ->and($recommendationPayload['safety_actions'])->toHaveKeys(['block', 'report']);
 
     actingAsWorkspace(1, ['id' => 77])
         ->postJson("/api/sessions/{$sessionId}/invites", [

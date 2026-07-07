@@ -4,6 +4,7 @@ use App\Models\Connection;
 use App\Models\Report;
 use App\Models\SportGroup;
 use App\Models\SportProfile;
+use App\Models\SportSession;
 use App\Models\TeacherProfile;
 use Illuminate\Support\Facades\DB;
 
@@ -299,6 +300,41 @@ it('removes active friendship between profiles when a block is created', functio
             'type' => 'friendship',
         ])
         ->assertUnprocessable();
+});
+
+it('removes session workflows between profiles when a block is created', function () {
+    $host = createSportProfileForUser(77, 'Host');
+    $invitee = createSportProfileForUser(88, 'Invitee');
+
+    $session = SportSession::query()->create([
+        'creator_profile_id' => $host->id,
+        'title' => 'Treino privado',
+        'type' => 'treino',
+        'starts_at' => now()->addDay(),
+        'visibility' => 'private',
+        'status' => 'open',
+    ]);
+
+    DB::table('session_participants')->insert([
+        'sport_session_id' => $session->id,
+        'sport_profile_id' => $invitee->id,
+        'status' => 'invited',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->postJson('/api/connections', [
+            'target_profile_id' => $host->id,
+            'type' => 'block',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.safety_actions.block.payload.target_profile_id', $host->id);
+
+    expect(DB::table('session_participants')
+        ->where('sport_session_id', $session->id)
+        ->where('sport_profile_id', $invitee->id)
+        ->value('status'))->toBe('removed');
 });
 
 it('creates one-way profile interest connections without requiring acceptance', function () {

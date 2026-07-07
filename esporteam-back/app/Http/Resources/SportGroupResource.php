@@ -21,9 +21,9 @@ class SportGroupResource extends JsonResource
             'description' => $this->description,
             'visibility' => $this->visibility,
             'capacity' => $this->capacity,
-            'creator' => $this->whenLoaded('creator', fn () => new SportProfileResource($this->creator)),
+            'creator' => $this->whenLoaded('creator', fn () => new PublicSportProfileResource($this->creator)),
             'sport' => $this->whenLoaded('sport', fn () => new SportResource($this->sport)),
-            'members' => SportProfileResource::collection($this->whenLoaded('members')),
+            'members' => PublicSportProfileResource::collection($this->whenLoaded('members')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

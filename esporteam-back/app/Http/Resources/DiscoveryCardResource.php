@@ -18,7 +18,9 @@ class DiscoveryCardResource extends JsonResource
                 'recommendation_reason' => $this->resource['recommendation_reason'],
                 'entry_rule' => $this->resource['entry_rule'],
                 'participant_count' => $this->resource['participant_count'],
-                'host' => new SportProfileResource($this->resource['host']),
+                'vacancy_status' => $this->resource['vacancy_status'],
+                'safety_actions' => $this->safetyActions($this->resource['host']),
+                'host' => new PublicSportProfileResource($this->resource['host']),
                 'session' => $this->sessionSummary($this->resource['session'], $this->resource['participant_count']),
             ];
         }
@@ -43,7 +45,9 @@ class DiscoveryCardResource extends JsonResource
             'primary_sport' => $this->resource['primary_sport'],
             'availability_summary' => $this->resource['availability_summary'],
             'location_label' => $this->resource['location_label'],
-            'profile' => new SportProfileResource($this->resource['profile']),
+            'trust_signals' => $this->resource['trust_signals'],
+            'safety_actions' => $this->safetyActions($this->resource['profile']),
+            'profile' => new PublicSportProfileResource($this->resource['profile']),
             'teacher_profile' => $this->when(
                 $this->resource['teacher_profile'] !== null,
                 fn () => new TeacherProfileResource($this->resource['teacher_profile']),
@@ -64,10 +68,7 @@ class DiscoveryCardResource extends JsonResource
             'location_label' => $session->location_label,
             'city' => $session->city,
             'region' => $session->region,
-            'location' => [
-                'latitude_approx' => $session->latitude_approx,
-                'longitude_approx' => $session->longitude_approx,
-            ],
+            'location_label_public' => $this->locationLabel($session->location_label, $session->city, $session->region),
             'requires_approval' => $session->requires_approval,
             'entry_mode' => $session->entry_mode?->value,
             'min_level' => $session->min_level,
@@ -78,6 +79,7 @@ class DiscoveryCardResource extends JsonResource
             'sport' => $session->relationLoaded('sport') && $session->sport !== null
                 ? $this->sportSummary($session->sport)
                 : null,
+            'approved_participants' => $this->approvedParticipants($session),
         ];
     }
 
@@ -89,6 +91,55 @@ class DiscoveryCardResource extends JsonResource
             'slug' => $sport->slug,
             'category' => $sport->category,
             'is_active' => $sport->is_active,
+        ];
+    }
+
+    private function approvedParticipants($session): array
+    {
+        if (! $session->relationLoaded('participants')) {
+            return [];
+        }
+
+        return $session->participants
+            ->take(5)
+            ->map(fn ($profile) => [
+                'id' => $profile->id,
+                'display_name' => $profile->display_name,
+                'avatar_url' => $profile->avatar_url,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function locationLabel(?string $locationLabel, ?string $city, ?string $region): ?string
+    {
+        if (filled($locationLabel)) {
+            return $locationLabel;
+        }
+
+        return collect([$city, $region])
+            ->filter(fn (?string $part) => filled($part))
+            ->implode(', ') ?: null;
+    }
+
+    private function safetyActions($profile): array
+    {
+        return [
+            'block' => [
+                'method' => 'POST',
+                'endpoint' => '/api/connections',
+                'payload' => [
+                    'target_profile_id' => $profile->id,
+                    'type' => 'block',
+                ],
+            ],
+            'report' => [
+                'method' => 'POST',
+                'endpoint' => '/api/reports',
+                'payload' => [
+                    'reported_profile_id' => $profile->id,
+                ],
+            ],
         ];
     }
 }
