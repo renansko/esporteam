@@ -3,8 +3,12 @@
 namespace App\Services;
 
 use App\Enums\ProfileVisibility;
+use App\Enums\SessionParticipantStatus;
+use App\Enums\SportSessionStatus;
 use App\Models\Connection;
+use App\Models\ProfileSport;
 use App\Models\SportProfile;
+use App\Models\SportSession;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -14,14 +18,31 @@ use Illuminate\Support\Collection;
 class DiscoveryService
 {
     /**
+     * @return array{mode:string,cards:Collection<int,array<string,mixed>>,empty_state:?array<string,mixed>}
+     */
+    public function discoverForUser(int $userId, array $filters = []): array
+    {
+        $mode = $filters['mode'] ?? 'people';
+
+        $cards = match ($mode) {
+            'sessions' => $this->sessionCardsForUser($userId, $filters),
+            'places' => $this->placeCardsForUser($userId, $filters),
+            default => $this->profilesForUser($userId, $filters),
+        };
+
+        return [
+            'mode' => $mode,
+            'cards' => $cards,
+            'empty_state' => $cards->isEmpty() ? $this->emptyStateFor($mode, $filters) : null,
+        ];
+    }
+
+    /**
      * @wiki app/brain/functions/DiscoveryService.md#profilesForUser
      */
     public function profilesForUser(int $userId, array $filters = []): Collection
     {
-        $currentProfile = SportProfile::query()
-            ->with(['sports', 'availabilityWindows'])
-            ->where('user_id', $userId)
-            ->first();
+        $currentProfile = $this->currentProfileForUser($userId);
         $blockedProfileIds = $currentProfile === null ? [] : $this->blockedProfileIds($currentProfile->id);
 
         $profiles = SportProfile::query()
@@ -32,6 +53,7 @@ class DiscoveryService
             ->when(isset($filters['sport_id']), fn (Builder $query) => $this->filterBySportId($query, (int) $filters['sport_id']))
             ->when(isset($filters['sport_slug']), fn (Builder $query) => $this->filterBySportSlug($query, (string) $filters['sport_slug']))
             ->when(isset($filters['level']), fn (Builder $query) => $this->filterByLevel($query, (string) $filters['level']))
+            ->when(isset($filters['goal']), fn (Builder $query) => $this->filterByGoal($query, (string) $filters['goal']))
             ->when($this->hasAvailabilityFilter($filters), fn (Builder $query) => $this->filterByAvailabilityOverlap($query, $filters))
             ->orderBy('display_name')
             ->orderBy('id')
@@ -48,6 +70,61 @@ class DiscoveryService
             ])
             ->take(50)
             ->values();
+    }
+
+    private function sessionCardsForUser(int $userId, array $filters): Collection
+    {
+        $currentProfile = $this->currentProfileForUser($userId);
+        $blockedProfileIds = $currentProfile === null ? [] : $this->blockedProfileIds($currentProfile->id);
+
+        $sessions = SportSession::query()
+            ->with(['creator.sports.sport', 'creator.availabilityWindows', 'sport'])
+            ->withCount(['participants as participant_count' => fn (Builder $query) => $query->where('session_participants.status', SessionParticipantStatus::Joined->value)])
+            ->where('status', SportSessionStatus::Open->value)
+            ->where('visibility', 'public')
+            ->when($currentProfile, fn (Builder $query) => $query->where('creator_profile_id', '!=', $currentProfile->id))
+            ->when($blockedProfileIds !== [], fn (Builder $query) => $query->whereNotIn('creator_profile_id', $blockedProfileIds))
+            ->when(isset($filters['sport_id']), fn (Builder $query) => $query->where('sport_id', (int) $filters['sport_id']))
+            ->when(isset($filters['sport_slug']), fn (Builder $query) => $query->whereHas('sport', fn (Builder $query) => $query->where('slug', $filters['sport_slug'])))
+            ->orderBy('starts_at')
+            ->orderBy('id')
+            ->get();
+
+        return $sessions
+            ->map(fn (SportSession $session) => $this->cardForSession($session, $currentProfile, $filters))
+            ->filter(fn (array $card) => $this->passesDistanceFilter($card, $filters))
+            ->filter(fn (array $card) => $this->passesSessionAvailabilityFilter($card['session'], $filters))
+            ->filter(fn (array $card) => $this->passesSessionHostLevelFilter($card['session'], $filters))
+            ->filter(fn (array $card) => $this->passesSessionHostGoalFilter($card['session'], $filters))
+            ->sortBy([
+                fn (array $card) => -$card['score'],
+                fn (array $card) => $card['session']->starts_at?->getTimestamp() ?? PHP_INT_MAX,
+                fn (array $card) => $card['distance_km'] ?? PHP_INT_MAX,
+                fn (array $card) => $card['session']->id,
+            ])
+            ->take(50)
+            ->values();
+    }
+
+    private function placeCardsForUser(int $userId, array $filters): Collection
+    {
+        return $this->sessionCardsForUser($userId, $filters)
+            ->groupBy(fn (array $card) => $this->placeKey($card['session']))
+            ->map(fn (Collection $cards) => $this->cardForPlace($cards))
+            ->sortBy([
+                fn (array $card) => -$card['score'],
+                fn (array $card) => $card['distance_km'] ?? PHP_INT_MAX,
+                fn (array $card) => $card['place']['label'],
+            ])
+            ->values();
+    }
+
+    private function currentProfileForUser(int $userId): ?SportProfile
+    {
+        return SportProfile::query()
+            ->with(['sports.sport', 'availabilityWindows'])
+            ->where('user_id', $userId)
+            ->first();
     }
 
     private function blockedProfileIds(int $profileId): array
@@ -82,6 +159,11 @@ class DiscoveryService
         return $query->whereHas('sports', fn (Builder $query) => $query->where('level', $level));
     }
 
+    private function filterByGoal(Builder $query, string $goal): Builder
+    {
+        return $query->whereHas('sports', fn (Builder $query) => $query->whereJsonContains('goals', $goal));
+    }
+
     private function cardForProfile(SportProfile $profile, ?SportProfile $currentProfile, array $filters): array
     {
         $score = 0;
@@ -102,6 +184,11 @@ class DiscoveryService
             $reasons[] = 'available';
         }
 
+        if ($this->hasCompatibleGoal($profile, $currentProfile, $filters)) {
+            $score += 50;
+            $reasons[] = 'compatible_goal';
+        }
+
         $distanceKm = $this->distanceKm($currentProfile, $profile);
         if ($distanceKm !== null) {
             $score += max(0, 30 - min(30, (int) floor($distanceKm)));
@@ -118,13 +205,124 @@ class DiscoveryService
             $reasons[] = 'teacher';
         }
 
+        $reasons = array_values(array_unique($reasons));
+
         return [
             'type' => $profile->teacherProfile === null ? 'person' : 'teacher',
             'score' => $score,
-            'reasons' => array_values(array_unique($reasons)),
+            'reasons' => $reasons,
             'distance_km' => $distanceKm,
             'profile' => $profile,
             'teacher_profile' => $profile->teacherProfile,
+            'primary_sport' => $this->primarySportSummary($profile, $filters),
+            'availability_summary' => $this->availabilitySummary($profile),
+            'location_label' => $this->locationLabel($profile->city, $profile->region),
+            'recommendation_reason' => $this->recommendationReason($reasons),
+        ];
+    }
+
+    private function cardForSession(SportSession $session, ?SportProfile $currentProfile, array $filters): array
+    {
+        $score = 0;
+        $reasons = [];
+
+        if ($currentProfile !== null && $session->sport_id !== null && $currentProfile->sports->contains('sport_id', $session->sport_id)) {
+            $score += 100;
+            $reasons[] = 'same_sport';
+        }
+
+        if ($this->sessionHostHasLevel($session, $filters['level'] ?? null)) {
+            $score += 60;
+            $reasons[] = 'compatible_level';
+        }
+
+        if ($this->sessionHostHasGoal($session, $filters['goal'] ?? null)) {
+            $score += 50;
+            $reasons[] = 'compatible_goal';
+        }
+
+        if ($this->hasCompatibleSessionTime($session, $currentProfile, $filters)) {
+            $score += 40;
+            $reasons[] = 'available';
+        }
+
+        $distanceKm = $this->distanceKm($currentProfile, $session);
+        if ($distanceKm !== null) {
+            $score += max(0, 30 - min(30, (int) floor($distanceKm)));
+            $reasons[] = 'nearby';
+        }
+
+        $joined = (int) ($session->participant_count ?? 0);
+        $available = $session->capacity === null ? null : max(0, $session->capacity - $joined);
+        $entryRule = $available === 0 ? 'full' : 'open_join';
+
+        if ($entryRule === 'open_join') {
+            $reasons[] = 'open_session';
+        }
+
+        $reasons = array_values(array_unique($reasons));
+
+        return [
+            'type' => 'session',
+            'score' => $score,
+            'reasons' => $reasons,
+            'distance_km' => $distanceKm,
+            'session' => $session,
+            'host' => $session->creator,
+            'entry_rule' => $entryRule,
+            'slots' => [
+                'capacity' => $session->capacity,
+                'joined' => $joined,
+                'available' => $available,
+                'status' => $session->status?->value,
+            ],
+            'recommendation_reason' => $this->recommendationReason($reasons),
+        ];
+    }
+
+    private function cardForPlace(Collection $cards): array
+    {
+        $sortedCards = $cards->sortBy(fn (array $card) => $card['session']->starts_at?->getTimestamp() ?? PHP_INT_MAX)->values();
+        $firstCard = $sortedCards->first();
+        $session = $firstCard['session'];
+        $distances = $cards->pluck('distance_km')->filter(fn (?float $distance) => $distance !== null);
+        $reasons = $cards
+            ->flatMap(fn (array $card) => $card['reasons'])
+            ->merge(['open_sessions'])
+            ->unique()
+            ->values()
+            ->all();
+
+        return [
+            'type' => 'place',
+            'score' => (int) $cards->max('score') + ($cards->count() * 10),
+            'reasons' => $reasons,
+            'distance_km' => $distances->isEmpty() ? null : (float) $distances->min(),
+            'place' => [
+                'label' => $session->location_label ?: $this->locationLabel($session->city, $session->region) ?: 'Local a definir',
+                'city' => $session->city,
+                'region' => $session->region,
+                'location' => [
+                    'latitude_approx' => $session->latitude_approx,
+                    'longitude_approx' => $session->longitude_approx,
+                ],
+                'sports' => $cards
+                    ->pluck('session.sport')
+                    ->filter()
+                    ->unique('id')
+                    ->map(fn ($sport) => [
+                        'id' => $sport->id,
+                        'name' => $sport->name,
+                        'slug' => $sport->slug,
+                        'category' => $sport->category,
+                        'is_active' => $sport->is_active,
+                    ])
+                    ->values()
+                    ->all(),
+                'open_session_count' => $cards->count(),
+                'next_session_starts_at' => $session->starts_at?->toISOString(),
+            ],
+            'recommendation_reason' => $this->recommendationReason($reasons),
         ];
     }
 
@@ -150,6 +348,33 @@ class DiscoveryService
         }
 
         return $card['distance_km'] !== null && $card['distance_km'] <= (float) $filters['distance_km'];
+    }
+
+    private function passesSessionAvailabilityFilter(SportSession $session, array $filters): bool
+    {
+        if (! $this->hasAvailabilityFilter($filters)) {
+            return true;
+        }
+
+        return $this->sessionStartsWithinWindow($session, $filters);
+    }
+
+    private function passesSessionHostLevelFilter(SportSession $session, array $filters): bool
+    {
+        if (! isset($filters['level'])) {
+            return true;
+        }
+
+        return $this->sessionHostHasLevel($session, (string) $filters['level']);
+    }
+
+    private function passesSessionHostGoalFilter(SportSession $session, array $filters): bool
+    {
+        if (! isset($filters['goal'])) {
+            return true;
+        }
+
+        return $this->sessionHostHasGoal($session, (string) $filters['goal']);
     }
 
     private function hasCommonSport(SportProfile $profile, ?SportProfile $currentProfile): bool
@@ -179,6 +404,27 @@ class DiscoveryService
         ]);
 
         return $profile->sports->contains(fn ($sport) => $currentLevelsBySport->get($sport->sport_id) === $sport->level?->value);
+    }
+
+    private function hasCompatibleGoal(SportProfile $profile, ?SportProfile $currentProfile, array $filters): bool
+    {
+        if (isset($filters['goal'])) {
+            return $profile->sports->contains(fn (ProfileSport $sport) => in_array($filters['goal'], $sport->goals ?? [], true));
+        }
+
+        if ($currentProfile === null) {
+            return false;
+        }
+
+        $currentGoalsBySport = $currentProfile->sports->mapWithKeys(fn (ProfileSport $sport) => [
+            $sport->sport_id => $sport->goals ?? [],
+        ]);
+
+        return $profile->sports->contains(function (ProfileSport $sport) use ($currentGoalsBySport): bool {
+            $currentGoals = $currentGoalsBySport->get($sport->sport_id, []);
+
+            return count(array_intersect($currentGoals, $sport->goals ?? [])) > 0;
+        });
     }
 
     private function hasCompatibleAvailability(SportProfile $profile, ?SportProfile $currentProfile, array $filters): bool
@@ -216,6 +462,57 @@ class DiscoveryService
         return false;
     }
 
+    private function hasCompatibleSessionTime(SportSession $session, ?SportProfile $currentProfile, array $filters): bool
+    {
+        if ($this->hasAvailabilityFilter($filters)) {
+            return $this->sessionStartsWithinWindow($session, $filters);
+        }
+
+        if ($currentProfile === null) {
+            return false;
+        }
+
+        return $currentProfile->availabilityWindows->contains(fn ($window) => $this->sessionStartsWithinWindow($session, [
+            'weekday' => $window->weekday,
+            'starts_at' => (string) $window->starts_at,
+            'ends_at' => (string) $window->ends_at,
+        ]));
+    }
+
+    private function sessionStartsWithinWindow(SportSession $session, array $filters): bool
+    {
+        if ($session->starts_at === null) {
+            return false;
+        }
+
+        $startsAt = $session->starts_at;
+        $sessionTime = $startsAt->format('H:i');
+
+        return (int) $startsAt->dayOfWeek === (int) $filters['weekday']
+            && $sessionTime >= (string) $filters['starts_at']
+            && $sessionTime < (string) $filters['ends_at'];
+    }
+
+    private function sessionHostHasLevel(SportSession $session, ?string $level): bool
+    {
+        if ($level === null || $session->creator === null) {
+            return false;
+        }
+
+        return $session->creator->sports->contains(fn (ProfileSport $sport) => $sport->level?->value === $level
+            && ($session->sport_id === null || $sport->sport_id === $session->sport_id));
+    }
+
+    private function sessionHostHasGoal(SportSession $session, ?string $goal): bool
+    {
+        if ($goal === null || $session->creator === null) {
+            return false;
+        }
+
+        return $session->creator->sports->contains(fn (ProfileSport $sport) => in_array($goal, $sport->goals ?? [], true)
+            && ($session->sport_id === null || $sport->sport_id === $session->sport_id));
+    }
+
     private function windowsOverlap(int $firstWeekday, string $firstStartsAt, string $firstEndsAt, int $secondWeekday, string $secondStartsAt, string $secondEndsAt): bool
     {
         return $firstWeekday === $secondWeekday
@@ -223,25 +520,25 @@ class DiscoveryService
             && $firstEndsAt > $secondStartsAt;
     }
 
-    private function distanceKm(?SportProfile $currentProfile, SportProfile $profile): ?float
+    private function distanceKm(?SportProfile $currentProfile, SportProfile|SportSession $candidate): ?float
     {
         if (
             $currentProfile?->latitude_approx === null
             || $currentProfile->longitude_approx === null
-            || $profile->latitude_approx === null
-            || $profile->longitude_approx === null
+            || $candidate->latitude_approx === null
+            || $candidate->longitude_approx === null
         ) {
             return null;
         }
 
         $earthRadiusKm = 6371;
-        $latitudeDelta = deg2rad($profile->latitude_approx - $currentProfile->latitude_approx);
-        $longitudeDelta = deg2rad($profile->longitude_approx - $currentProfile->longitude_approx);
+        $latitudeDelta = deg2rad($candidate->latitude_approx - $currentProfile->latitude_approx);
+        $longitudeDelta = deg2rad($candidate->longitude_approx - $currentProfile->longitude_approx);
         $currentLatitude = deg2rad($currentProfile->latitude_approx);
-        $profileLatitude = deg2rad($profile->latitude_approx);
+        $candidateLatitude = deg2rad($candidate->latitude_approx);
 
         $haversine = sin($latitudeDelta / 2) ** 2
-            + cos($currentLatitude) * cos($profileLatitude) * sin($longitudeDelta / 2) ** 2;
+            + cos($currentLatitude) * cos($candidateLatitude) * sin($longitudeDelta / 2) ** 2;
 
         return round($earthRadiusKm * 2 * atan2(sqrt($haversine), sqrt(1 - $haversine)), 1);
     }
@@ -269,5 +566,139 @@ class DiscoveryService
         }
 
         return $score;
+    }
+
+    private function primarySportSummary(SportProfile $profile, array $filters): ?array
+    {
+        $practices = $profile->sports;
+
+        if (isset($filters['sport_slug'])) {
+            $filtered = $practices->filter(fn (ProfileSport $sport) => $sport->sport?->slug === $filters['sport_slug']);
+            $practices = $filtered->isNotEmpty() ? $filtered : $practices;
+        }
+
+        if (isset($filters['sport_id'])) {
+            $filtered = $practices->filter(fn (ProfileSport $sport) => $sport->sport_id === (int) $filters['sport_id']);
+            $practices = $filtered->isNotEmpty() ? $filtered : $practices;
+        }
+
+        $practice = $practices->firstWhere('is_primary', true) ?? $practices->first();
+
+        if ($practice === null) {
+            return null;
+        }
+
+        return [
+            'sport' => $practice->sport === null ? null : [
+                'id' => $practice->sport->id,
+                'name' => $practice->sport->name,
+                'slug' => $practice->sport->slug,
+            ],
+            'level' => $practice->level?->value,
+            'goals' => $practice->goals ?? [],
+        ];
+    }
+
+    private function availabilitySummary(SportProfile $profile): array
+    {
+        $windows = $profile->availabilityWindows
+            ->sortBy([['weekday', 'asc'], ['starts_at', 'asc']])
+            ->take(2)
+            ->map(fn ($window) => [
+                'weekday' => $window->weekday,
+                'starts_at' => (string) $window->starts_at,
+                'ends_at' => (string) $window->ends_at,
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'window_count' => $profile->availabilityWindows->count(),
+            'windows' => $windows,
+        ];
+    }
+
+    private function locationLabel(?string $city, ?string $region): ?string
+    {
+        return collect([$city, $region])
+            ->filter()
+            ->implode(', ') ?: null;
+    }
+
+    private function recommendationReason(array $reasons): ?string
+    {
+        return $reasons[0] ?? null;
+    }
+
+    private function placeKey(SportSession $session): string
+    {
+        return implode('|', [
+            $session->location_label ?? '',
+            $session->city ?? '',
+            $session->region ?? '',
+            $session->latitude_approx ?? '',
+            $session->longitude_approx ?? '',
+        ]);
+    }
+
+    private function emptyStateFor(string $mode, array $filters): array
+    {
+        $suggestions = [];
+
+        if (isset($filters['distance_km'])) {
+            $suggestions[] = [
+                'action' => 'expand_distance',
+                'label' => 'Ampliar raio',
+                'params' => ['distance_km' => min(200, max(10, (float) $filters['distance_km'] * 2))],
+            ];
+        }
+
+        if (isset($filters['level'])) {
+            $suggestions[] = [
+                'action' => 'remove_level_filter',
+                'label' => 'Remover filtro de nivel',
+                'params' => ['level' => null],
+            ];
+        }
+
+        $suggestions[] = [
+            'action' => 'create_public_session',
+            'label' => 'Criar sessao publica',
+            'params' => ['mode' => 'sessions'],
+        ];
+
+        if (isset($filters['goal'])) {
+            $suggestions[] = [
+                'action' => 'remove_goal_filter',
+                'label' => 'Remover filtro de objetivo',
+                'params' => ['goal' => null],
+            ];
+        }
+
+        if ($this->hasAvailabilityFilter($filters)) {
+            $suggestions[] = [
+                'action' => 'relax_availability',
+                'label' => 'Relaxar disponibilidade',
+                'params' => ['weekday' => null, 'starts_at' => null, 'ends_at' => null],
+            ];
+        }
+
+        if (isset($filters['sport_id']) || isset($filters['sport_slug'])) {
+            $suggestions[] = [
+                'action' => 'remove_sport_filter',
+                'label' => 'Ver outras modalidades',
+                'params' => ['sport_id' => null, 'sport_slug' => null],
+            ];
+        }
+
+        return [
+            'title' => match ($mode) {
+                'sessions' => 'Nenhuma sessao encontrada',
+                'places' => 'Nenhum local encontrado',
+                default => 'Nenhum perfil encontrado',
+            },
+            'message' => 'Ajuste os filtros ou crie uma sessao publica para atrair perfis esportivos compativeis.',
+            'suggestions' => $suggestions,
+        ];
     }
 }

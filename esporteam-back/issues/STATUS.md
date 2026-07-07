@@ -14,6 +14,7 @@ Atualizado em 2026-07-07.
 | 06 - Teachers And Classes | Done | `teacher_profiles`, `class_offerings`, `PUT /api/teacher-profile`, `POST /api/classes`, `GET /api/classes`, interesse de aluno em aula e testes HTTP. |
 | 07 - Connections And Safety | Done | `connections`, `POST /api/connections`, `PATCH /api/connections/{id}`, amizade/convite, interesse, bloqueio removendo relacionamentos, bloqueados fora da discovery, `reports` e `POST /api/reports` com contexto minimo de moderacao. |
 | 08 - Demo Seed Dataset | Done | `DemoSeeder` cria 12 modalidades, 40 perfis esportivos, 8 professores, 15 aulas, 20 sessoes abertas gratuitas, participantes, conexoes, bloqueios e denuncias; teste de idempotencia cobre as contagens. |
+| 09 - Discovery Modes And Empty States | Done | `GET /api/discovery` aceita `mode=people|sessions|places`, aplica filtros compartilhados de modalidade, distancia, nivel, objetivo e disponibilidade, retorna cards tipados e inclui `empty_state` com acoes produtivas. |
 
 ## Partial
 
@@ -24,7 +25,6 @@ Atualizado em 2026-07-07.
 
 | Issue | Status | Notes |
 | --- | --- | --- |
-| 09 - Discovery Modes And Empty States | Planned | Issue criada a partir da pesquisa; depende de discovery mais completo. |
 | 10 - Hosted Group Match | Planned | Issue criada; depende de discovery, sessoes e seguranca. |
 | 11 - Public Sessions Without Match | Planned | Issue criada; depende de sessoes e seguranca. |
 | 12 - Post Match Sport Action | Planned | Issue criada; depende de disponibilidade, sessoes e match em grupo. |
@@ -41,3 +41,5 @@ Atualizado em 2026-07-07.
 - Docker: `php artisan test` passou em 2026-07-07 com 131 testes e 489 assertions.
 - Docker: `php artisan test tests/Feature/Seeders/DemoSeederTest.php` passou em 2026-07-07 com 1 teste e 22 assertions.
 - Docker: `php artisan test` passou em 2026-07-07 com 132 testes e 511 assertions.
+- Docker: `php artisan test tests/Feature/Api/DiscoveryTest.php` passou em 2026-07-07 com 8 testes e 68 assertions.
+- Docker: `php artisan test` passou em 2026-07-07 com 135 testes e 551 assertions.

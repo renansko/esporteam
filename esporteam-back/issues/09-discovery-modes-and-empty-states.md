@@ -6,12 +6,12 @@ Separar a descoberta em modos de `Pessoas`, `Sessoes` e `Locais`, mantendo filtr
 
 ## Acceptance criteria
 
-- [ ] `GET /api/discovery` aceita um modo de descoberta e retorna cards tipados para pessoas, sessoes e locais quando aplicavel.
-- [ ] Filtros essenciais funcionam de forma consistente entre modos: modalidade, distancia/raio, nivel, objetivo e disponibilidade.
-- [ ] Cards de pessoa exibem modalidade, nivel, disponibilidade resumida, bairro/distancia aproximada e motivo de recomendacao.
-- [ ] Cards de sessao exibem modalidade, anfitriao, horario, local aproximado, vagas/status e regra de entrada, sem preco ou chamada de pagamento.
-- [ ] Estados vazios retornam sugestoes acionaveis, como ampliar distancia, remover filtro de nivel ou criar sessao publica.
-- [ ] Testes cobrem filtros, payload tipado e estados vazios sem expor coordenada precisa.
+- [x] `GET /api/discovery` aceita um modo de descoberta e retorna cards tipados para pessoas, sessoes e locais quando aplicavel.
+- [x] Filtros essenciais funcionam de forma consistente entre modos: modalidade, distancia/raio, nivel, objetivo e disponibilidade.
+- [x] Cards de pessoa exibem modalidade, nivel, disponibilidade resumida, bairro/distancia aproximada e motivo de recomendacao.
+- [x] Cards de sessao exibem modalidade, anfitriao, horario, local aproximado, vagas/status e regra de entrada, sem preco ou chamada de pagamento.
+- [x] Estados vazios retornam sugestoes acionaveis, como ampliar distancia, remover filtro de nivel ou criar sessao publica.
+- [x] Testes cobrem filtros, payload tipado e estados vazios sem expor coordenada precisa.
 
 ## Blocked by
 

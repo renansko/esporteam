@@ -3,7 +3,9 @@
 use App\Models\Connection;
 use App\Models\Sport;
 use App\Models\SportProfile;
+use App\Models\SportSession;
 use App\Models\TeacherProfile;
+use Carbon\CarbonImmutable;
 
 it('filters discovered sport profiles by overlapping availability windows', function () {
     SportProfile::query()->create([
@@ -172,7 +174,12 @@ it('ranks discovery by deterministic match signals', function () {
         ->assertJsonPath('data.0.profile.id', $best->id)
         ->assertJsonPath('data.0.reasons.0', 'same_sport')
         ->assertJsonPath('data.0.reasons.1', 'compatible_level')
-        ->assertJsonPath('data.0.reasons.2', 'available');
+        ->assertJsonPath('data.0.reasons.2', 'available')
+        ->assertJsonPath('data.0.primary_sport.sport.slug', 'tenis')
+        ->assertJsonPath('data.0.primary_sport.level', 'intermediate')
+        ->assertJsonPath('data.0.availability_summary.window_count', 1)
+        ->assertJsonPath('data.0.location_label', 'Sao Paulo, SP')
+        ->assertJsonPath('data.0.recommendation_reason', 'same_sport');
 });
 
 it('excludes hidden self and blocked profiles from discovery', function () {
@@ -243,4 +250,166 @@ it('differentiates teacher cards and hides precise coordinate fields', function 
     expect($payload['profile'])->not->toHaveKeys(['latitude', 'longitude'])
         ->and($payload['profile']['location'])->toHaveKeys(['latitude_approx', 'longitude_approx'])
         ->and($payload['profile']['location'])->not->toHaveKeys(['latitude', 'longitude']);
+});
+
+it('returns typed session discovery cards with shared filters and no payment fields', function () {
+    $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
+    $running = Sport::query()->create(['name' => 'Corrida', 'slug' => 'corrida']);
+
+    $current = SportProfile::query()->create([
+        'user_id' => 77,
+        'display_name' => 'Current profile',
+        'latitude_approx' => -23.550,
+        'longitude_approx' => -46.633,
+    ]);
+    $current->sports()->create([
+        'sport_id' => $tennis->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+
+    $host = SportProfile::query()->create([
+        'user_id' => 88,
+        'display_name' => 'Session host',
+        'latitude_approx' => -23.552,
+        'longitude_approx' => -46.635,
+    ]);
+    $host->sports()->create([
+        'sport_id' => $tennis->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+
+    $matching = SportSession::query()->create([
+        'creator_profile_id' => $host->id,
+        'sport_id' => $tennis->id,
+        'title' => 'Tenis em duplas',
+        'type' => 'partida',
+        'starts_at' => CarbonImmutable::parse('2026-07-07 19:30:00'),
+        'location_label' => 'Quadra Pinheiros',
+        'city' => 'Sao Paulo',
+        'region' => 'SP',
+        'latitude_approx' => -23.551,
+        'longitude_approx' => -46.634,
+        'capacity' => 4,
+        'visibility' => 'public',
+        'status' => 'open',
+    ]);
+    $matching->participants()->attach($host->id, ['status' => 'joined']);
+
+    $wrongSport = SportProfile::query()->create(['user_id' => 99, 'display_name' => 'Runner host']);
+    $wrongSport->sports()->create([
+        'sport_id' => $running->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+    SportSession::query()->create([
+        'creator_profile_id' => $wrongSport->id,
+        'sport_id' => $running->id,
+        'title' => 'Corrida noturna',
+        'type' => 'corrida',
+        'starts_at' => CarbonImmutable::parse('2026-07-07 19:30:00'),
+        'capacity' => 10,
+        'visibility' => 'public',
+        'status' => 'open',
+    ]);
+
+    $payload = actingAsWorkspace(1, ['id' => 77])
+        ->getJson('/api/discovery?mode=sessions&sport_slug=tenis&level=intermediate&goal=jogar&distance_km=5&weekday=2&starts_at=19:00&ends_at=21:00')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('mode', 'sessions')
+        ->assertJsonPath('data.0.type', 'session')
+        ->assertJsonPath('data.0.session.id', $matching->id)
+        ->assertJsonPath('data.0.session.sport.slug', 'tenis')
+        ->assertJsonPath('data.0.host.display_name', 'Session host')
+        ->assertJsonPath('data.0.entry_rule', 'open_join')
+        ->assertJsonPath('data.0.slots.capacity', 4)
+        ->assertJsonPath('data.0.slots.joined', 1)
+        ->assertJsonPath('data.0.slots.available', 3)
+        ->json('data.0');
+
+    expect($payload)->not->toHaveKeys(['price', 'price_cents', 'payment_url'])
+        ->and($payload['session'])->not->toHaveKeys(['price', 'price_cents', 'payment_url'])
+        ->and($payload['session']['location'])->toHaveKeys(['latitude_approx', 'longitude_approx'])
+        ->and($payload['session']['location'])->not->toHaveKeys(['latitude', 'longitude']);
+});
+
+it('returns place discovery cards from open public sessions', function () {
+    $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
+    $current = SportProfile::query()->create([
+        'user_id' => 77,
+        'display_name' => 'Current profile',
+        'latitude_approx' => -23.550,
+        'longitude_approx' => -46.633,
+    ]);
+    $current->sports()->create([
+        'sport_id' => $tennis->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+
+    $host = SportProfile::query()->create([
+        'user_id' => 88,
+        'display_name' => 'Session host',
+        'latitude_approx' => -23.552,
+        'longitude_approx' => -46.635,
+    ]);
+    $host->sports()->create([
+        'sport_id' => $tennis->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+
+    SportSession::query()->create([
+        'creator_profile_id' => $host->id,
+        'sport_id' => $tennis->id,
+        'title' => 'Tenis em duplas',
+        'type' => 'partida',
+        'starts_at' => CarbonImmutable::parse('2026-07-07 19:30:00'),
+        'location_label' => 'Quadra Pinheiros',
+        'city' => 'Sao Paulo',
+        'region' => 'SP',
+        'latitude_approx' => -23.551,
+        'longitude_approx' => -46.634,
+        'capacity' => 4,
+        'visibility' => 'public',
+        'status' => 'open',
+    ]);
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->getJson('/api/discovery?mode=places&sport_slug=tenis&distance_km=5')
+        ->assertOk()
+        ->assertJsonPath('mode', 'places')
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.type', 'place')
+        ->assertJsonPath('data.0.place.label', 'Quadra Pinheiros')
+        ->assertJsonPath('data.0.place.city', 'Sao Paulo')
+        ->assertJsonPath('data.0.place.sports.0.slug', 'tenis')
+        ->assertJsonPath('data.0.place.open_session_count', 1);
+});
+
+it('returns actionable empty state suggestions for discovery modes', function () {
+    $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
+
+    $current = SportProfile::query()->create([
+        'user_id' => 77,
+        'display_name' => 'Current profile',
+        'latitude_approx' => -23.550,
+        'longitude_approx' => -46.633,
+    ]);
+    $current->sports()->create([
+        'sport_id' => $tennis->id,
+        'level' => 'beginner',
+        'goals' => ['aprender'],
+    ]);
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->getJson('/api/discovery?mode=people&sport_slug=tenis&level=advanced&goal=competir&distance_km=1')
+        ->assertOk()
+        ->assertJsonCount(0, 'data')
+        ->assertJsonPath('mode', 'people')
+        ->assertJsonPath('empty_state.suggestions.0.action', 'expand_distance')
+        ->assertJsonPath('empty_state.suggestions.1.action', 'remove_level_filter')
+        ->assertJsonPath('empty_state.suggestions.2.action', 'create_public_session');
 });

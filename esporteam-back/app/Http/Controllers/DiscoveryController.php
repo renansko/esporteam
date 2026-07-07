@@ -15,11 +15,17 @@ class DiscoveryController extends Controller
 
     public function index(IndexDiscoveryRequest $request): JsonResponse
     {
-        $cards = $this->discovery->profilesForUser(
+        $result = $this->discovery->discoverForUser(
             (int) $request->user()->id,
             $request->validated(),
         );
 
-        return $this->successResponse(DiscoveryCardResource::collection($cards), 'Discovery profiles listed.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Discovery listed.',
+            'mode' => $result['mode'],
+            'data' => DiscoveryCardResource::collection($result['cards']),
+            'empty_state' => $result['empty_state'],
+        ]);
     }
 }

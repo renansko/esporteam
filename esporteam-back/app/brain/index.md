@@ -23,7 +23,7 @@
 
 ## Services
 
-- [`services/DiscoveryService.md`](services/DiscoveryService.md) — listagem determinística inicial de Perfis Esportivos para Descoberta
+- [`services/DiscoveryService.md`](services/DiscoveryService.md) — Descoberta determinística por modos de pessoas, sessões e locais
 - [`services/SportSessionService.md`](services/SportSessionService.md) — criacao, listagem aberta e participacao em Sessoes Esportivas
 - [`services/IdeaIngestionService.md`](services/IdeaIngestionService.md) — ponto único de criação de Ideas (gera embedding)
 - [`services/ClusteringService.md`](services/ClusteringService.md) — orquestrador da run (LLM + fallback)
@@ -31,7 +31,7 @@
 
 ## Functions
 
-- [`functions/DiscoveryService.md`](functions/DiscoveryService.md) — `profilesForUser` e filtros básicos
+- [`functions/DiscoveryService.md`](functions/DiscoveryService.md) — `discoverForUser`, `profilesForUser`, modos e filtros compartilhados
 - [`functions/SportSessionService.md`](functions/SportSessionService.md) — `createForUser`, `openSessions` e `join`
 - [`functions/IdeaIngestionService.md`](functions/IdeaIngestionService.md) — contratos das funções públicas
 - [`functions/ClusteringService.md`](functions/ClusteringService.md) — `executeRun` e side effects

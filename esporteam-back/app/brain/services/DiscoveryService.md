@@ -1,6 +1,6 @@
 # DiscoveryService
 
-Service da Descoberta deterministica inicial. Lista cards de Perfis Esportivos publicos e aplica filtros/ranking sem depender de IA.
+Service da Descoberta deterministica inicial. Lista cards tipados de Perfis Esportivos, Sessoes Esportivas e Locais derivados de sessoes publicas abertas, aplicando filtros/ranking sem depender de IA.
 
 ## Dependencias
 
@@ -8,15 +8,19 @@ Service da Descoberta deterministica inicial. Lista cards de Perfis Esportivos p
 - `AvailabilityWindow`: usado via relacionamento para filtro de sobreposicao.
 - `Connection`: bloqueios removem perfis da Descoberta.
 - `TeacherProfile`: quando existe, o card de descoberta recebe tipo `teacher`.
+- `SportSession`: fonte dos cards `session` e dos cards `place` agregados por local aproximado.
 
 ## Funcoes
 
+- [`discoverForUser`](../functions/DiscoveryService.md#discoverForUser)
 - [`profilesForUser`](../functions/DiscoveryService.md#profilesForUser)
 
 ## Observacoes
 
+- `GET /api/discovery` aceita `mode=people|sessions|places`; ausencia de modo preserva `people`.
 - Exclui o Perfil Esportivo do usuario autenticado quando ele existe.
 - Exclui perfis ocultos e perfis bloqueados em qualquer direcao.
-- Filtros aceitos: modalidade por `sport_id` ou `sport_slug`, `level`, `distance_km` e janela `weekday`/`starts_at`/`ends_at`.
+- Filtros aceitos: modalidade por `sport_id` ou `sport_slug`, `level`, `goal`, `distance_km` e janela `weekday`/`starts_at`/`ends_at`.
 - Ranking deterministico combina esporte em comum, nivel compativel, disponibilidade, distancia aproximada e completude de perfil.
-- Limita o resultado a 50 cards ordenados por score, distancia, nome e id.
+- Estados vazios retornam `empty_state` com sugestoes como ampliar distancia, remover nivel e criar sessao publica.
+- Limita o resultado a 50 cards ordenados por score, distancia, nome/horario e id.
