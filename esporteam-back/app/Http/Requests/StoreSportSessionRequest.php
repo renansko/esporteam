@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\SportLevel;
+use App\Enums\SportSessionEntryMode;
 use App\Enums\SportSessionStatus;
 use App\Enums\SportSessionType;
 use Illuminate\Foundation\Http\FormRequest;
@@ -23,6 +25,9 @@ class StoreSportSessionRequest extends FormRequest
             'latitude_approx' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude_approx' => ['nullable', 'numeric', 'between:-180,180'],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'entry_mode' => ['nullable', Rule::in(SportSessionEntryMode::values())],
+            'min_level' => ['nullable', Rule::in(SportLevel::values())],
+            'max_level' => ['nullable', Rule::in(SportLevel::values())],
             'requires_approval' => ['nullable', 'boolean'],
             'visibility' => ['nullable', Rule::in(['public', 'private'])],
             'status' => ['nullable', Rule::in(SportSessionStatus::values())],

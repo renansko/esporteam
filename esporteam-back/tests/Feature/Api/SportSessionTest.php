@@ -100,6 +100,86 @@ it('lists open public sport sessions by filters', function () {
         ->assertJsonPath('data.0.participant_count', 1);
 });
 
+it('lists public sessions by match filters without exposing vacancy counts', function () {
+    $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
+    $current = createSessionSportProfileForUser(88, 'Candidate');
+    $current->update([
+        'latitude_approx' => -23.550,
+        'longitude_approx' => -46.633,
+    ]);
+    $current->sports()->create([
+        'sport_id' => $tennis->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+
+    $host = createSessionSportProfileForUser(77, 'Host');
+    $matchingId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'sport_id' => $tennis->id,
+            'title' => 'Tenis publico',
+            'type' => 'partida',
+            'starts_at' => CarbonImmutable::parse('2026-07-07 19:30:00')->toISOString(),
+            'latitude_approx' => -23.551,
+            'longitude_approx' => -46.634,
+            'capacity' => 4,
+            'entry_mode' => 'publica_direta',
+            'min_level' => 'beginner',
+            'max_level' => 'intermediate',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.entry_mode', 'publica_direta')
+        ->json('data.id');
+
+    $fullId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'sport_id' => $tennis->id,
+            'title' => 'Tenis lotado',
+            'type' => 'partida',
+            'starts_at' => CarbonImmutable::parse('2026-07-07 20:00:00')->toISOString(),
+            'latitude_approx' => -23.551,
+            'longitude_approx' => -46.634,
+            'capacity' => 1,
+            'entry_mode' => 'publica_direta',
+            'min_level' => 'beginner',
+            'max_level' => 'intermediate',
+        ])
+        ->assertCreated()
+        ->json('data.id');
+
+    SportProfile::query()->create(['user_id' => 99, 'display_name' => 'Far host']);
+    actingAsWorkspace(1, ['id' => 99])
+        ->postJson('/api/sessions', [
+            'sport_id' => $tennis->id,
+            'title' => 'Tenis longe',
+            'type' => 'partida',
+            'starts_at' => CarbonImmutable::parse('2026-07-07 19:30:00')->toISOString(),
+            'latitude_approx' => -23.900,
+            'longitude_approx' => -46.900,
+            'capacity' => 4,
+            'entry_mode' => 'publica_direta',
+            'min_level' => 'beginner',
+            'max_level' => 'intermediate',
+        ])
+        ->assertCreated();
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->postJson("/api/sessions/{$fullId}/join")
+        ->assertUnprocessable();
+
+    $payload = actingAsWorkspace(1, ['id' => 88])
+        ->getJson('/api/sessions?sport_slug=tenis&level=intermediate&distance_km=5&weekday=2&starts_at=19:00&ends_at=21:00&has_available_slots=1')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $matchingId)
+        ->assertJsonPath('data.0.next_action', 'entrar')
+        ->assertJsonPath('data.0.participant_count', 1)
+        ->json('data.0');
+
+    expect($payload)->not->toHaveKeys(['capacity', 'available', 'available_slots']);
+    expect($host->id)->toBeInt();
+});
+
 it('lets a sport profile join an open session once', function () {
     createSessionSportProfileForUser(77, 'Creator');
     $participant = createSessionSportProfileForUser(88, 'Participant');
@@ -123,6 +203,121 @@ it('lets a sport profile join an open session once', function () {
     actingAsWorkspace(1, ['id' => 88])
         ->postJson("/api/sessions/{$sessionId}/join")
         ->assertUnprocessable();
+});
+
+it('lets eligible profiles join public direct sessions without prior match', function () {
+    $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
+    createSessionSportProfileForUser(77, 'Host');
+    $participant = createSessionSportProfileForUser(88, 'Participant');
+    $participant->sports()->create([
+        'sport_id' => $tennis->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+
+    $sessionId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'sport_id' => $tennis->id,
+            'title' => 'Aberta sem match',
+            'type' => 'partida',
+            'starts_at' => now()->addDay()->setSecond(0)->toISOString(),
+            'capacity' => 3,
+            'entry_mode' => 'publica_direta',
+            'min_level' => 'beginner',
+            'max_level' => 'advanced',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.entry_mode', 'publica_direta')
+        ->assertJsonPath('data.requires_approval', false)
+        ->json('data.id');
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->postJson("/api/sessions/{$sessionId}/join")
+        ->assertCreated()
+        ->assertJsonPath('data.participant_count', 2)
+        ->assertJsonPath('data.participation.1.profile.id', $participant->id)
+        ->assertJsonPath('data.participation.1.status', 'joined');
+});
+
+it('lets eligible profiles request approval while blocking unsafe or ineligible public entry', function () {
+    $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
+    $host = createSessionSportProfileForUser(77, 'Host');
+    $eligible = createSessionSportProfileForUser(88, 'Eligible');
+    $eligible->sports()->create([
+        'sport_id' => $tennis->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+    $beginner = createSessionSportProfileForUser(99, 'Beginner');
+    $beginner->sports()->create([
+        'sport_id' => $tennis->id,
+        'level' => 'beginner',
+        'goals' => ['jogar'],
+    ]);
+    $blocked = createSessionSportProfileForUser(100, 'Blocked');
+    $blocked->sports()->create([
+        'sport_id' => $tennis->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+    Connection::query()->create([
+        'requester_profile_id' => $host->id,
+        'target_profile_id' => $blocked->id,
+        'profile_low_id' => min($host->id, $blocked->id),
+        'profile_high_id' => max($host->id, $blocked->id),
+        'type' => 'block',
+        'status' => 'blocked',
+    ]);
+
+    $approvalSessionId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'sport_id' => $tennis->id,
+            'title' => 'Aberta com aprovacao',
+            'type' => 'partida',
+            'starts_at' => now()->addDay()->setSecond(0)->toISOString(),
+            'capacity' => 2,
+            'entry_mode' => 'publica_aprovacao',
+            'min_level' => 'intermediate',
+            'max_level' => 'advanced',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.entry_mode', 'publica_aprovacao')
+        ->assertJsonPath('data.requires_approval', true)
+        ->json('data.id');
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->postJson("/api/sessions/{$approvalSessionId}/join")
+        ->assertCreated()
+        ->assertJsonPath('data.participation.1.profile.id', $eligible->id)
+        ->assertJsonPath('data.participation.1.status', 'interested');
+
+    actingAsWorkspace(1, ['id' => 99])
+        ->postJson("/api/sessions/{$approvalSessionId}/join")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['profile']);
+
+    actingAsWorkspace(1, ['id' => 100])
+        ->postJson("/api/sessions/{$approvalSessionId}/join")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['profile']);
+
+    $inviteOnlySessionId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'sport_id' => $tennis->id,
+            'title' => 'So convite',
+            'type' => 'partida',
+            'starts_at' => now()->addDays(2)->setSecond(0)->toISOString(),
+            'capacity' => 2,
+            'entry_mode' => 'convite',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.entry_mode', 'convite')
+        ->json('data.id');
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->postJson("/api/sessions/{$inviteOnlySessionId}/join")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['entry_mode']);
 });
 
 it('rejects joins when session capacity or status does not allow entry', function () {

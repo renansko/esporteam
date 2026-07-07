@@ -20,6 +20,14 @@ _Avoid_: Instrutor, treinador, coach
 A sport profile that hosts sport sessions, groups, or local activities. An organizer may have a platform subscription, but cannot charge participants through a sport session.
 _Avoid_: Dono do evento, promotor, vendedor de vaga
 
+**Sessao Esportiva**:
+A one-off free sport activity hosted by a sport profile. A session belongs to global sport discovery and is not scoped to a workspace today.
+_Avoid_: Evento pago, vaga, produto, turma
+
+**Anfitriao da Sessao**:
+The sport profile responsible for a sport session, including invitations and participant decisions when approval is needed.
+_Avoid_: Dono do evento, tenant, administrador do workspace
+
 **Aluno**:
 A sport profile that has an explicit learning relationship with a teacher. A sport profile should not be called a student merely because it wants to learn something.
 _Avoid_: Cliente, estudante, aprendiz
@@ -64,6 +72,14 @@ _Avoid_: Participante, integrante, membro
 The experience of finding compatible sport profiles, teachers, groups, or opportunities based on modality, location, level, availability, objectives, and privacy rules.
 _Avoid_: Busca, matching, recomendacao
 
+**Match de Sessao**:
+The compatibility gate that makes a sport session visible or actionable for a sport profile. It combines sport fit, approximate location, level, availability, safety, and internal capacity without exposing remaining slots.
+_Avoid_: Consulta de vagas, disponibilidade publica, lotacao
+
 **Visibilidade do Perfil**:
 The discovery exposure chosen by a sport profile. Hidden profiles do not participate in public discovery.
 _Avoid_: Privacidade, status publico, publicacao
+
+**Workspace**:
+A future administrative boundary outside the current sport discovery model. It must not scope public discovery, session matching, or sport participation today.
+_Avoid_: Tenant atual, clube obrigatorio, organizacao do match

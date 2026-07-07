@@ -252,7 +252,7 @@ it('differentiates teacher cards and hides precise coordinate fields', function 
         ->and($payload['profile']['location'])->not->toHaveKeys(['latitude', 'longitude']);
 });
 
-it('returns typed session discovery cards with shared filters and no payment fields', function () {
+it('returns typed session discovery cards without exposing vacancy or payment fields', function () {
     $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
     $running = Sport::query()->create(['name' => 'Corrida', 'slug' => 'corrida']);
 
@@ -292,10 +292,39 @@ it('returns typed session discovery cards with shared filters and no payment fie
         'latitude_approx' => -23.551,
         'longitude_approx' => -46.634,
         'capacity' => 4,
+        'requires_approval' => true,
         'visibility' => 'public',
         'status' => 'open',
     ]);
     $matching->participants()->attach($host->id, ['status' => 'joined']);
+
+    $fullHost = SportProfile::query()->create([
+        'user_id' => 98,
+        'display_name' => 'Full session host',
+        'latitude_approx' => -23.552,
+        'longitude_approx' => -46.635,
+    ]);
+    $fullHost->sports()->create([
+        'sport_id' => $tennis->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+    $full = SportSession::query()->create([
+        'creator_profile_id' => $fullHost->id,
+        'sport_id' => $tennis->id,
+        'title' => 'Tenis ja lotado',
+        'type' => 'partida',
+        'starts_at' => CarbonImmutable::parse('2026-07-07 20:00:00'),
+        'location_label' => 'Quadra Pinheiros',
+        'city' => 'Sao Paulo',
+        'region' => 'SP',
+        'latitude_approx' => -23.551,
+        'longitude_approx' => -46.634,
+        'capacity' => 1,
+        'visibility' => 'public',
+        'status' => 'open',
+    ]);
+    $full->participants()->attach($fullHost->id, ['status' => 'joined']);
 
     $wrongSport = SportProfile::query()->create(['user_id' => 99, 'display_name' => 'Runner host']);
     $wrongSport->sports()->create([
@@ -323,14 +352,14 @@ it('returns typed session discovery cards with shared filters and no payment fie
         ->assertJsonPath('data.0.session.id', $matching->id)
         ->assertJsonPath('data.0.session.sport.slug', 'tenis')
         ->assertJsonPath('data.0.host.display_name', 'Session host')
-        ->assertJsonPath('data.0.entry_rule', 'open_join')
-        ->assertJsonPath('data.0.slots.capacity', 4)
-        ->assertJsonPath('data.0.slots.joined', 1)
-        ->assertJsonPath('data.0.slots.available', 3)
+        ->assertJsonPath('data.0.entry_rule', 'approval_required')
+        ->assertJsonPath('data.0.participant_count', 1)
+        ->assertJsonPath('data.0.session.participant_count', 1)
+        ->assertJsonPath('data.0.session.requires_approval', true)
         ->json('data.0');
 
-    expect($payload)->not->toHaveKeys(['price', 'price_cents', 'payment_url'])
-        ->and($payload['session'])->not->toHaveKeys(['price', 'price_cents', 'payment_url'])
+    expect($payload)->not->toHaveKeys(['price', 'price_cents', 'payment_url', 'slots', 'capacity', 'available'])
+        ->and($payload['session'])->not->toHaveKeys(['price', 'price_cents', 'payment_url', 'slots', 'capacity', 'available'])
         ->and($payload['session']['location'])->toHaveKeys(['latitude_approx', 'longitude_approx'])
         ->and($payload['session']['location'])->not->toHaveKeys(['latitude', 'longitude']);
 });

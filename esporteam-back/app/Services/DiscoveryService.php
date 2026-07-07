@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ProfileVisibility;
 use App\Enums\SessionParticipantStatus;
+use App\Enums\SportSessionEntryMode;
 use App\Enums\SportSessionStatus;
 use App\Models\Connection;
 use App\Models\ProfileSport;
@@ -92,6 +93,7 @@ class DiscoveryService
 
         return $sessions
             ->map(fn (SportSession $session) => $this->cardForSession($session, $currentProfile, $filters))
+            ->filter(fn (array $card) => $this->passesSessionCapacityGate($card['session']))
             ->filter(fn (array $card) => $this->passesDistanceFilter($card, $filters))
             ->filter(fn (array $card) => $this->passesSessionAvailabilityFilter($card['session'], $filters))
             ->filter(fn (array $card) => $this->passesSessionHostLevelFilter($card['session'], $filters))
@@ -252,13 +254,12 @@ class DiscoveryService
             $reasons[] = 'nearby';
         }
 
-        $joined = (int) ($session->participant_count ?? 0);
-        $available = $session->capacity === null ? null : max(0, $session->capacity - $joined);
-        $entryRule = $available === 0 ? 'full' : 'open_join';
-
-        if ($entryRule === 'open_join') {
-            $reasons[] = 'open_session';
-        }
+        $participantCount = (int) ($session->participant_count ?? 0);
+        $entryRule = match (true) {
+            $session->entry_mode === SportSessionEntryMode::PublicApproval || $session->requires_approval => 'approval_required',
+            $session->entry_mode === SportSessionEntryMode::InviteOnly => 'invite_only',
+            default => 'match_required',
+        };
 
         $reasons = array_values(array_unique($reasons));
 
@@ -270,12 +271,7 @@ class DiscoveryService
             'session' => $session,
             'host' => $session->creator,
             'entry_rule' => $entryRule,
-            'slots' => [
-                'capacity' => $session->capacity,
-                'joined' => $joined,
-                'available' => $available,
-                'status' => $session->status?->value,
-            ],
+            'participant_count' => $participantCount,
             'recommendation_reason' => $this->recommendationReason($reasons),
         ];
     }
@@ -348,6 +344,15 @@ class DiscoveryService
         }
 
         return $card['distance_km'] !== null && $card['distance_km'] <= (float) $filters['distance_km'];
+    }
+
+    private function passesSessionCapacityGate(SportSession $session): bool
+    {
+        if ($session->capacity === null) {
+            return true;
+        }
+
+        return (int) ($session->participant_count ?? 0) < $session->capacity;
     }
 
     private function passesSessionAvailabilityFilter(SportSession $session, array $filters): bool

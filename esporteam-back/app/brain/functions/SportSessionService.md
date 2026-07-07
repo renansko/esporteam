@@ -6,13 +6,17 @@ Assinatura: `createForUser(int $userId, array $data): SportSession`
 
 Cria uma Sessao Esportiva para o Perfil Esportivo autenticado. Ignora qualquer autoria enviada no payload e usa o perfil resolvido por `user_id`.
 
+Aceita `entry_mode` como `convite`, `publica_direta` ou `publica_aprovacao`. O campo legado `requires_approval = true` ainda cria sessao `publica_aprovacao` quando `entry_mode` nao foi enviado. `min_level` e `max_level` definem faixa opcional de nivel elegivel.
+
 Side effects: grava `sport_sessions` e adiciona o criador em `session_participants` com status `joined`.
 
 ## openSessions
 
-Assinatura: `openSessions(array $filters = []): Collection`
+Assinatura: `openSessions(int $userId, array $filters = []): Collection`
 
-Lista sessoes `open` e `public`, ordenadas por `starts_at` e limitadas a 50 itens. Filtros atuais: `sport_id`, `sport_slug`, `type`, `city`, `region`, `starts_after`, `starts_before`.
+Lista sessoes `open` e `public`, ordenadas por `starts_at` e limitadas a 50 itens. Filtros atuais: `sport_id`, `sport_slug`, `type`, `entry_mode`, `level`, `distance_km`, `weekday`/`starts_at`/`ends_at`, `has_available_slots`, `city`, `region`, `starts_after`, `starts_before`.
+
+Cada sessao recebe `next_action`: `entrar`, `pedir_vaga` ou `indisponivel`, calculado por modo de entrada, bloqueio, visibilidade do perfil, faixa de nivel e capacidade. O payload publico nao expõe vagas restantes.
 
 Side effects: nenhum.
 
@@ -52,8 +56,8 @@ Side effects: atualiza status em `session_participants`.
 
 Assinatura: `join(int $userId, SportSession $session): SportSession`
 
-Registra participacao do Perfil Esportivo autenticado em uma sessao existente. A sessao e travada em transacao antes de contar participantes. Quando `requires_approval = true`, cria pedido `interested` em vez de entrada direta.
+Registra participacao do Perfil Esportivo autenticado em uma sessao existente. A sessao e travada em transacao antes de contar participantes. `publica_direta` cria `joined`; `publica_aprovacao` cria pedido `interested`; `convite` rejeita entrada publica.
 
-Falha com validacao quando a sessao nao esta `open`, a capacidade esta cheia ou o perfil ja entrou.
+Falha com validacao quando a sessao nao esta `open`, a capacidade esta cheia para entrada direta, o perfil esta bloqueado/oculto, nao respeita a faixa de nivel ou ja entrou/pediu vaga.
 
 Side effects: cria ou reativa linha em `session_participants`.

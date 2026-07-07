@@ -28,11 +28,16 @@ class SportSessionResource extends JsonResource
                 'latitude_approx' => $this->latitude_approx,
                 'longitude_approx' => $this->longitude_approx,
             ],
-            'capacity' => $this->capacity,
+            'capacity' => $this->when($this->isOwnedByRequester($request), $this->capacity),
             'requires_approval' => $this->requires_approval,
+            'entry_mode' => $this->entry_mode?->value,
+            'min_level' => $this->min_level,
+            'max_level' => $this->max_level,
             'visibility' => $this->visibility,
             'status' => $this->status?->value,
             'participant_count' => $this->participant_count ?? $this->participants_count,
+            'distance_km' => $this->when($this->getAttribute('distance_km') !== null, $this->getAttribute('distance_km')),
+            'next_action' => $this->getAttribute('next_action') ?? 'indisponivel',
             'creator' => $this->whenLoaded('creator', fn () => new SportProfileResource($this->creator)),
             'sport' => $this->whenLoaded('sport', fn () => new SportResource($this->sport)),
             'participation' => SessionParticipantResource::collection($this->whenLoaded('participationRecords')),
@@ -40,5 +45,14 @@ class SportSessionResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
+    }
+
+    private function isOwnedByRequester(Request $request): bool
+    {
+        if (! $this->relationLoaded('creator') || $this->creator === null) {
+            return false;
+        }
+
+        return (int) $this->creator->user_id === (int) $request->user()?->id;
     }
 }

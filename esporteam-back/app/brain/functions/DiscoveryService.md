@@ -38,7 +38,7 @@ Score deterministico antes de IA:
 
 Cards `person` e `teacher` incluem `type`, `score`, `reasons`, `distance_km`, `profile`, `primary_sport`, `availability_summary`, `location_label`, `recommendation_reason` e, quando aplicavel, `teacher_profile`.
 
-Cards `session` incluem `session`, `host`, `slots`, `entry_rule`, modalidade via resource da sessao e nao incluem preco ou chamada de pagamento.
+Cards `session` incluem `session`, `host`, `participant_count`, `entry_rule`, modalidade via resumo da sessao e nao incluem preco, chamada de pagamento, capacidade, vagas restantes ou lotacao.
 
 Cards `place` agregam sessoes publicas abertas por local aproximado e incluem esportes disponiveis, contagem de sessoes abertas e proximo horario.
 

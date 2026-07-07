@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SessionParticipantStatus;
+use App\Enums\SportSessionEntryMode;
 use App\Enums\SportSessionStatus;
 use App\Enums\SportSessionType;
 use Illuminate\Database\Eloquent\Model;
@@ -29,6 +30,9 @@ class SportSession extends Model
         'longitude_approx',
         'capacity',
         'requires_approval',
+        'entry_mode',
+        'min_level',
+        'max_level',
         'visibility',
         'status',
     ];
@@ -40,6 +44,7 @@ class SportSession extends Model
         'longitude_approx' => 'float',
         'capacity' => 'integer',
         'requires_approval' => 'boolean',
+        'entry_mode' => SportSessionEntryMode::class,
         'status' => SportSessionStatus::class,
     ];
 

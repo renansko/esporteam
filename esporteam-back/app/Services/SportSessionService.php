@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ProfileVisibility;
 use App\Enums\SessionParticipantStatus;
+use App\Enums\SportSessionEntryMode;
 use App\Enums\SportSessionStatus;
 use App\Models\Connection;
 use App\Models\ProfileSport;
@@ -20,14 +21,23 @@ use Illuminate\Validation\ValidationException;
  */
 class SportSessionService
 {
+    private const LEVEL_ORDER = [
+        'beginner' => 0,
+        'intermediate' => 1,
+        'advanced' => 2,
+        'competitive' => 3,
+    ];
+
     /**
      * @wiki app/brain/functions/SportSessionService.md#createForUser
      */
     public function createForUser(int $userId, array $data): SportSession
     {
         $profile = $this->requireProfile($userId);
+        $entryMode = $this->entryModeFromInput($data);
+        $this->assertValidLevelRange($data['min_level'] ?? null, $data['max_level'] ?? null);
 
-        return DB::transaction(function () use ($profile, $data) {
+        return DB::transaction(function () use ($profile, $data, $entryMode) {
             $session = SportSession::query()->create([
                 'creator_profile_id' => $profile->id,
                 'sport_id' => $data['sport_id'] ?? null,
@@ -41,7 +51,10 @@ class SportSessionService
                 'latitude_approx' => $data['latitude_approx'] ?? null,
                 'longitude_approx' => $data['longitude_approx'] ?? null,
                 'capacity' => $data['capacity'] ?? null,
-                'requires_approval' => $data['requires_approval'] ?? false,
+                'requires_approval' => $entryMode->requiresApproval(),
+                'entry_mode' => $entryMode->value,
+                'min_level' => $data['min_level'] ?? null,
+                'max_level' => $data['max_level'] ?? null,
                 'visibility' => $data['visibility'] ?? 'public',
                 'status' => $data['status'] ?? SportSessionStatus::Open->value,
             ]);
@@ -57,9 +70,11 @@ class SportSessionService
     /**
      * @wiki app/brain/functions/SportSessionService.md#openSessions
      */
-    public function openSessions(array $filters = []): Collection
+    public function openSessions(int $userId, array $filters = []): Collection
     {
-        return SportSession::query()
+        $currentProfile = $this->profileForUser($userId);
+
+        $sessions = SportSession::query()
             ->with(['creator', 'sport'])
             ->withCount(['participants as participant_count' => fn (Builder $query) => $query->whereIn('session_participants.status', SessionParticipantStatus::activeValues())])
             ->where('status', SportSessionStatus::Open->value)
@@ -67,14 +82,27 @@ class SportSessionService
             ->when(isset($filters['sport_id']), fn (Builder $query) => $query->where('sport_id', (int) $filters['sport_id']))
             ->when(isset($filters['sport_slug']), fn (Builder $query) => $query->whereHas('sport', fn (Builder $query) => $query->where('slug', $filters['sport_slug'])))
             ->when(isset($filters['type']), fn (Builder $query) => $query->where('type', $filters['type']))
+            ->when(isset($filters['entry_mode']), fn (Builder $query) => $query->where('entry_mode', $filters['entry_mode']))
             ->when(isset($filters['city']), fn (Builder $query) => $query->where('city', $filters['city']))
             ->when(isset($filters['region']), fn (Builder $query) => $query->where('region', $filters['region']))
             ->when(isset($filters['starts_after']), fn (Builder $query) => $query->where('starts_at', '>=', $filters['starts_after']))
             ->when(isset($filters['starts_before']), fn (Builder $query) => $query->where('starts_at', '<=', $filters['starts_before']))
             ->orderBy('starts_at')
             ->orderBy('id')
-            ->limit(50)
             ->get();
+
+        return $sessions
+            ->filter(fn (SportSession $session) => $this->passesSessionLevelFilter($session, $filters['level'] ?? null))
+            ->filter(fn (SportSession $session) => $this->passesSessionDistanceFilter($session, $currentProfile, $filters))
+            ->filter(fn (SportSession $session) => $this->passesSessionTimeWindowFilter($session, $filters))
+            ->filter(fn (SportSession $session) => $this->passesAvailableSlotsFilter($session, $filters))
+            ->map(fn (SportSession $session) => $this->withPublicSessionState($session, $currentProfile))
+            ->sortBy([
+                fn (SportSession $session) => $session->starts_at?->getTimestamp() ?? PHP_INT_MAX,
+                fn (SportSession $session) => $session->id,
+            ])
+            ->take(50)
+            ->values();
     }
 
     /**
@@ -141,6 +169,7 @@ class SportSessionService
                 /** @var SportProfile $profile */
                 $profile = $profiles->get($profileId);
                 $this->assertProfileCanParticipate($lockedSession, $host, $profile, 'profile_ids');
+                $this->assertProfileMatchesLevelRange($lockedSession, $profile, 'profile_ids');
             }
 
             $availableSlots = $this->availableReservedSlots($lockedSession);
@@ -183,6 +212,7 @@ class SportSessionService
 
             $host = $lockedSession->creator()->firstOrFail();
             $this->assertProfileCanParticipate($lockedSession, $host, $profile, 'profile');
+            $this->assertProfileMatchesLevelRange($lockedSession, $profile, 'profile');
             $this->assertActiveCapacityAvailable($lockedSession);
             $this->updateParticipationStatus($participation, SessionParticipantStatus::Approved);
 
@@ -220,6 +250,7 @@ class SportSessionService
             }
 
             $this->assertProfileCanParticipate($lockedSession, $host, $profile, 'profile');
+            $this->assertProfileMatchesLevelRange($lockedSession, $profile, 'profile');
             $this->assertActiveCapacityAvailable($lockedSession);
             $this->updateParticipationStatus($participation, SessionParticipantStatus::Approved);
 
@@ -238,7 +269,14 @@ class SportSessionService
             $lockedSession = $this->lockOpenSession($session);
             $host = $lockedSession->creator()->firstOrFail();
 
+            if ($lockedSession->visibility !== 'public' || $lockedSession->entry_mode === SportSessionEntryMode::InviteOnly) {
+                throw ValidationException::withMessages([
+                    'entry_mode' => 'Session does not allow public entry.',
+                ]);
+            }
+
             $this->assertProfileCanParticipate($lockedSession, $host, $profile, 'profile');
+            $this->assertProfileMatchesLevelRange($lockedSession, $profile, 'profile');
 
             $existing = $this->participationFor($lockedSession, $profile);
             if ($existing !== null && in_array($existing->status, [SessionParticipantStatus::Joined, SessionParticipantStatus::Approved, SessionParticipantStatus::Interested], true)) {
@@ -247,7 +285,7 @@ class SportSessionService
                 ]);
             }
 
-            if ($lockedSession->requires_approval) {
+            if ($lockedSession->entry_mode === SportSessionEntryMode::PublicApproval) {
                 $this->upsertParticipation($lockedSession->id, $profile->id, SessionParticipantStatus::Interested);
 
                 return $this->freshSession($lockedSession);
@@ -287,6 +325,131 @@ class SportSessionService
         return $lockedSession;
     }
 
+    private function entryModeFromInput(array $data): SportSessionEntryMode
+    {
+        if (isset($data['entry_mode'])) {
+            return SportSessionEntryMode::from($data['entry_mode']);
+        }
+
+        if (($data['requires_approval'] ?? false) === true) {
+            return SportSessionEntryMode::PublicApproval;
+        }
+
+        return SportSessionEntryMode::PublicDirect;
+    }
+
+    private function withPublicSessionState(SportSession $session, ?SportProfile $profile): SportSession
+    {
+        $session->setAttribute('distance_km', $profile === null ? null : $this->distanceFromSession($session, $profile));
+        $session->setAttribute('next_action', $this->nextActionForProfile($session, $profile));
+
+        return $session;
+    }
+
+    private function nextActionForProfile(SportSession $session, ?SportProfile $profile): string
+    {
+        if ($profile === null) {
+            return 'indisponivel';
+        }
+
+        if (
+            $session->status !== SportSessionStatus::Open
+            || $session->visibility !== 'public'
+            || $session->creator_profile_id === $profile->id
+            || $session->entry_mode === SportSessionEntryMode::InviteOnly
+            || $this->participationFor($session, $profile) !== null
+            || $profile->visibility !== ProfileVisibility::Public
+            || $this->profilesAreBlocked($session->creator_profile_id, $profile->id)
+            || ! $this->profileMatchesLevelRange($session, $profile)
+        ) {
+            return 'indisponivel';
+        }
+
+        if ($session->entry_mode === SportSessionEntryMode::PublicDirect && ! $this->sessionHasAvailableActiveSlot($session)) {
+            return 'indisponivel';
+        }
+
+        return $session->entry_mode?->nextAction() ?? SportSessionEntryMode::PublicDirect->nextAction();
+    }
+
+    private function passesSessionLevelFilter(SportSession $session, ?string $level): bool
+    {
+        if ($level === null) {
+            return true;
+        }
+
+        return $this->levelIsInRange($level, $session->min_level, $session->max_level);
+    }
+
+    private function passesSessionDistanceFilter(SportSession $session, ?SportProfile $profile, array $filters): bool
+    {
+        if (! isset($filters['distance_km'])) {
+            return true;
+        }
+
+        if ($profile === null) {
+            return false;
+        }
+
+        $distanceKm = $this->distanceFromSession($session, $profile);
+
+        return $distanceKm !== null && $distanceKm <= (float) $filters['distance_km'];
+    }
+
+    private function passesSessionTimeWindowFilter(SportSession $session, array $filters): bool
+    {
+        if (! $this->hasTimeWindowFilter($filters)) {
+            return true;
+        }
+
+        $startsAt = $session->starts_at;
+        $sessionTime = $startsAt->format('H:i');
+
+        return (int) $startsAt->dayOfWeek === (int) $filters['weekday']
+            && $sessionTime >= (string) $filters['starts_at']
+            && $sessionTime < (string) $filters['ends_at'];
+    }
+
+    private function hasTimeWindowFilter(array $filters): bool
+    {
+        return isset($filters['weekday'], $filters['starts_at'], $filters['ends_at']);
+    }
+
+    private function passesAvailableSlotsFilter(SportSession $session, array $filters): bool
+    {
+        if (! array_key_exists('has_available_slots', $filters) || $filters['has_available_slots'] === null) {
+            return true;
+        }
+
+        $hasAvailableSlot = $this->sessionHasAvailableActiveSlot($session);
+
+        return filter_var($filters['has_available_slots'], FILTER_VALIDATE_BOOLEAN)
+            ? $hasAvailableSlot
+            : ! $hasAvailableSlot;
+    }
+
+    private function sessionHasAvailableActiveSlot(SportSession $session): bool
+    {
+        if ($session->capacity === null) {
+            return true;
+        }
+
+        return (int) ($session->participant_count ?? $this->activeParticipantCount($session->id)) < $session->capacity;
+    }
+
+    private function assertValidLevelRange(?string $minLevel, ?string $maxLevel): void
+    {
+        if ($minLevel === null || $maxLevel === null) {
+            return;
+        }
+
+        if (self::LEVEL_ORDER[$minLevel] > self::LEVEL_ORDER[$maxLevel]) {
+            throw ValidationException::withMessages([
+                'min_level' => 'Minimum level must be less than or equal to maximum level.',
+            ]);
+        }
+    }
+
     private function assertProfileCanParticipate(SportSession $session, SportProfile $host, SportProfile $profile, string $errorKey): void
     {
         if ($profile->id === $host->id) {
@@ -306,6 +469,48 @@ class SportSessionService
                 $errorKey => 'Blocked sport profiles cannot participate in this session.',
             ]);
         }
+    }
+
+    private function assertProfileMatchesLevelRange(SportSession $session, SportProfile $profile, string $errorKey): void
+    {
+        if (! $this->profileMatchesLevelRange($session, $profile)) {
+            throw ValidationException::withMessages([
+                $errorKey => 'Sport profile level does not match this session.',
+            ]);
+        }
+    }
+
+    private function profileMatchesLevelRange(SportSession $session, SportProfile $profile): bool
+    {
+        if ($session->min_level === null && $session->max_level === null) {
+            return true;
+        }
+
+        $practices = $profile->relationLoaded('sports')
+            ? $profile->sports
+            : $profile->sports()->get();
+
+        if ($session->sport_id !== null) {
+            $practices = $practices->where('sport_id', $session->sport_id);
+        }
+
+        return $practices->contains(fn (ProfileSport $sport) => $sport->level !== null
+            && $this->levelIsInRange($sport->level->value, $session->min_level, $session->max_level));
+    }
+
+    private function levelIsInRange(string $level, ?string $minLevel, ?string $maxLevel): bool
+    {
+        $levelOrder = self::LEVEL_ORDER[$level];
+
+        if ($minLevel !== null && $levelOrder < self::LEVEL_ORDER[$minLevel]) {
+            return false;
+        }
+
+        if ($maxLevel !== null && $levelOrder > self::LEVEL_ORDER[$maxLevel]) {
+            return false;
+        }
+
+        return true;
     }
 
     private function assertActiveCapacityAvailable(SportSession $session): void
@@ -534,6 +739,14 @@ class SportSessionService
             ->fresh()
             ->load(['creator', 'sport', 'participants', 'participationRecords.profile'])
             ->loadCount(['participants as participant_count' => fn (Builder $query) => $query->whereIn('session_participants.status', SessionParticipantStatus::activeValues())]);
+    }
+
+    private function profileForUser(int $userId): ?SportProfile
+    {
+        return SportProfile::query()
+            ->with(['sports', 'availabilityWindows'])
+            ->where('user_id', $userId)
+            ->first();
     }
 
     private function requireProfile(int $userId): SportProfile

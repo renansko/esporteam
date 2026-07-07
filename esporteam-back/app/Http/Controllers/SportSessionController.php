@@ -25,7 +25,10 @@ class SportSessionController extends Controller
     public function index(IndexSportSessionRequest $request): JsonResponse
     {
         return $this->successResponse(
-            SportSessionResource::collection($this->sessions->openSessions($request->validated())),
+            SportSessionResource::collection($this->sessions->openSessions(
+                (int) $request->user()->id,
+                $request->validated(),
+            )),
             'Sessions listed.',
         );
     }
