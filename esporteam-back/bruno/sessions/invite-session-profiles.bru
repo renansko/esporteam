@@ -1,0 +1,27 @@
+meta {
+  name: Invite Session Profiles
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/sessions/1/invites
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "profile_ids": [2, 3]
+  }
+}
+
+docs {
+  POST /api/sessions/{id}/invites cria convites invited para perfis recomendados.
+
+  Apenas o anfitriao pode convidar. Campos de preco, taxa ou pagamento sao rejeitados.
+}

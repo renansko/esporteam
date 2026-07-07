@@ -14,8 +14,8 @@
 > Entidades abaixo ainda refletem a base tecnica herdada. Elas devem ser migradas para o dominio esportivo em cortes pequenos, preservando os padrões de arquitetura.
 
 - [`entities/AvailabilityWindow.md`](entities/AvailabilityWindow.md) — Disponibilidade recorrente de um Perfil Esportivo
-- [`entities/SportSession.md`](entities/SportSession.md) — Sessao Esportiva pontual criada por um Perfil Esportivo
-- [`entities/SessionParticipant.md`](entities/SessionParticipant.md) — participacao de Perfil Esportivo em uma Sessao Esportiva
+- [`entities/SportSession.md`](entities/SportSession.md) — Sessao Esportiva pontual ou hospedada por um Perfil Esportivo
+- [`entities/SessionParticipant.md`](entities/SessionParticipant.md) — participacao, convite e interesse de Perfil Esportivo em uma Sessao Esportiva
 - [`entities/Idea.md`](entities/Idea.md) — entrada bruta, schema da tabela `ideas` (com embedding)
 - [`entities/RoadmapItem.md`](entities/RoadmapItem.md) — item priorizado do roadmap + recomputeScore
 - [`entities/ClusteringRun.md`](entities/ClusteringRun.md) — execução de clustering com cost/cache/fallback tracking
@@ -24,7 +24,7 @@
 ## Services
 
 - [`services/DiscoveryService.md`](services/DiscoveryService.md) — Descoberta determinística por modos de pessoas, sessões e locais
-- [`services/SportSessionService.md`](services/SportSessionService.md) — criacao, listagem aberta e participacao em Sessoes Esportivas
+- [`services/SportSessionService.md`](services/SportSessionService.md) — criacao, listagem aberta, participacao e match em grupo de Sessoes Esportivas
 - [`services/IdeaIngestionService.md`](services/IdeaIngestionService.md) — ponto único de criação de Ideas (gera embedding)
 - [`services/ClusteringService.md`](services/ClusteringService.md) — orquestrador da run (LLM + fallback)
 - [`services/LlmFactory.md`](services/LlmFactory.md) — hub multi-provider de LLM/Embedding
@@ -32,7 +32,7 @@
 ## Functions
 
 - [`functions/DiscoveryService.md`](functions/DiscoveryService.md) — `discoverForUser`, `profilesForUser`, modos e filtros compartilhados
-- [`functions/SportSessionService.md`](functions/SportSessionService.md) — `createForUser`, `openSessions` e `join`
+- [`functions/SportSessionService.md`](functions/SportSessionService.md) — `createForUser`, `openSessions`, recomendacoes, convites, decisoes e `join`
 - [`functions/IdeaIngestionService.md`](functions/IdeaIngestionService.md) — contratos das funções públicas
 - [`functions/ClusteringService.md`](functions/ClusteringService.md) — `executeRun` e side effects
 

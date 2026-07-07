@@ -45,6 +45,10 @@ Route::middleware('auth.service')->group(function () {
 
     Route::get('/sessions', [SportSessionController::class, 'index']);
     Route::post('/sessions', [SportSessionController::class, 'store']);
+    Route::get('/sessions/{session}/recommendations', [SportSessionController::class, 'recommendations']);
+    Route::post('/sessions/{session}/invites', [SportSessionController::class, 'invite']);
+    Route::patch('/sessions/{session}/invite', [SportSessionController::class, 'respondToInvite']);
+    Route::patch('/sessions/{session}/participants/{profile}', [SportSessionController::class, 'updateParticipant']);
     Route::post('/sessions/{session}/join', [SportSessionController::class, 'join']);
 
     Route::post('/connections', [ConnectionController::class, 'store']);

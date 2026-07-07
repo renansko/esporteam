@@ -1,0 +1,27 @@
+meta {
+  name: Update Session Participant
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/sessions/1/participants/2
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "action": "approve"
+  }
+}
+
+docs {
+  PATCH /api/sessions/{id}/participants/{profile_id} permite ao anfitriao aprovar, recusar ou remover um perfil do fluxo da sessao.
+
+  action aceita: approve, decline, remove.
+}

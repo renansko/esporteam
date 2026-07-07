@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SessionParticipantStatus;
 use App\Enums\SportSessionStatus;
 use App\Enums\SportSessionType;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,7 @@ class SportSession extends Model
         'latitude_approx',
         'longitude_approx',
         'capacity',
+        'requires_approval',
         'visibility',
         'status',
     ];
@@ -37,6 +39,7 @@ class SportSession extends Model
         'latitude_approx' => 'float',
         'longitude_approx' => 'float',
         'capacity' => 'integer',
+        'requires_approval' => 'boolean',
         'status' => SportSessionStatus::class,
     ];
 
@@ -52,13 +55,14 @@ class SportSession extends Model
 
     public function participationRecords(): HasMany
     {
-        return $this->hasMany(SessionParticipant::class);
+        return $this->hasMany(SessionParticipant::class)->orderBy('id');
     }
 
     public function participants(): BelongsToMany
     {
         return $this->belongsToMany(SportProfile::class, 'session_participants', 'sport_session_id', 'sport_profile_id')
             ->using(SessionParticipant::class)
+            ->wherePivotIn('status', SessionParticipantStatus::activeValues())
             ->withPivot(['status'])
             ->withTimestamps();
     }

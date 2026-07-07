@@ -23,6 +23,7 @@ class StoreSportSessionRequest extends FormRequest
             'latitude_approx' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude_approx' => ['nullable', 'numeric', 'between:-180,180'],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'requires_approval' => ['nullable', 'boolean'],
             'visibility' => ['nullable', Rule::in(['public', 'private'])],
             'status' => ['nullable', Rule::in(SportSessionStatus::values())],
             'price_cents' => ['prohibited'],

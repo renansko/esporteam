@@ -79,7 +79,7 @@ class DiscoveryService
 
         $sessions = SportSession::query()
             ->with(['creator.sports.sport', 'creator.availabilityWindows', 'sport'])
-            ->withCount(['participants as participant_count' => fn (Builder $query) => $query->where('session_participants.status', SessionParticipantStatus::Joined->value)])
+            ->withCount(['participants as participant_count' => fn (Builder $query) => $query->whereIn('session_participants.status', SessionParticipantStatus::activeValues())])
             ->where('status', SportSessionStatus::Open->value)
             ->where('visibility', 'public')
             ->when($currentProfile, fn (Builder $query) => $query->where('creator_profile_id', '!=', $currentProfile->id))

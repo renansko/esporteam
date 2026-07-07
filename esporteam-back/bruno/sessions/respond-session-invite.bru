@@ -1,0 +1,27 @@
+meta {
+  name: Respond Session Invite
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/sessions/1/invite
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "action": "accept"
+  }
+}
+
+docs {
+  PATCH /api/sessions/{id}/invite permite ao perfil convidado aceitar ou recusar convite.
+
+  action aceita: accept, decline.
+}

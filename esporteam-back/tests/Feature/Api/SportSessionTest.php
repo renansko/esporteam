@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\Connection;
 use App\Models\Sport;
 use App\Models\SportProfile;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 function createSessionSportProfileForUser(int $userId, string $name): SportProfile
@@ -155,4 +157,252 @@ it('rejects joins when session capacity or status does not allow entry', functio
     actingAsWorkspace(1, ['id' => 99])
         ->postJson("/api/sessions/{$cancelledSessionId}/join")
         ->assertUnprocessable();
+});
+
+it('lets the host list compatible recommendations and invite profiles to a session', function () {
+    $sport = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
+    $host = createSessionSportProfileForUser(77, 'Host');
+    $host->sports()->create([
+        'sport_id' => $sport->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+
+    $recommended = createSessionSportProfileForUser(88, 'Recommended profile');
+    $recommended->update([
+        'city' => 'Sao Paulo',
+        'region' => 'SP',
+        'latitude_approx' => -23.551,
+        'longitude_approx' => -46.634,
+    ]);
+    $recommended->sports()->create([
+        'sport_id' => $sport->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+    $recommended->availabilityWindows()->create([
+        'weekday' => 2,
+        'starts_at' => '18:00',
+        'ends_at' => '21:00',
+    ]);
+
+    $wrongLevel = createSessionSportProfileForUser(99, 'Wrong level');
+    $wrongLevel->sports()->create([
+        'sport_id' => $sport->id,
+        'level' => 'beginner',
+        'goals' => ['jogar'],
+    ]);
+    $wrongLevel->availabilityWindows()->create([
+        'weekday' => 2,
+        'starts_at' => '18:00',
+        'ends_at' => '21:00',
+    ]);
+
+    $hidden = createSessionSportProfileForUser(100, 'Hidden profile');
+    $hidden->update(['visibility' => 'hidden']);
+    $hidden->sports()->create([
+        'sport_id' => $sport->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+
+    $blocked = createSessionSportProfileForUser(101, 'Blocked profile');
+    $blocked->sports()->create([
+        'sport_id' => $sport->id,
+        'level' => 'intermediate',
+        'goals' => ['jogar'],
+    ]);
+    Connection::query()->create([
+        'requester_profile_id' => $host->id,
+        'target_profile_id' => $blocked->id,
+        'profile_low_id' => min($host->id, $blocked->id),
+        'profile_high_id' => max($host->id, $blocked->id),
+        'type' => 'block',
+        'status' => 'blocked',
+    ]);
+
+    $sessionId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'sport_id' => $sport->id,
+            'title' => 'Tenis em grupo',
+            'type' => 'partida',
+            'starts_at' => CarbonImmutable::parse('2026-07-07 19:30:00')->toISOString(),
+            'latitude_approx' => -23.550,
+            'longitude_approx' => -46.633,
+            'capacity' => 3,
+        ])
+        ->assertCreated()
+        ->json('data.id');
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->getJson("/api/sessions/{$sessionId}/recommendations")
+        ->assertForbidden();
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->getJson("/api/sessions/{$sessionId}/recommendations?level=intermediate&goal=jogar&distance_km=5")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.profile.id', $recommended->id)
+        ->assertJsonPath('data.0.reasons.0', 'same_sport')
+        ->assertJsonPath('data.0.reasons.1', 'compatible_level')
+        ->assertJsonPath('data.0.reasons.2', 'compatible_goal')
+        ->assertJsonPath('data.0.reasons.3', 'available');
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->postJson("/api/sessions/{$sessionId}/invites", [
+            'profile_ids' => [$recommended->id],
+            'price_cents' => 1000,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['price_cents']);
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->postJson("/api/sessions/{$sessionId}/invites", [
+            'profile_ids' => [$recommended->id],
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.participation.1.profile.id', $recommended->id)
+        ->assertJsonPath('data.participation.1.status', 'invited');
+
+    $fullSessionId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'sport_id' => $sport->id,
+            'title' => 'Tenis sem vagas',
+            'type' => 'partida',
+            'starts_at' => CarbonImmutable::parse('2026-07-08 19:30:00')->toISOString(),
+            'capacity' => 1,
+        ])
+        ->assertCreated()
+        ->json('data.id');
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->postJson("/api/sessions/{$fullSessionId}/invites", [
+            'profile_ids' => [$recommended->id],
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['capacity']);
+});
+
+it('lets invited profiles accept or decline a hosted session invite', function () {
+    $host = createSessionSportProfileForUser(77, 'Host');
+    $accepted = createSessionSportProfileForUser(88, 'Accepted invitee');
+    $declined = createSessionSportProfileForUser(99, 'Declined invitee');
+
+    $sessionId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'title' => 'Pelada com convite',
+            'type' => 'partida',
+            'starts_at' => now()->addDay()->setSecond(0)->toISOString(),
+            'capacity' => 3,
+        ])
+        ->assertCreated()
+        ->json('data.id');
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->postJson("/api/sessions/{$sessionId}/invites", [
+            'profile_ids' => [$accepted->id, $declined->id],
+        ])
+        ->assertCreated();
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->patchJson("/api/sessions/{$sessionId}/invite", ['action' => 'accept'])
+        ->assertOk()
+        ->assertJsonPath('data.participant_count', 2)
+        ->assertJsonPath('data.participation.1.profile.id', $accepted->id)
+        ->assertJsonPath('data.participation.1.status', 'approved');
+
+    actingAsWorkspace(1, ['id' => 99])
+        ->patchJson("/api/sessions/{$sessionId}/invite", ['action' => 'decline'])
+        ->assertOk()
+        ->assertJsonPath('data.participant_count', 2)
+        ->assertJsonPath('data.participation.2.profile.id', $declined->id)
+        ->assertJsonPath('data.participation.2.status', 'declined');
+
+    expect($host->id)->toBeInt();
+});
+
+it('lets hosts approve decline and remove requested seats while enforcing safety rules', function () {
+    $host = createSessionSportProfileForUser(77, 'Host');
+    $interested = createSessionSportProfileForUser(88, 'Interested profile');
+    $second = createSessionSportProfileForUser(99, 'Second interested profile');
+    $blocked = createSessionSportProfileForUser(100, 'Blocked interested profile');
+    $hidden = createSessionSportProfileForUser(101, 'Hidden candidate');
+    $hidden->update(['visibility' => 'hidden']);
+
+    Connection::query()->create([
+        'requester_profile_id' => $host->id,
+        'target_profile_id' => $blocked->id,
+        'profile_low_id' => min($host->id, $blocked->id),
+        'profile_high_id' => max($host->id, $blocked->id),
+        'type' => 'block',
+        'status' => 'blocked',
+    ]);
+
+    $sessionId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'title' => 'Dupla com aprovacao',
+            'type' => 'partida',
+            'starts_at' => now()->addDay()->setSecond(0)->toISOString(),
+            'capacity' => 2,
+            'requires_approval' => true,
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.requires_approval', true)
+        ->json('data.id');
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->postJson("/api/sessions/{$sessionId}/join")
+        ->assertCreated()
+        ->assertJsonPath('data.participant_count', 1)
+        ->assertJsonPath('data.participation.1.profile.id', $interested->id)
+        ->assertJsonPath('data.participation.1.status', 'interested');
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->patchJson("/api/sessions/{$sessionId}/participants/{$interested->id}", ['action' => 'approve'])
+        ->assertForbidden();
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->patchJson("/api/sessions/{$sessionId}/participants/{$interested->id}", ['action' => 'approve'])
+        ->assertOk()
+        ->assertJsonPath('data.participant_count', 2)
+        ->assertJsonPath('data.participation.1.status', 'approved');
+
+    actingAsWorkspace(1, ['id' => 99])
+        ->postJson("/api/sessions/{$sessionId}/join")
+        ->assertCreated()
+        ->assertJsonPath('data.participation.2.status', 'interested');
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->patchJson("/api/sessions/{$sessionId}/participants/{$second->id}", ['action' => 'approve'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['capacity']);
+
+    DB::table('session_participants')->insert([
+        'sport_session_id' => $sessionId,
+        'sport_profile_id' => $blocked->id,
+        'status' => 'interested',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->patchJson("/api/sessions/{$sessionId}/participants/{$blocked->id}", ['action' => 'approve'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['profile']);
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->postJson("/api/sessions/{$sessionId}/invites", ['profile_ids' => [$hidden->id]])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['profile_ids']);
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->patchJson("/api/sessions/{$sessionId}/participants/{$second->id}", ['action' => 'decline'])
+        ->assertOk()
+        ->assertJsonPath('data.participation.2.status', 'declined');
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->patchJson("/api/sessions/{$sessionId}/participants/{$interested->id}", ['action' => 'remove'])
+        ->assertOk()
+        ->assertJsonPath('data.participant_count', 1)
+        ->assertJsonPath('data.participation.1.status', 'removed');
 });

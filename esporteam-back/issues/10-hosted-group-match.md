@@ -6,14 +6,14 @@ Permitir que uma sessao esportiva tenha um anfitriao que monta um grupo a partir
 
 ## Acceptance criteria
 
-- [ ] Uma sessao registra o anfitriao e diferencia participantes convidados, interessados, aprovados, recusados e removidos.
-- [ ] O anfitriao consegue listar perfis recomendados para a sessao por modalidade, distancia, nivel, objetivo e disponibilidade.
-- [ ] O anfitriao consegue convidar um ou mais perfis recomendados para participar da sessao.
-- [ ] Um perfil convidado consegue aceitar ou recusar o convite da sessao.
-- [ ] O anfitriao consegue aprovar ou recusar pedidos de vaga quando a sessao exigir aprovacao.
-- [ ] Capacidade, bloqueios e visibilidade impedem convite ou aprovacao invalida.
-- [ ] Match em grupo nao introduz cobranca por vaga; a sessao hospedada continua gratuita para participantes.
-- [ ] Testes cobrem match em grupo, transicoes de status e regras de seguranca.
+- [x] Uma sessao registra o anfitriao e diferencia participantes convidados, interessados, aprovados, recusados e removidos.
+- [x] O anfitriao consegue listar perfis recomendados para a sessao por modalidade, distancia, nivel, objetivo e disponibilidade.
+- [x] O anfitriao consegue convidar um ou mais perfis recomendados para participar da sessao.
+- [x] Um perfil convidado consegue aceitar ou recusar o convite da sessao.
+- [x] O anfitriao consegue aprovar ou recusar pedidos de vaga quando a sessao exigir aprovacao.
+- [x] Capacidade, bloqueios e visibilidade impedem convite ou aprovacao invalida.
+- [x] Match em grupo nao introduz cobranca por vaga; a sessao hospedada continua gratuita para participantes.
+- [x] Testes cobrem match em grupo, transicoes de status e regras de seguranca.
 
 ## Blocked by
 

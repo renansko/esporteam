@@ -32,6 +32,7 @@ roadmap/* + roadmap/cluster/*            → roadmap e clustering com IA
 - `me/` — `/api/me` do Esporteam
 - `connections/` — convites, interesses e bloqueios entre perfis esportivos
 - `reports/` — denuncias para moderacao
+- `sessions/` — sessoes esportivas, convites e match em grupo
 - `ideas/` — CRUD de ideias no Esporteam
 - `roadmap/` — listagem e drilldown de RoadmapItems
 - `roadmap/cluster/` — dispatch e auditoria de runs de clustering com IA

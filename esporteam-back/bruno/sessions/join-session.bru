@@ -17,5 +17,6 @@ auth:bearer {
 docs {
   POST /api/sessions/{id}/join registra participacao do Perfil Esportivo autenticado.
 
-  Falha quando a sessao nao esta aberta, esta cheia ou o perfil ja entrou.
+  Em sessoes com requires_approval=true, cria pedido interested para aprovacao do anfitriao.
+  Falha quando a sessao nao esta aberta, esta cheia, ha bloqueio ou o perfil ja entrou/pediu vaga.
 }

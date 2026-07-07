@@ -1,0 +1,30 @@
+meta {
+  name: List Session Recommendations
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/sessions/1/recommendations?level=intermediate&goal=jogar&distance_km=10
+  body: none
+  auth: bearer
+}
+
+params:query {
+  level: intermediate
+  goal: jogar
+  distance_km: 10
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/sessions/{id}/recommendations lista perfis recomendados para o anfitriao da sessao.
+
+  Filtros:
+    - level
+    - goal
+    - distance_km
+}
