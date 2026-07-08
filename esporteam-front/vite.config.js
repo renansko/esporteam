@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
         '/auth': {
           target: authTarget,
           changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/auth/, '/api'),
+          rewrite: (p) => p.replace(/^\/auth/, '/api/auth'),
         },
         '/ws': {
           target: workspaceTarget,

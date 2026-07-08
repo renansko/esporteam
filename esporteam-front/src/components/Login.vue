@@ -1,15 +1,11 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useAppStore } from '../stores/app'
-import { STR, pickLang } from '../mock/i18n'
 import Icon from './Icon.vue'
 
 const store = useAppStore()
-const email = ref('eduardo@mesa.app')
-const password = ref('demo1234')
-
-const lang = computed(() => store.lang)
-const t = (k) => pickLang(STR[k], lang.value)
+const email = ref('')
+const password = ref('')
 
 function submit() {
   store.login(email.value, password.value)
@@ -17,48 +13,84 @@ function submit() {
 </script>
 
 <template>
-  <div class="login-page">
-    <form class="login-card" @submit.prevent="submit">
-      <div class="login-logo">
-        <div class="mark">P</div>
-        <div>
-          <div class="nm">Esporteam</div>
-          <div :style="{ fontSize: '11px', color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }">
-            {{ pickLang(STR.workspaceTagline, lang) }}
+  <div class="auth-page">
+    <section class="auth-shell" aria-labelledby="login-title">
+      <div class="auth-preview" aria-hidden="true">
+        <div class="auth-phone">
+          <div class="auth-phone-bar">
+            <span>9:41</span>
+            <span class="auth-phone-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </div>
+          <div class="auth-phone-title">
+            <strong>Descobrir</strong>
+            <span><Icon name="filter" :size="18" /></span>
+          </div>
+          <div class="auth-session-card">
+            <div class="auth-session-art auth-session-art-blue">
+              <Icon name="cards" :size="58" />
+              <span class="auth-badge auth-badge-curated">
+                <Icon name="lock" :size="14" />
+                Curadoria
+              </span>
+              <span class="auth-distance">1,2 km</span>
+            </div>
+            <div class="auth-session-copy">
+              <strong>Volei de praia</strong>
+              <span>com Prof. Marina</span>
+              <div>
+                <span>Sab, 9h</span>
+                <span>Iniciante</span>
+              </div>
+            </div>
+          </div>
+          <div class="auth-action-row">
+            <span>Pular</span>
+            <span>Tenho interesse</span>
           </div>
         </div>
-        <div style="margin-left: auto">
-          <div class="chip-group">
-            <div :class="['chip', { active: lang === 'pt' }]" @click="store.setLang('pt')">PT</div>
-            <div :class="['chip', { active: lang === 'en' }]" @click="store.setLang('en')">EN</div>
+      </div>
+
+      <form class="auth-card" @submit.prevent="submit">
+        <div class="auth-brand">
+          <div class="auth-mark">E</div>
+          <div>
+            <div class="auth-name">Esporteam</div>
+            <div class="auth-tagline">Descoberta esportiva local</div>
           </div>
         </div>
-      </div>
 
-      <h1>{{ t('login_title') }}</h1>
-      <p>{{ t('login_subtitle') }}</p>
+        <p class="auth-eyebrow">Modo Participante</p>
+        <h1 id="login-title">Entre para encontrar Sessoes Esportivas perto de voce</h1>
+        <p class="auth-lede">
+          Sua conta autentica o acesso. A Descoberta usa seu Perfil Esportivo.
+        </p>
 
-      <label>{{ t('login_email') }}</label>
-      <input class="input" type="email" v-model="email" autofocus />
-      <label>{{ t('login_password') }}</label>
-      <input class="input" type="password" v-model="password" />
+        <label for="login-email">Email</label>
+        <input id="login-email" class="input" type="email" v-model="email" autocomplete="email" autofocus required />
 
-      <div v-if="store.loginError" style="margin-top: 12px; color: var(--danger, #c0392b); font-size: 12px">
-        {{ store.loginError }}
-      </div>
+        <label for="login-password">Senha</label>
+        <input id="login-password" class="input" type="password" v-model="password" autocomplete="current-password" required />
 
-      <div style="margin-top: 18px">
-        <button class="btn btn-primary" type="submit" :disabled="store.loginLoading">
-          {{ store.loginLoading ? '...' : t('login_submit') }} <Icon name="chevron" />
+        <div v-if="store.loginError" class="field-error auth-error">
+          {{ store.loginError }}
+        </div>
+
+        <button class="btn btn-primary auth-submit" type="submit" :disabled="store.loginLoading">
+          {{ store.loginLoading ? 'Entrando...' : 'Entrar' }}
+          <Icon name="chevron" />
         </button>
-      </div>
 
-      <div class="auth-switch">
-        <span>{{ t('login_no_account') }}</span>
-        <button type="button" class="link" @click="store.setAuthView('register')">
-          {{ t('login_to_register') }}
-        </button>
-      </div>
-    </form>
+        <div class="auth-switch">
+          <span>Ainda nao tem conta?</span>
+          <button type="button" class="link" @click="store.setAuthView('register')">
+            Criar conta
+          </button>
+        </div>
+      </form>
+    </section>
   </div>
 </template>

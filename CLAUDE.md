@@ -10,3 +10,17 @@ Before changing code in this workspace, read:
 The product language is centered on sport discovery and participation. In discovery code, use Perfil Esportivo / `SportProfile` as the social identity; `User` belongs to authentication.
 
 Keep controllers thin, put use-case behaviour behind service interfaces, use FormRequests for HTTP validation, and keep Resources limited to response shape.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked in GitHub Issues for this repo. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The repo uses the default mattpocock/skills triage label vocabulary. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repo using root `CONTEXT.md` and root `docs/adr/`. See `docs/agents/domain.md`.

@@ -6,6 +6,7 @@ import {
   SEED_COMPETITOR_FEATURES,
 } from '../mock/data'
 import { STR } from '../mock/i18n'
+import { MOCK_ACTIVE_SPORT_PROFILE } from '../mock/sportDiscovery'
 import {
   loadToken,
   saveToken,
@@ -15,6 +16,8 @@ import {
   createWorkspace as apiCreateWorkspace,
   selectWorkspace,
   fetchMe,
+  fetchSportProfile,
+  saveSportProfile,
   logoutOnAuth,
   listIdeas as apiListIdeas,
   createIdea as apiCreateIdea,
@@ -38,6 +41,44 @@ function seedIdeas() {
 
 let toastTimer = null
 
+function sportProfileFromApi(profile, user = null) {
+  if (!profile) {
+    const displayName = user?.name || user?.email || 'Perfil Esportivo'
+    return {
+      ...MOCK_ACTIVE_SPORT_PROFILE,
+      id: 'sport-profile-pending',
+      displayName,
+      role: 'Entusiasta',
+      locationLabel: 'Localizacao a definir',
+      primaryModality: 'Modalidade a definir',
+      modalities: [],
+      availability: [],
+    }
+  }
+
+  const sports = Array.isArray(profile.sports) ? profile.sports : []
+  const availability = Array.isArray(profile.availability) ? profile.availability : []
+  const locationLabel = [profile.city, profile.region].filter(Boolean).join(', ') || 'Localizacao aproximada'
+  const modalities = sports.map((practice) => ({
+    name: practice?.sport?.name || 'Modalidade',
+    level: practice?.level || 'Nivel a definir',
+    goal: Array.isArray(practice?.goals) ? practice.goals.join(', ') : '',
+  }))
+
+  return {
+    id: profile.id,
+    displayName: profile.display_name || user?.name || 'Perfil Esportivo',
+    role: 'Entusiasta',
+    locationLabel,
+    primaryModality: modalities[0]?.name || 'Modalidade a definir',
+    modalities,
+    availability: availability.map((window) => (
+      `${window.weekday} ${window.starts_at}-${window.ends_at}`
+    )),
+    raw: profile,
+  }
+}
+
 export const useAppStore = defineStore('app', {
   state: () => ({
     auth: false,
@@ -55,6 +96,8 @@ export const useAppStore = defineStore('app', {
     registerErrors: null,
     registerLoading: false,
     page: 'inbox',                  // inbox | ideas | competitors | roadmap
+    participantTab: 'discover',     // discover | map | matches | profile
+    activeSportProfile: MOCK_ACTIVE_SPORT_PROFILE,
     publicMode: false,
     lang: 'pt',
     theme: 'light',
@@ -91,19 +134,7 @@ export const useAppStore = defineStore('app', {
         if (!token) throw new Error('login_no_token')
         saveToken(token)
         this.token = token
-
-        const workspaces = await listWorkspaces()
-        if (!workspaces.length) {
-          const me = await fetchMe()
-          this.currentUser = me?.user ?? null
-          this.currentWorkspace = null
-          this.workspaceOptions = []
-          this.workspaceSetupRequired = true
-          this.auth = true
-          return
-        }
-
-        await this.selectAndLoadWorkspace(workspaces[0])
+        await this.loadParticipantSession()
       } catch (err) {
         this.loginError = err?.response?.data?.message || err?.message || 'login_failed'
         saveToken(null)
@@ -114,7 +145,7 @@ export const useAppStore = defineStore('app', {
       }
     },
 
-    async register({ name, email, password, passwordConfirmation, workspaceName }) {
+    async register({ name, email, password, passwordConfirmation, city, region }) {
       this.registerError = null
       this.registerErrors = null
       this.registerLoading = true
@@ -124,21 +155,9 @@ export const useAppStore = defineStore('app', {
         saveToken(token)
         this.token = token
 
-        const workspace = await apiCreateWorkspace({ name: workspaceName })
-        if (!workspace?.id) throw new Error('workspace_create_failed')
-
-        const { token: scopedToken } = await selectWorkspace(workspace.id)
-        saveToken(scopedToken)
-        this.token = scopedToken
-
-        const me = await fetchMe()
-        this.currentUser = me?.user ?? null
-        this.currentWorkspace = me?.workspace ?? workspace
-        this.workspaceSetupRequired = false
-        this.workspaceOptions = []
-        this.auth = true
+        await saveSportProfile({ displayName: name, city, region })
+        await this.loadParticipantSession()
         this.authView = 'login'
-        this.loadInboxIdeas()
       } catch (err) {
         const apiErrors = err?.response?.data?.errors
         this.registerErrors = apiErrors || null
@@ -154,30 +173,26 @@ export const useAppStore = defineStore('app', {
     async hydrateFromToken() {
       if (!this.token) return
       try {
-        const me = await fetchMe()
-        this.currentUser = me?.user ?? null
-        this.currentWorkspace = me?.workspace ?? null
-        this.auth = true
-        if (this.currentWorkspace) {
-          this.workspaceSetupRequired = false
-          this.loadInboxIdeas()
-          return
-        }
-
-        const workspaces = await listWorkspaces()
-        if (workspaces.length) {
-          await this.selectAndLoadWorkspace(workspaces[0])
-          return
-        }
-
-        this.workspaceOptions = []
-        this.workspaceSetupRequired = true
+        await this.loadParticipantSession()
       } catch {
         saveToken(null)
         this.token = null
         this.auth = false
         this.workspaceSetupRequired = false
       }
+    },
+
+    async loadParticipantSession() {
+      const me = await fetchMe()
+      this.currentUser = me?.user ?? null
+      this.currentWorkspace = null
+      this.workspaceSetupRequired = false
+      this.workspaceOptions = []
+
+      const sportProfile = await fetchSportProfile()
+      this.activeSportProfile = sportProfileFromApi(sportProfile, this.currentUser)
+      this.auth = true
+      this.participantTab = 'discover'
     },
 
     async selectAndLoadWorkspace(workspace) {
@@ -280,6 +295,8 @@ export const useAppStore = defineStore('app', {
     },
 
     setPage(p)     { this.page = p; this.publicMode = (p === 'public') },
+    setParticipantTab(tab) { this.participantTab = tab },
+    setActiveSportProfile(profile) { this.activeSportProfile = profile || MOCK_ACTIVE_SPORT_PROFILE },
     setLang(l)     { this.lang = l },
     setTheme(t)    { this.theme = t },
     selectIdea(id) { this.selectedIdeaId = id },

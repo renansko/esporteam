@@ -26,12 +26,12 @@ export const wsApi = makeClient('/ws')
 export const esporteamApi = makeClient('/api')
 
 export async function login(email, password) {
-  const { data } = await authApi.post('/auth/login', { email, password })
+  const { data } = await authApi.post('/login', { email, password })
   return data?.data ?? data
 }
 
 export async function register({ name, email, password, passwordConfirmation }) {
-  const { data } = await authApi.post('/auth/register', {
+  const { data } = await authApi.post('/register', {
     name,
     email,
     password,
@@ -60,9 +60,26 @@ export async function fetchMe() {
   return data?.data ?? data
 }
 
+export async function fetchSportProfile() {
+  const { data } = await esporteamApi.get('/profile')
+  return data?.data ?? null
+}
+
+export async function saveSportProfile({ displayName, city, region } = {}) {
+  const payload = {
+    display_name: displayName,
+    visibility: 'public',
+  }
+  if (city) payload.city = city
+  if (region) payload.region = region
+
+  const { data } = await esporteamApi.put('/profile', payload)
+  return data?.data ?? data
+}
+
 export async function logoutOnAuth() {
   try {
-    await authApi.post('/auth/logout')
+    await authApi.post('/logout')
   } catch {
     // Best-effort: se o servidor falhar, ainda limpamos o token local.
   }

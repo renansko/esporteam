@@ -134,6 +134,89 @@ Admin:
 - `PATCH /api/admin/reports/{id}`
 - `PATCH /api/admin/profiles/{id}/status`
 
+## SPEC Consolidada Para Front MVP Participante
+
+Esta SPEC consolida o contrato do backend que deve sustentar o PRD de front `docs/prd/frontend-mvp-participante.md` e as issues front #2 a #10. O recorte e o Modo Participante do Entusiasta; fluxos completos de Anfitriao, aprovacao operacional do anfitriao e professor/aulas continuam no PRD amplo, mas nao bloqueiam o primeiro front participante.
+
+### Assinatura De Dominio
+
+- Autenticacao identifica um `User`; Descoberta, Partidas e Perfil do app usam sempre o `SportProfile` ativo do usuario autenticado.
+- Descoberta e participacao sao globais entre Perfis Esportivos publicos, nao escopadas por Workspace.
+- A UI do front deve falar em `Perfil Esportivo`, `Entusiasta`, `Sessao Esportiva`, `Modalidade`, `Anfitriao da Sessao`, `Descoberta`, `Partidas` e `Disponibilidade`.
+- `sport_sessions` nunca recebe preco, taxa, moeda ou pagamento. Preco pertence a `teacher_profiles` e `class_offerings`; assinatura de plataforma futura pertence a `profile_subscriptions`.
+- Localizacao publica e aproximada: payloads publicos podem expor cidade, regiao, `location_label_public`, distancia aproximada e coordenadas aproximadas quando existirem, mas nao endereco residencial preciso.
+- Capacidade e vagas restantes nao aparecem em cards publicos antes de match/acao. O backend pode expor `participant_count`, `next_action`, `entry_rule` e `vacancy_status`, mas nao deve expor `capacity` para quem nao e anfitriao.
+
+### Modos De Entrada De Sessao
+
+`entry_mode` e a fonte de verdade para a acao primaria:
+
+- `publica_direta`: sessao aberta; `POST /api/sessions/{id}/join` cria participacao `joined`; front exibe `Vou participar` ou `Tenho interesse` com resultado confirmado.
+- `publica_aprovacao`: sessao com curadoria; `POST /api/sessions/{id}/join` cria participacao `interested`; front exibe `Pedir para participar` e estado `Aguardando aprovacao`.
+- `convite`: sessao por convite; nao aparece como entrada publica acionavel; `next_action` deve ser `indisponivel`.
+
+O campo legado `requires_approval` pode continuar no payload por compatibilidade, mas o front deve preferir `entry_mode`/`next_action` para decidir comportamento.
+
+### Estados De Participacao
+
+O backend persiste `session_participants.status`; o front normaliza para estados de Partidas:
+
+- `joined` e `approved`: `Confirmado`.
+- `interested` e `invited`: `Aguardando`.
+- `declined` e `removed`: `Recusado` ou removido pelo anfitriao, conforme copy da tela.
+- `left`: fora da primeira interface de Partidas, mas deve ser tratado como historico nao-confirmado quando aparecer.
+
+Acoes duplicadas devem falhar de forma previsivel: se o Perfil Esportivo ja tem `joined`, `approved` ou `interested` para a sessao, `POST /api/sessions/{id}/join` retorna validacao e o front preserva o estado atual.
+
+### Contrato De Endpoints Para As Issues Do Front
+
+#### Perfil Esportivo (#10)
+
+- `GET /api/profile`: retorna o `SportProfile` ativo ou `data = null` quando ainda nao existe.
+- `PUT /api/profile`: cria/atualiza identidade esportiva publica sem alterar dados de autenticacao do `User`.
+- `PUT /api/profile/sports`: substitui Modalidades, Nivel Esportivo, Objetivos Esportivos, posicoes e modalidade primaria.
+- `PUT /api/profile/availability`: substitui janelas de Disponibilidade.
+- O payload normalizado deve incluir `id`, `display_name`, `bio`, `city`, `region`, `location.latitude_approx`, `location.longitude_approx`, `visibility`, `avatar_url`, `sports[]` e `availability[]`.
+
+#### Descobrir Deck E Filtros (#3, #4, #5)
+
+- `GET /api/discovery?mode=sessions` e o feed principal para cards compativeis de Sessao Esportiva.
+- Filtros aceitos: `sport_id`, `sport_slug`, `level`, `goal`, `distance_km`, `weekday`, `starts_at`, `ends_at`.
+- Cada card de sessao deve expor `type=session`, `score`, `reasons`, `distance_km`, `recommendation_reason`, `entry_rule`, `participant_count`, `vacancy_status`, `safety_actions`, `host` e `session`.
+- `session` deve trazer `id`, `creator_profile_id`, `sport_id`, `title`, `description`, `type`, `starts_at`, `location_label`, `city`, `region`, `location_label_public`, `requires_approval`, `entry_mode`, `min_level`, `max_level`, `visibility`, `status`, `participant_count`, `sport` e uma amostra de `approved_participants`.
+- `entry_rule=approval_required` mapeia para UI curada; `entry_rule=match_required` com `entry_mode=publica_direta` mapeia para UI aberta.
+- `POST /api/sessions/{id}/join` e a acao do botao `Tenho interesse`; o resultado depende de `entry_mode`.
+- `Pular` e `Voltar` permanecem locais no front neste recorte; nao ha contrato de persistencia de dismiss/undo.
+
+#### Mapa E Lista (#8)
+
+- `GET /api/discovery?mode=sessions` pode alimentar Mapa e Lista quando a UI quer cards ranqueados por compatibilidade.
+- `GET /api/sessions` pode alimentar uma lista temporal/geografica de sessoes abertas e publicas.
+- Filtros aceitos em `GET /api/sessions`: `sport_id`, `sport_slug`, `type`, `entry_mode`, `level`, `distance_km`, `weekday`, `starts_at`, `ends_at`, `has_available_slots`, `city`, `region`, `starts_after`, `starts_before`.
+- O front pode usar um mapa deterministico no MVP; se nao houver coordenadas, deve cair para Lista/bottom sheet com `location_label_public`, cidade, regiao e distancia quando disponivel.
+
+#### Detalhe Aberto E Curado (#6, #7)
+
+- `GET /api/sessions/{id}` e requisito da SPEC para a tela de detalhe. O PRD ja lista este endpoint, mas a rota ainda precisa existir no backend.
+- O detalhe deve retornar `SportSessionResource` com `creator`, `sport`, `participant_count`, `participants` quando permitido, `participation` do perfil autenticado quando existir, `entry_mode`, `requires_approval`, `next_action` e dados de localizacao publica.
+- Para `publica_direta`, `POST /api/sessions/{id}/join` retorna `201` com sessao atualizada e participacao `joined`.
+- Para `publica_aprovacao`, `POST /api/sessions/{id}/join` retorna `201` com sessao atualizada e participacao `interested`.
+- Erros de elegibilidade, bloqueio, capacidade, visibilidade ou duplicidade retornam validacao; o front deve manter o detalhe aberto e mostrar feedback.
+
+#### Partidas (#9)
+
+- A primeira SPEC pode derivar Partidas do `GET /api/sessions` somente se o backend carregar a participacao do Perfil Esportivo autenticado; o contrato mais claro e adicionar endpoint dedicado `GET /api/profile/sessions` ou filtro `GET /api/sessions?participating=true`.
+- O payload precisa listar sessoes em que o Perfil Esportivo atuou, incluindo status de participacao normalizado, dados basicos da Sessao Esportiva e linkavel para `GET /api/sessions/{id}`.
+- Itens `declined`/`removed` nao devem desaparecer silenciosamente; o backend deve permitir retorno historico suficiente para a aba Recusado.
+
+### Gaps Que O Back Precisa Fechar Para Ficar 100% Consistente
+
+- Implementar `GET /api/sessions/{id}` com autorizacao publica segura e `SportSessionResource` enriquecido para detalhe.
+- Definir endpoint ou filtro dedicado para Partidas do Perfil Esportivo ativo.
+- Garantir que `POST /api/sessions/{id}/join` sempre retorne a participacao do perfil autenticado carregada no recurso, para o front atualizar Descobrir e Partidas sem segunda chamada.
+- Revisar `GET /api/discovery?mode=sessions` para nao expor `vacancy_status` como capacidade reversivel antes do match; se ele indicar lotacao, deve continuar sem revelar quantidade de vagas restantes.
+- Manter testes de feature cobrindo aberta direta, curada pendente, duplicidade, bloqueio, perfil oculto, faixa de nivel, capacidade e payload sem `capacity` para nao-anfitriao.
+
 ## IA E Brain
 
 O `app/brain` permanece como memoria tecnica do backend.

@@ -6,6 +6,7 @@ ARG GID=1000
 # Instalar dependências do sistema
 RUN apk add --no-cache \
     curl \
+    openssl \
     libxml2-dev \
     zip \
     unzip \

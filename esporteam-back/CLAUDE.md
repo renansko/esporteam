@@ -1,5 +1,13 @@
 # esporteam-back
 
+## Soul / Norte do produto
+
+Antes de qualquer alteracao de produto, dominio, API, banco, UX, IA ou documentacao, leia `SOUL.md`.
+
+`SOUL.md` e o contrato curto do por que este projeto existe: descoberta esportiva local, Perfil Esportivo, Sessoes Esportivas, professores/aulas, participacao e seguranca. O agente deve manter qualquer decisao alinhada a esse norte. Se uma tarefa conflitar com o `SOUL.md`, registre o conflito explicitamente antes de implementar.
+
+Use `PRD.md` como especificacao detalhada depois de ler o `SOUL.md`.
+
 ## Referencias do workspace
 
 Antes de alterar codigo neste servico, leia `../CONTEXT.md` para linguagem de dominio e `../CODEBASE-DESIGN.md` para desenho de modulos. Este servico e o dono de descoberta esportiva e participacao: Perfil Esportivo, Modalidade, Professor, Aluno, Conexao, Grupo Esportivo e Disponibilidade.
