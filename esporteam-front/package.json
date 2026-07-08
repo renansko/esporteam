@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "npm run test:contracts",
+    "test:contracts": "node src/services/sportDiscovery.contract.test.js",
     "build": "vite build",
     "preview": "vite preview"
   },

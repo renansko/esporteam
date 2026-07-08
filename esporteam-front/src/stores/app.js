@@ -7,6 +7,7 @@ import {
 } from '../mock/data'
 import { STR } from '../mock/i18n'
 import { MOCK_ACTIVE_SPORT_PROFILE } from '../mock/sportDiscovery'
+import { DEFAULT_PARTICIPANT_TAB, isParticipantTab } from '../features/participant/shell'
 import {
   loadToken,
   saveToken,
@@ -96,7 +97,7 @@ export const useAppStore = defineStore('app', {
     registerErrors: null,
     registerLoading: false,
     page: 'inbox',                  // inbox | ideas | competitors | roadmap
-    participantTab: 'discover',     // discover | map | matches | profile
+    participantTab: DEFAULT_PARTICIPANT_TAB, // discover | map | matches | profile
     activeSportProfile: MOCK_ACTIVE_SPORT_PROFILE,
     publicMode: false,
     lang: 'pt',
@@ -192,7 +193,7 @@ export const useAppStore = defineStore('app', {
       const sportProfile = await fetchSportProfile()
       this.activeSportProfile = sportProfileFromApi(sportProfile, this.currentUser)
       this.auth = true
-      this.participantTab = 'discover'
+      this.participantTab = DEFAULT_PARTICIPANT_TAB
     },
 
     async selectAndLoadWorkspace(workspace) {
@@ -295,7 +296,7 @@ export const useAppStore = defineStore('app', {
     },
 
     setPage(p)     { this.page = p; this.publicMode = (p === 'public') },
-    setParticipantTab(tab) { this.participantTab = tab },
+    setParticipantTab(tab) { this.participantTab = isParticipantTab(tab) ? tab : DEFAULT_PARTICIPANT_TAB },
     setActiveSportProfile(profile) { this.activeSportProfile = profile || MOCK_ACTIVE_SPORT_PROFILE },
     setLang(l)     { this.lang = l },
     setTheme(t)    { this.theme = t },

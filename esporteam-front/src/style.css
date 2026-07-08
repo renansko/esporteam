@@ -25,8 +25,10 @@
   --sport-curated: #916412;
   --sport-refused: #9e4b3b;
   --sport-text: #201e1a;
+  --sport-neutral-text: #201e1a;
   --sport-muted: #6c675e;
   --sport-surface: #ffffff;
+  --sport-surface-elevated: #fbfaf7;
   --sport-page: #edeae3;
   --sport-line: #d6d1c6;
   --ring:        rgba(22, 36, 71, 0.22);
@@ -63,8 +65,10 @@
   --sport-curated: #d5ad5b;
   --sport-refused: #d77575;
   --sport-text: #efe8d4;
+  --sport-neutral-text: #efe8d4;
   --sport-muted: #c7c2b9;
   --sport-surface: #1a1d22;
+  --sport-surface-elevated: #202329;
   --sport-page: #0e0f10;
   --sport-line: rgba(232, 224, 196, 0.18);
   --ring:        rgba(239, 232, 212, 0.22);
@@ -263,7 +267,7 @@ body {
   display: grid;
   align-content: center;
   gap: 16px;
-  background: #fbfaf7;
+  background: var(--sport-surface-elevated);
 }
 .placeholder-icon {
   width: 52px;

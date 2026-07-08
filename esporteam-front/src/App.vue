@@ -3,7 +3,7 @@ import { watch } from 'vue'
 import { useAppStore } from './stores/app'
 import Login from './components/Login.vue'
 import Register from './components/Register.vue'
-import ParticipantShell from './components/ParticipantShell.vue'
+import ParticipantModeView from './views/ParticipantModeView.vue'
 import Toast from './components/Toast.vue'
 
 const store = useAppStore()
@@ -21,6 +21,6 @@ watch(() => store.theme, (theme) => {
     <Register v-if="store.authView === 'register'" />
     <Login v-else />
   </template>
-  <ParticipantShell v-else />
+  <ParticipantModeView v-else />
   <Toast />
 </template>

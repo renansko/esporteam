@@ -1,16 +1,20 @@
 <script setup>
 import { computed } from 'vue'
 import { useAppStore } from '../stores/app'
-import { PARTICIPANT_TABS } from '../mock/sportDiscovery'
+import { PARTICIPANT_TABS, resolveParticipantTab } from '../features/participant/shell'
 import Icon from './Icon.vue'
 
 const store = useAppStore()
 
-const activeTab = computed(() => (
-  PARTICIPANT_TABS.find(tab => tab.id === store.participantTab) || PARTICIPANT_TABS[0]
-))
+const activeTab = computed(() => resolveParticipantTab(store.participantTab))
 
 const sportProfile = computed(() => store.activeSportProfile)
+const modalityList = computed(() => (
+  sportProfile.value?.modalities?.map(item => item.name).filter(Boolean).join(', ') || 'Modalidade a definir'
+))
+const availabilityList = computed(() => (
+  sportProfile.value?.availability?.slice(0, 2).join(', ') || 'Disponibilidade a definir'
+))
 const initials = computed(() => {
   const name = sportProfile.value?.displayName || ''
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]?.toUpperCase()).join('') || 'PE'
@@ -44,19 +48,19 @@ const initials = computed(() => {
             <Icon :name="activeTab.icon" :size="28" />
           </div>
           <div>
-            <h2>{{ activeTab.label }}</h2>
-            <p>{{ activeTab.status }}</p>
+            <h2>{{ activeTab.emptyState.title }}</h2>
+            <p>{{ activeTab.emptyState.description }}</p>
           </div>
         </div>
 
         <dl class="sport-profile-summary">
           <div>
             <dt>Modalidades</dt>
-            <dd>{{ sportProfile.modalities.map(item => item.name).join(', ') }}</dd>
+            <dd>{{ modalityList }}</dd>
           </div>
           <div>
             <dt>Disponibilidade</dt>
-            <dd>{{ sportProfile.availability.slice(0, 2).join(', ') }}</dd>
+            <dd>{{ availabilityList }}</dd>
           </div>
         </dl>
       </section>
