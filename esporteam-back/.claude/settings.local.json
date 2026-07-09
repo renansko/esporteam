@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer install *)",
+      "Bash(sudo apt-get *)",
+      "Bash(php -m)",
+      "Bash(php --version)",
+      "Bash(rm -rf /mnt/d/projetos/axyo-prioris/node_modules)",
+      "Bash(rm -f /mnt/d/projetos/axyo-prioris/package.json /mnt/d/projetos/axyo-prioris/package-lock.json /mnt/d/projetos/axyo-prioris/public/fonts-manifest.dev.json /mnt/d/projetos/axyo-prioris/public/hot)",
+      "Bash(git *)"
+    ]
+  }
+}
