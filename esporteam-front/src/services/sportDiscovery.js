@@ -35,6 +35,46 @@ function normalizePublicVacancyStatus(value) {
   return status === 'hidden' ? status : null
 }
 
+function present(value) {
+  return value !== undefined && value !== null && value !== ''
+}
+
+export function normalizeDiscoverySessionFilters(filters = {}) {
+  const normalized = {
+    sport_id: firstValue(filters.sport_id, filters.sportId, null),
+    sport_slug: firstValue(filters.sport_slug, filters.sportSlug, null),
+    level: firstValue(filters.level, null),
+    goal: firstValue(filters.goal, null),
+    distance_km: firstValue(filters.distance_km, filters.distanceKm, null),
+    weekday: firstValue(filters.weekday, null),
+    starts_at: firstValue(filters.starts_at, filters.startsAt, null),
+    ends_at: firstValue(filters.ends_at, filters.endsAt, null),
+  }
+
+  return Object.fromEntries(
+    Object.entries(normalized).filter(([, value]) => present(value)),
+  )
+}
+
+function isCuratedSession(card) {
+  return card.entryMode === 'publica_aprovacao'
+    || card.entryRule === 'approval_required'
+    || card.session?.entryMode === 'publica_aprovacao'
+    || card.session?.entryRule === 'approval_required'
+}
+
+function isOpenSession(card) {
+  return card.entryMode === 'publica_direta'
+    || card.session?.entryMode === 'publica_direta'
+}
+
+function matchesParticipationType(card, participationType) {
+  if (!participationType || participationType === 'all') return true
+  if (participationType === 'curated') return isCuratedSession(card)
+  if (participationType === 'open') return isOpenSession(card)
+  return true
+}
+
 function normalizeModality(payload = {}) {
   if (typeof payload === 'string') return { id: null, name: payload }
 
@@ -221,11 +261,18 @@ export async function fetchActiveSportProfile({ useMockFallback = true } = {}) {
 }
 
 export async function listCompatibleSportSessions(params = {}, { useMockFallback = true } = {}) {
+  const discoveryParams = normalizeDiscoverySessionFilters(params)
+  const participationType = firstValue(params.participationType, params.participation_type, 'all')
+
   try {
-    const { data } = await esporteamApi.get('/discovery', { params: { ...params, mode: 'sessions' } })
+    const { data } = await esporteamApi.get('/discovery', { params: { ...discoveryParams, mode: 'sessions' } })
     return normalizeDiscoveryCards(data?.data ?? data)
+      .filter(card => matchesParticipationType(card, participationType))
   } catch (err) {
-    if (useMockFallback) return normalizeDiscoveryCards(MOCK_COMPATIBLE_SPORT_SESSIONS)
+    if (useMockFallback) {
+      return normalizeDiscoveryCards(MOCK_COMPATIBLE_SPORT_SESSIONS)
+        .filter(card => matchesParticipationType(card, participationType))
+    }
     throw err
   }
 }

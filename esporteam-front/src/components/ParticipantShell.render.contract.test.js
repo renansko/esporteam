@@ -19,8 +19,16 @@ const server = await createServer({
 try {
   const { default: ParticipantShell } = await server.ssrLoadModule('/src/components/ParticipantShell.vue')
 
-  const app = createSSRApp({
-    render: () => h(ParticipantShell, {
+  async function renderShell(props) {
+    const app = createSSRApp({
+      render: () => h(ParticipantShell, props),
+    })
+
+    app.use(createPinia())
+    return renderToString(app)
+  }
+
+  const html = await renderShell({
       discoveryCards: [
         {
           id: 'card-render-1',
@@ -48,15 +56,11 @@ try {
           },
         },
       ],
-    }),
-  })
-
-  app.use(createPinia())
-
-  const html = await renderToString(app)
+    })
 
   assert.match(html, /class="discovery-deck"/)
   assert.match(html, /class="session-card"/)
+  assert.match(html, /Filtros/)
   assert.match(html, /aria-label="Sessao Esportiva Corrida orientada no parque/)
   assert.match(html, /class="session-entry-badge session-entry-badge-curated"/)
   assert.match(html, /Com curadoria/)
@@ -68,7 +72,53 @@ try {
   assert.match(html, /Iniciante a Intermediario/)
   assert.match(html, /7 participantes/)
   assert.match(html, /Boa compatibilidade com sua Disponibilidade/)
+  assert.doesNotMatch(html, /Voltar|Pular|Tenho interesse/)
   assert.doesNotMatch(html, /capacity|capacidade|vaga|slot|remaining/i)
+
+  const loadingHtml = await renderShell({
+    discoveryCards: [],
+    discoveryLoading: true,
+  })
+
+  assert.match(loadingHtml, /aria-label="Descoberta carregando"/)
+  assert.match(loadingHtml, /session-card-skeleton/)
+
+  const emptyHtml = await renderShell({
+    discoveryCards: [],
+    hasDiscoveryFilters: true,
+    discoveryFilters: {
+      sportSlug: 'corrida',
+      level: 'iniciante',
+      goal: 'treino',
+      distanceKm: 20,
+      weekday: 'sabado',
+      startsAt: '08:00',
+      endsAt: '10:00',
+      participationType: 'open',
+    },
+  })
+
+  assert.match(emptyHtml, /Filtros ativos: Corrida · 20 km · Iniciante · Treino · Sabado · 08:00-10:00 · Aberta/)
+  assert.match(emptyHtml, /Nenhuma Sessao Esportiva por perto/)
+  assert.match(emptyHtml, /Amplie a distancia/)
+
+  const defaultEmptyHtml = await renderShell({
+    discoveryCards: [],
+  })
+
+  assert.match(defaultEmptyHtml, /Amplie a distancia/)
+
+  const errorHtml = await renderShell({
+    discoveryCards: [],
+    discoveryError: {
+      title: 'Descoberta sem atualizacao',
+      description: 'Nao foi possivel atualizar a Descoberta agora. Verifique sua conexao e tente novamente.',
+      retryLabel: 'Tentar novamente',
+    },
+  })
+
+  assert.match(errorHtml, /Descoberta sem atualizacao/)
+  assert.match(errorHtml, /Tentar novamente/)
 } finally {
   await server.close()
 }

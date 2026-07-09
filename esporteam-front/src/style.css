@@ -258,10 +258,135 @@ body {
   font-weight: 680;
   max-width: 12ch;
 }
+.participant-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.discovery-filter-toggle {
+  appearance: none;
+  min-height: 36px;
+  border: 1px solid var(--sport-line);
+  border-radius: 8px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--sport-surface-elevated);
+  color: var(--sport-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.discovery-filter-toggle.active {
+  border-color: color-mix(in oklab, var(--sport-accent) 42%, var(--sport-line));
+  color: var(--sport-accent);
+  background: #e9effb;
+}
+.discovery-filter-summary {
+  margin: 10px 0 0;
+  color: var(--sport-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.discovery-filters {
+  margin-top: 18px;
+  border: 1px solid var(--sport-line);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  background: var(--sport-surface-elevated);
+}
+.discovery-filters label,
+.filter-time-range {
+  min-width: 0;
+}
+.discovery-filters label {
+  display: grid;
+  gap: 5px;
+}
+.discovery-filters label > span,
+.discovery-filters legend {
+  color: var(--sport-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.discovery-filters select,
+.discovery-filters input[type="time"] {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid color-mix(in oklab, var(--sport-line) 82%, transparent);
+  border-radius: 8px;
+  padding: 0 9px;
+  background: var(--sport-surface);
+  color: var(--sport-text);
+  font: inherit;
+  font-size: 13px;
+}
+.filter-time-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.discovery-filters fieldset {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.discovery-filters fieldset label {
+  min-height: 32px;
+  border: 1px solid color-mix(in oklab, var(--sport-line) 82%, transparent);
+  border-radius: 999px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sport-surface);
+  color: var(--sport-text);
+  font-size: 12px;
+  font-weight: 650;
+}
+.discovery-filters input[type="radio"] {
+  margin: 0;
+}
+.discovery-filter-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.discovery-filter-actions button,
+.participant-placeholder-action {
+  appearance: none;
+  min-height: 36px;
+  border: 1px solid var(--sport-line);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: var(--sport-surface);
+  color: var(--sport-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.discovery-filter-actions button[type="submit"],
+.participant-placeholder-action {
+  border-color: var(--sport-accent);
+  background: var(--sport-accent);
+  color: white;
+}
 .discovery-deck {
   position: relative;
   margin-top: 24px;
-  min-height: 408px;
+  min-height: 506px;
 }
 .deck-shadow,
 .session-card {
@@ -290,6 +415,17 @@ body {
   grid-template-rows: auto 1fr auto auto;
   gap: 16px;
   box-shadow: 0 14px 28px rgba(38, 35, 29, 0.12);
+  touch-action: pan-y;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+.discovery-deck-interest .session-card {
+  animation: discovery-card-interest 0.24s ease both;
+}
+.discovery-deck-skip .session-card {
+  animation: discovery-card-skip 0.24s ease both;
+}
+.discovery-deck-back .session-card {
+  animation: discovery-card-back 0.18s ease both;
 }
 .session-card-header {
   display: flex;
@@ -387,6 +523,38 @@ body {
   font-size: 13px;
   line-height: 1.45;
 }
+.session-card-skeleton {
+  min-height: 384px;
+  align-content: stretch;
+}
+.session-card-skeleton span {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #edeae3 0%, #f8f6f1 50%, #edeae3 100%);
+  background-size: 200% 100%;
+  animation: sport-skeleton 1.15s ease-in-out infinite;
+}
+.session-card-skeleton span:nth-child(1) {
+  width: 62%;
+  height: 30px;
+}
+.session-card-skeleton span:nth-child(2) {
+  align-self: end;
+  width: 86%;
+  height: 92px;
+}
+.session-card-skeleton span:nth-child(3) {
+  width: 100%;
+  height: 92px;
+}
+.session-card-skeleton span:nth-child(4) {
+  width: 74%;
+  height: 42px;
+}
+@keyframes sport-skeleton {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
 .participant-placeholder {
   margin-top: 24px;
   border: 1px solid var(--sport-line);
@@ -417,6 +585,9 @@ body {
   color: var(--sport-muted);
   line-height: 1.55;
   font-size: 14px;
+}
+.participant-placeholder-action {
+  margin-top: 14px;
 }
 .sport-profile-summary {
   margin: 18px 0 0;
@@ -466,7 +637,13 @@ body {
   font-weight: 650;
 }
 .participant-nav-item:focus-visible,
-.mode-switch:focus-visible {
+.mode-switch:focus-visible,
+.discovery-filter-toggle:focus-visible,
+.discovery-filter-actions button:focus-visible,
+.discovery-action:focus-visible,
+.participant-placeholder-action:focus-visible,
+.discovery-filters select:focus-visible,
+.discovery-filters input:focus-visible {
   outline: 3px solid color-mix(in oklab, var(--sport-accent) 28%, transparent);
   outline-offset: -3px;
 }
@@ -487,7 +664,7 @@ body {
     max-width: 14ch;
   }
   .discovery-deck {
-    min-height: 430px;
+    min-height: 528px;
   }
   .session-card {
     min-height: 406px;
@@ -498,6 +675,26 @@ body {
   .session-facts {
     grid-template-columns: 1fr;
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .session-card,
+  .discovery-deck-interest .session-card,
+  .discovery-deck-skip .session-card,
+  .discovery-deck-back .session-card,
+  .session-card-skeleton span {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+  .discovery-deck-interest .session-card,
+  .discovery-deck-skip .session-card,
+  .discovery-deck-back .session-card {
+    animation-name: discovery-card-calm;
+  }
+}
+@keyframes discovery-card-calm {
+  from { opacity: 0.82; }
+  to { opacity: 1; }
 }
 
 /* ── Page header ── */

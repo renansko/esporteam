@@ -1,15 +1,41 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useAppStore } from '../stores/app'
 import { createSportSessionCardView } from '../features/participant/discoveryCard'
+import {
+  DISCOVERY_GOAL_OPTIONS,
+  DISCOVERY_LEVEL_OPTIONS,
+  DISCOVERY_PARTICIPATION_TYPE_OPTIONS,
+  DISCOVERY_SPORT_OPTIONS,
+  DISCOVERY_WEEKDAY_OPTIONS,
+  createDefaultDiscoverySessionFilters,
+  discoveryFilterOptionLabel,
+} from '../features/participant/discoveryFilters'
 import { PARTICIPANT_TABS, resolveParticipantTab } from '../features/participant/shell'
 import Icon from './Icon.vue'
 
 const props = defineProps({
   discoveryCards: { type: Array, default: null },
+  discoveryLoading: { type: Boolean, default: false },
+  discoveryError: { type: Object, default: null },
+  discoveryFilters: { type: Object, default: () => ({}) },
+  hasDiscoveryFilters: { type: Boolean, default: false },
 })
+const emit = defineEmits([
+  'applyDiscoveryFilters',
+  'retryDiscovery',
+])
 
 const store = useAppStore()
+const filtersOpen = ref(false)
+const draftFilters = reactive(createDefaultDiscoverySessionFilters())
+
+watch(() => props.discoveryFilters, (filters = {}) => {
+  Object.assign(draftFilters, {
+    ...createDefaultDiscoverySessionFilters(),
+    ...filters,
+  })
+}, { immediate: true, deep: true })
 
 const activeTab = computed(() => resolveParticipantTab(store.participantTab))
 const isDiscoverTab = computed(() => activeTab.value.id === 'discover')
@@ -30,6 +56,42 @@ const initials = computed(() => {
   const name = sportProfile.value?.displayName || ''
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]?.toUpperCase()).join('') || 'PE'
 })
+const discoveryEmptyState = computed(() => {
+  if (props.discoveryError) return props.discoveryError
+
+  return {
+    title: 'Nenhuma Sessao Esportiva por perto',
+    description: props.hasDiscoveryFilters
+      ? 'Nenhuma sessao proxima combina com estes filtros. Amplie a distancia ou remova uma Modalidade, Nivel Esportivo ou Disponibilidade.'
+      : 'Ainda nao encontramos sessoes proximas compativeis com seu Perfil Esportivo. Amplie a distancia ou ajuste sua Disponibilidade.',
+  }
+})
+const activeFilterSummary = computed(() => {
+  if (!props.hasDiscoveryFilters) return ''
+
+  const parts = [
+    discoveryFilterOptionLabel(DISCOVERY_SPORT_OPTIONS, props.discoveryFilters.sportSlug),
+    props.discoveryFilters.distanceKm ? `${props.discoveryFilters.distanceKm} km` : '',
+    discoveryFilterOptionLabel(DISCOVERY_LEVEL_OPTIONS, props.discoveryFilters.level),
+    discoveryFilterOptionLabel(DISCOVERY_GOAL_OPTIONS, props.discoveryFilters.goal),
+    discoveryFilterOptionLabel(DISCOVERY_WEEKDAY_OPTIONS, props.discoveryFilters.weekday),
+    props.discoveryFilters.startsAt && props.discoveryFilters.endsAt
+      ? `${props.discoveryFilters.startsAt}-${props.discoveryFilters.endsAt}`
+      : '',
+    discoveryFilterOptionLabel(DISCOVERY_PARTICIPATION_TYPE_OPTIONS, props.discoveryFilters.participationType),
+  ].filter(Boolean)
+
+  return parts.length ? `Filtros ativos: ${parts.join(' · ')}` : ''
+})
+
+function applyFilters() {
+  emit('applyDiscoveryFilters', { ...draftFilters })
+}
+
+function clearFilters() {
+  emit('applyDiscoveryFilters', createDefaultDiscoverySessionFilters())
+}
+
 </script>
 
 <template>
@@ -52,9 +114,117 @@ const initials = computed(() => {
 
       <section class="participant-content" :aria-labelledby="`${activeTab.id}-title`">
         <p class="participant-eyebrow">{{ activeTab.eyebrow }}</p>
-        <h1 :id="`${activeTab.id}-title`">{{ activeTab.title }}</h1>
+        <div class="participant-title-row">
+          <h1 :id="`${activeTab.id}-title`">{{ activeTab.title }}</h1>
+          <button
+            v-if="isDiscoverTab"
+            type="button"
+            :class="['discovery-filter-toggle', { active: filtersOpen || hasDiscoveryFilters }]"
+            :aria-expanded="filtersOpen"
+            aria-controls="discovery-filters"
+            @click="filtersOpen = !filtersOpen"
+          >
+            <Icon name="filter" :size="16" />
+            <span>Filtros</span>
+          </button>
+        </div>
 
-        <div v-if="isDiscoverTab && primaryDiscoveryCard" class="discovery-deck" aria-label="Deck Descobrir">
+        <p v-if="isDiscoverTab && activeFilterSummary" class="discovery-filter-summary">
+          {{ activeFilterSummary }}
+        </p>
+
+        <form
+          v-if="isDiscoverTab && filtersOpen"
+          id="discovery-filters"
+          class="discovery-filters"
+          aria-label="Filtros da Descoberta"
+          @submit.prevent="applyFilters"
+        >
+          <label>
+            <span>Modalidade</span>
+            <select v-model="draftFilters.sportSlug">
+              <option v-for="option in DISCOVERY_SPORT_OPTIONS" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+
+          <label>
+            <span>Distancia</span>
+            <select v-model.number="draftFilters.distanceKm">
+              <option :value="5">5 km</option>
+              <option :value="10">10 km</option>
+              <option :value="20">20 km</option>
+              <option :value="50">50 km</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Nivel Esportivo</span>
+            <select v-model="draftFilters.level">
+              <option v-for="option in DISCOVERY_LEVEL_OPTIONS" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+
+          <label>
+            <span>Objetivo Esportivo</span>
+            <select v-model="draftFilters.goal">
+              <option v-for="option in DISCOVERY_GOAL_OPTIONS" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+
+          <label>
+            <span>Disponibilidade</span>
+            <select v-model="draftFilters.weekday">
+              <option v-for="option in DISCOVERY_WEEKDAY_OPTIONS" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+
+          <div class="filter-time-range" aria-label="Janela de Disponibilidade">
+            <label>
+              <span>Inicio</span>
+              <input v-model="draftFilters.startsAt" type="time">
+            </label>
+            <label>
+              <span>Fim</span>
+              <input v-model="draftFilters.endsAt" type="time">
+            </label>
+          </div>
+
+          <fieldset>
+            <legend>Tipo</legend>
+            <label v-for="option in DISCOVERY_PARTICIPATION_TYPE_OPTIONS" :key="option.value">
+              <input v-model="draftFilters.participationType" type="radio" :value="option.value">
+              <span>{{ option.label }}</span>
+            </label>
+          </fieldset>
+
+          <div class="discovery-filter-actions">
+            <button type="button" @click="clearFilters">Limpar</button>
+            <button type="submit">Aplicar</button>
+          </div>
+        </form>
+
+        <div v-if="isDiscoverTab && discoveryLoading" class="discovery-deck discovery-deck-loading" aria-label="Descoberta carregando">
+          <div class="session-card session-card-skeleton" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+
+        <div
+          v-else-if="isDiscoverTab && primaryDiscoveryCard"
+          class="discovery-deck"
+          aria-label="Deck Descobrir"
+        >
           <div class="deck-shadow deck-shadow-back" aria-hidden="true"></div>
           <div class="deck-shadow deck-shadow-mid" aria-hidden="true"></div>
 
@@ -107,11 +277,19 @@ const initials = computed(() => {
 
         <div v-else class="participant-placeholder">
           <div class="placeholder-icon">
-            <Icon :name="activeTab.icon" :size="28" />
+            <Icon :name="discoveryError ? 'bolt' : activeTab.icon" :size="28" />
           </div>
           <div>
-            <h2>{{ activeTab.emptyState.title }}</h2>
-            <p>{{ activeTab.emptyState.description }}</p>
+            <h2>{{ isDiscoverTab ? discoveryEmptyState.title : activeTab.emptyState.title }}</h2>
+            <p>{{ isDiscoverTab ? discoveryEmptyState.description : activeTab.emptyState.description }}</p>
+            <button
+              v-if="isDiscoverTab && discoveryError"
+              class="participant-placeholder-action"
+              type="button"
+              @click="emit('retryDiscovery')"
+            >
+              {{ discoveryError.retryLabel }}
+            </button>
           </div>
         </div>
 
