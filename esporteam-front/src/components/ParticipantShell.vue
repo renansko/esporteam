@@ -1,12 +1,23 @@
 <script setup>
 import { computed } from 'vue'
 import { useAppStore } from '../stores/app'
+import { createSportSessionCardView } from '../features/participant/discoveryCard'
 import { PARTICIPANT_TABS, resolveParticipantTab } from '../features/participant/shell'
 import Icon from './Icon.vue'
+
+const props = defineProps({
+  discoveryCards: { type: Array, default: null },
+})
 
 const store = useAppStore()
 
 const activeTab = computed(() => resolveParticipantTab(store.participantTab))
+const isDiscoverTab = computed(() => activeTab.value.id === 'discover')
+const primaryDiscoveryCard = computed(() => (
+  props.discoveryCards?.[0]
+    ? createSportSessionCardView(props.discoveryCards[0])
+    : null
+))
 
 const sportProfile = computed(() => store.activeSportProfile)
 const modalityList = computed(() => (
@@ -43,7 +54,58 @@ const initials = computed(() => {
         <p class="participant-eyebrow">{{ activeTab.eyebrow }}</p>
         <h1 :id="`${activeTab.id}-title`">{{ activeTab.title }}</h1>
 
-        <div class="participant-placeholder">
+        <div v-if="isDiscoverTab && primaryDiscoveryCard" class="discovery-deck" aria-label="Deck Descobrir">
+          <div class="deck-shadow deck-shadow-back" aria-hidden="true"></div>
+          <div class="deck-shadow deck-shadow-mid" aria-hidden="true"></div>
+
+          <article
+            class="session-card"
+            :aria-label="primaryDiscoveryCard.accessibilityLabel"
+          >
+            <header class="session-card-header">
+              <span :class="['session-entry-badge', primaryDiscoveryCard.entryBadge.toneClass]">
+                <Icon :name="primaryDiscoveryCard.entryBadge.icon" :size="14" />
+                <span>{{ primaryDiscoveryCard.entryBadge.label }}</span>
+              </span>
+              <span v-if="primaryDiscoveryCard.distanceLabel" class="session-distance">
+                {{ primaryDiscoveryCard.distanceLabel }}
+              </span>
+            </header>
+
+            <div class="session-card-main">
+              <p class="session-modality">{{ primaryDiscoveryCard.modalityLabel }}</p>
+              <h2>{{ primaryDiscoveryCard.title }}</h2>
+              <p class="session-host">
+                {{ primaryDiscoveryCard.hostRoleLabel }} · {{ primaryDiscoveryCard.hostLabel }}
+              </p>
+            </div>
+
+            <dl class="session-facts">
+              <div>
+                <dt>Data</dt>
+                <dd>{{ primaryDiscoveryCard.dateTimeLabel }}</dd>
+              </div>
+              <div>
+                <dt>Nivel Esportivo</dt>
+                <dd>{{ primaryDiscoveryCard.levelLabel }}</dd>
+              </div>
+              <div v-if="primaryDiscoveryCard.participantCountLabel">
+                <dt>Participantes</dt>
+                <dd>{{ primaryDiscoveryCard.participantCountLabel }}</dd>
+              </div>
+              <div v-if="primaryDiscoveryCard.locationLabel">
+                <dt>Local</dt>
+                <dd>{{ primaryDiscoveryCard.locationLabel }}</dd>
+              </div>
+            </dl>
+
+            <p v-if="primaryDiscoveryCard.recommendationReason" class="session-reason">
+              {{ primaryDiscoveryCard.recommendationReason }}
+            </p>
+          </article>
+        </div>
+
+        <div v-else class="participant-placeholder">
           <div class="placeholder-icon">
             <Icon :name="activeTab.icon" :size="28" />
           </div>

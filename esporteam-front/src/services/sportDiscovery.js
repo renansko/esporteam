@@ -8,6 +8,33 @@ function firstValue(...values) {
   return values.find(value => value !== undefined && value !== null)
 }
 
+function publicDiscoveryRaw(payload = {}) {
+  if (!payload || typeof payload !== 'object') return payload
+  if (Array.isArray(payload)) return payload.map(publicDiscoveryRaw)
+
+  const {
+    capacity,
+    remaining_capacity,
+    remainingCapacity,
+    remaining_slots,
+    remainingSlots,
+    available_slots,
+    availableSlots,
+    vacancy_status,
+    vacancyStatus,
+    ...publicPayload
+  } = payload
+
+  return Object.fromEntries(
+    Object.entries(publicPayload).map(([key, value]) => [key, publicDiscoveryRaw(value)]),
+  )
+}
+
+function normalizePublicVacancyStatus(value) {
+  const status = firstValue(value, null)
+  return status === 'hidden' ? status : null
+}
+
 function normalizeModality(payload = {}) {
   if (typeof payload === 'string') return { id: null, name: payload }
 
@@ -27,6 +54,8 @@ function normalizeHostSportProfile(payload = {}) {
 
 function normalizeLocation(payload = {}) {
   const label = firstValue(
+    payload.location_label_public,
+    payload.locationLabelPublic,
     payload.label,
     payload.location_label,
     payload.locationLabel,
@@ -77,17 +106,48 @@ export function normalizeSportProfile(payload = {}) {
   }
 }
 
+function normalizeApprovedParticipant(payload = {}) {
+  return {
+    id: payload.id ?? null,
+    displayName: firstValue(payload.display_name, payload.displayName, payload.name, 'Perfil Esportivo'),
+    raw: publicDiscoveryRaw(payload),
+  }
+}
+
+function normalizeLevel(session = {}) {
+  const explicitLevel = firstValue(session.level, session.sport_level, session.sportLevel, null)
+  if (explicitLevel) return explicitLevel
+
+  const minLevel = firstValue(session.min_level, session.minLevel, null)
+  const maxLevel = firstValue(session.max_level, session.maxLevel, null)
+
+  if (minLevel && maxLevel && minLevel !== maxLevel) return `${minLevel} a ${maxLevel}`
+  return firstValue(minLevel, maxLevel, 'Nivel a definir')
+}
+
 export function normalizeSportSession(payload = {}) {
   const session = payload.sport_session ?? payload.sportSession ?? payload.session ?? payload
+  const approvedParticipants = firstValue(
+    session.approved_participants,
+    session.approvedParticipants,
+    [],
+  )
 
   return {
     id: session.id ?? null,
     title: firstValue(session.title, session.name, 'Sessao Esportiva'),
     modality: normalizeModality(session.modality ?? session.sport),
-    hostSportProfile: normalizeHostSportProfile(session.host_sport_profile ?? session.hostSportProfile ?? session.host),
+    hostSportProfile: normalizeHostSportProfile(
+      session.host_sport_profile
+      ?? session.hostSportProfile
+      ?? session.host
+      ?? payload.host,
+    ),
     startsAt: firstValue(session.starts_at, session.startsAt, session.start_time, session.startTime, null),
     location: normalizeLocation(session.location ?? session),
     entryMode: firstValue(session.entry_mode, session.entryMode, payload.entry_mode, payload.entryMode, 'open'),
+    entryRule: firstValue(session.entry_rule, session.entryRule, payload.entry_rule, payload.entryRule, null),
+    requiresApproval: firstValue(session.requires_approval, session.requiresApproval, null),
     nextAction: firstValue(session.next_action, session.nextAction, payload.next_action, payload.nextAction, null),
     participationStatus: firstValue(
       session.participation_status,
@@ -96,31 +156,52 @@ export function normalizeSportSession(payload = {}) {
       payload.participationStatus,
       null,
     ),
-    level: firstValue(session.level, session.sport_level, session.sportLevel, 'Nivel a definir'),
-    participantCount: firstValue(session.participant_count, session.participantCount, null),
-    raw: session,
+    level: normalizeLevel(session),
+    participantCount: firstValue(session.participant_count, session.participantCount, payload.participant_count, payload.participantCount, null),
+    approvedParticipants: Array.isArray(approvedParticipants)
+      ? approvedParticipants.map(normalizeApprovedParticipant)
+      : [],
+    raw: publicDiscoveryRaw(session),
   }
 }
 
 export function normalizeDiscoveryCard(payload = {}) {
   const session = normalizeSportSession(payload)
+  const host = normalizeHostSportProfile(payload.host ?? session.hostSportProfile)
   const distanceMeters = firstValue(payload.distance_meters, payload.distanceMeters, null)
+  const distanceKm = firstValue(
+    payload.distance_km,
+    payload.distanceKm,
+    typeof distanceMeters === 'number' ? distanceMeters / 1000 : null,
+  )
 
   return {
     id: payload.id ?? session.id,
+    type: firstValue(payload.type, 'session'),
+    score: firstValue(payload.score, null),
+    reasons: Array.isArray(payload.reasons) ? payload.reasons : [],
     sportProfileId: firstValue(payload.sport_profile_id, payload.sportProfileId, null),
+    host,
     session,
     distanceMeters,
+    distanceKm,
     distanceLabel: firstValue(
       payload.distance_label,
       payload.distanceLabel,
-      typeof distanceMeters === 'number' ? `${(distanceMeters / 1000).toFixed(1)} km` : '',
+      typeof distanceKm === 'number' ? `${distanceKm.toFixed(1)} km` : '',
     ),
     scoreLabel: firstValue(payload.score_label, payload.scoreLabel, ''),
+    recommendationReason: firstValue(payload.recommendation_reason, payload.recommendationReason, ''),
     entryMode: firstValue(payload.entry_mode, payload.entryMode, session.entryMode),
+    entryRule: firstValue(payload.entry_rule, payload.entryRule, session.entryRule),
     nextAction: firstValue(payload.next_action, payload.nextAction, session.nextAction),
     participationStatus: firstValue(payload.participation_status, payload.participationStatus, session.participationStatus),
-    raw: payload,
+    participantCount: firstValue(payload.participant_count, payload.participantCount, session.participantCount),
+    vacancyStatus: normalizePublicVacancyStatus(firstValue(payload.vacancy_status, payload.vacancyStatus, null)),
+    safetyActions: Array.isArray(payload.safety_actions)
+      ? payload.safety_actions
+      : Array.isArray(payload.safetyActions) ? payload.safetyActions : [],
+    raw: publicDiscoveryRaw(payload),
   }
 }
 
@@ -141,7 +222,7 @@ export async function fetchActiveSportProfile({ useMockFallback = true } = {}) {
 
 export async function listCompatibleSportSessions(params = {}, { useMockFallback = true } = {}) {
   try {
-    const { data } = await esporteamApi.get('/discovery/sessions', { params })
+    const { data } = await esporteamApi.get('/discovery', { params: { ...params, mode: 'sessions' } })
     return normalizeDiscoveryCards(data?.data ?? data)
   } catch (err) {
     if (useMockFallback) return normalizeDiscoveryCards(MOCK_COMPATIBLE_SPORT_SESSIONS)

@@ -258,6 +258,135 @@ body {
   font-weight: 680;
   max-width: 12ch;
 }
+.discovery-deck {
+  position: relative;
+  margin-top: 24px;
+  min-height: 408px;
+}
+.deck-shadow,
+.session-card {
+  border: 1px solid var(--sport-line);
+  border-radius: 8px;
+  background: var(--sport-surface-elevated);
+}
+.deck-shadow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.deck-shadow-back {
+  transform: translateY(18px) scale(0.94);
+  opacity: 0.36;
+}
+.deck-shadow-mid {
+  transform: translateY(9px) scale(0.97);
+  opacity: 0.58;
+}
+.session-card {
+  position: relative;
+  min-height: 384px;
+  padding: 16px;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 16px;
+  box-shadow: 0 14px 28px rgba(38, 35, 29, 0.12);
+}
+.session-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.session-entry-badge {
+  min-width: 0;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.session-entry-badge-open {
+  background: color-mix(in oklab, var(--sport-open) 14%, var(--sport-surface));
+  color: var(--sport-open);
+}
+.session-entry-badge-curated {
+  background: color-mix(in oklab, var(--sport-curated) 16%, var(--sport-surface));
+  color: var(--sport-curated);
+}
+.session-distance {
+  color: var(--sport-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: right;
+}
+.session-card-main {
+  align-self: end;
+  min-width: 0;
+}
+.session-modality {
+  margin: 0 0 8px;
+  color: var(--sport-accent);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.session-card-main h2 {
+  margin: 0;
+  color: var(--sport-text);
+  font-size: 30px;
+  line-height: 1.05;
+  font-weight: 720;
+  overflow-wrap: anywhere;
+}
+.session-host {
+  margin: 10px 0 0;
+  color: var(--sport-muted);
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.session-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.session-facts div {
+  min-width: 0;
+  border: 1px solid color-mix(in oklab, var(--sport-line) 72%, transparent);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--sport-surface);
+}
+.session-facts dt {
+  margin: 0 0 4px;
+  color: var(--sport-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.session-facts dd {
+  margin: 0;
+  color: var(--sport-text);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.session-reason {
+  margin: 0;
+  border-top: 1px solid color-mix(in oklab, var(--sport-line) 70%, transparent);
+  padding-top: 12px;
+  color: var(--sport-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
 .participant-placeholder {
   margin-top: 24px;
   border: 1px solid var(--sport-line);
@@ -356,6 +485,18 @@ body {
   .participant-content h1 {
     font-size: 26px;
     max-width: 14ch;
+  }
+  .discovery-deck {
+    min-height: 430px;
+  }
+  .session-card {
+    min-height: 406px;
+  }
+  .session-card-main h2 {
+    font-size: 27px;
+  }
+  .session-facts {
+    grid-template-columns: 1fr;
   }
 }
 

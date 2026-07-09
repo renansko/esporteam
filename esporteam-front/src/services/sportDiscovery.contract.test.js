@@ -67,4 +67,76 @@ assert.equal(card.session.hostSportProfile.displayName, 'Luiz Professor')
 assert.equal(card.session.modality.name, 'Volei de praia')
 assert.equal(card.session.location.label, 'Beira-mar Norte')
 
+const backendCard = normalizeDiscoveryCard({
+  id: 'backend-card-1',
+  type: 'session',
+  score: 0.92,
+  reasons: ['availability_fit', 'level_fit'],
+  distance_km: 3.4,
+  recommendation_reason: 'Compativel com sua Disponibilidade',
+  entry_rule: 'approval_required',
+  participant_count: 6,
+  vacancy_status: 'hidden',
+  safety_actions: ['report'],
+  host: {
+    id: 'host-2',
+    display_name: 'Marina Organizadora',
+    role: 'Organizador',
+  },
+  session: {
+    id: 'session-2',
+    title: 'Corrida no parque',
+    starts_at: '2026-07-14T07:30:00-03:00',
+    location_label_public: 'Parque de Coqueiros',
+    city: 'Florianopolis',
+    region: 'SC',
+    requires_approval: true,
+    entry_mode: 'publica_aprovacao',
+    min_level: 'Iniciante',
+    max_level: 'Intermediario',
+    participant_count: 6,
+    sport: { id: 'sport-1', name: 'Corrida' },
+    approved_participants: [
+      { id: 'profile-2', display_name: 'Joao' },
+    ],
+  },
+})
+
+assert.equal(backendCard.type, 'session')
+assert.equal(backendCard.score, 0.92)
+assert.deepEqual(backendCard.reasons, ['availability_fit', 'level_fit'])
+assert.equal(backendCard.distanceKm, 3.4)
+assert.equal(backendCard.distanceLabel, '3.4 km')
+assert.equal(backendCard.recommendationReason, 'Compativel com sua Disponibilidade')
+assert.equal(backendCard.entryRule, 'approval_required')
+assert.equal(backendCard.participantCount, 6)
+assert.equal(backendCard.vacancyStatus, 'hidden')
+assert.deepEqual(backendCard.safetyActions, ['report'])
+assert.equal(backendCard.host.displayName, 'Marina Organizadora')
+assert.equal(backendCard.session.entryMode, 'publica_aprovacao')
+assert.equal(backendCard.session.requiresApproval, true)
+assert.equal(backendCard.session.modality.name, 'Corrida')
+assert.equal(backendCard.session.location.label, 'Parque de Coqueiros')
+assert.equal(backendCard.session.level, 'Iniciante a Intermediario')
+assert.equal(backendCard.session.approvedParticipants[0].displayName, 'Joao')
+assert.equal(backendCard.session.raw.capacity, undefined)
+assert.equal(backendCard.raw.capacity, undefined)
+assert.equal(backendCard.raw.vacancy_status, undefined)
+assert.equal(backendCard.raw.session.capacity, undefined)
+assert.equal(backendCard.raw.session.remaining_slots, undefined)
+
+const publicCapacityCard = normalizeDiscoveryCard({
+  vacancy_status: 'available',
+  session: {
+    capacity: 12,
+    remaining_slots: 2,
+    sport: 'Corrida',
+  },
+})
+
+assert.equal(publicCapacityCard.vacancyStatus, null)
+assert.equal(publicCapacityCard.raw.vacancy_status, undefined)
+assert.equal(publicCapacityCard.raw.session.capacity, undefined)
+assert.equal(publicCapacityCard.raw.session.remaining_slots, undefined)
+
 assert.equal(normalizeDiscoveryCards({ data: [card.raw] }).length, 1)
