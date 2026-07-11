@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { createNearbySportSessionView } from '../features/participant/nearbySession.js'
 import { useNearbySportSessions } from './useNearbySportSessions.js'
 
 const participationUpdates = []
@@ -11,11 +12,12 @@ const nearby = useNearbySportSessions({
         id: 'nearby-card-1',
         distanceKm: 2.4,
         session: {
-          id: 'nearby-session-1',
-          title: 'Corrida no parque',
-          entryMode: 'publica_direta',
-          participantCount: 8,
-        },
+        id: 'nearby-session-1',
+        title: 'Tenis no clube',
+        modality: { name: 'Tenis' },
+        entryMode: 'publica_direta',
+        participantCount: 8,
+      },
       },
     ]
   },
@@ -38,6 +40,7 @@ await nearby.loadNearbySportSessions({ id: 'sport-profile-1' }, { distanceKm: 10
 assert.equal(nearby.nearbySessionsLoading.value, false)
 assert.equal(nearby.nearbySessionsError.value, null)
 assert.equal(nearby.nearbySessionCards.value.length, 1)
+assert.equal(createNearbySportSessionView(nearby.nearbySessionCards.value[0]).modalityIcon, 'sportTennis')
 
 assert.equal(await nearby.submitNearbySessionParticipation(nearby.nearbySessionCards.value[0]), true)
 assert.equal(nearby.nearbySessionParticipationFeedback.value, 'Confirmado')

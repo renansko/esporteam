@@ -17,6 +17,7 @@ matches.setMatchFilter('pending')
 assert.deepEqual(matches.filteredMatches.value.map(item => item.id), ['pending'])
 assert.equal(createParticipantMatchView(sessions[1]).pendingNotice, 'Aguardando aprovacao do Anfitriao da Sessao.')
 assert.equal(createParticipantMatchView(sessions[1]).canOpen, true)
+assert.equal(createParticipantMatchView(sessions[1]).modalityIcon, 'sportVolleyball')
 assert.equal(createParticipantMatchView(sessions[2]).canOpen, false)
 
 matches.setMatchFilter('refused')

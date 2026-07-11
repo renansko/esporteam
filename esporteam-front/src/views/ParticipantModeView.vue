@@ -21,7 +21,7 @@ const {
   onSaved: reloadParticipantSessions,
 })
 const {
-  filteredMatches,
+  matches: participantMatches,
   activeFilter: activeMatchFilter,
   loading: participantMatchesLoading,
   error: participantMatchesError,
@@ -133,7 +133,7 @@ function saveProfile() {
     :sport-session-participation-loading="sportSessionParticipationLoading"
     :sport-session-participation-confirmed="isParticipationConfirmed"
     :sport-session-participation-feedback-tone="sportSessionParticipationFeedbackTone"
-    :participant-matches="filteredMatches"
+    :participant-matches="participantMatches"
     :participant-match-filter="activeMatchFilter"
     :participant-matches-loading="participantMatchesLoading"
     :participant-matches-error="participantMatchesError"

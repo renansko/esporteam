@@ -74,11 +74,13 @@ function matchesParticipationType(card, participationType) {
 }
 
 function normalizeModality(payload = {}) {
-  if (typeof payload === 'string') return { id: null, name: payload }
+  if (typeof payload === 'string') return { id: null, name: payload, slug: null, category: null }
 
   return {
     id: payload.id ?? null,
     name: payload.name ?? payload.title ?? 'Modalidade',
+    slug: payload.slug ?? null,
+    category: payload.category ?? null,
   }
 }
 

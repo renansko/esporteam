@@ -107,6 +107,23 @@ const isDiscoverTab = computed(() => activeTab.value.id === 'discover')
 const isMatchesTab = computed(() => activeTab.value.id === 'matches')
 const isProfileTab = computed(() => activeTab.value.id === 'profile')
 const participantMatchViews = computed(() => props.participantMatches.map(createParticipantMatchView))
+const now = new Date('2026-07-11T00:00:00-03:00')
+const upcomingConfirmedMatches = computed(() => participantMatchViews.value
+  .filter(match => match.statusId === 'confirmed')
+  .filter(match => !match.startsAtDate || match.startsAtDate >= now)
+  .sort((a, b) => {
+    if (!a.startsAtDate || !b.startsAtDate) return 0
+    return a.startsAtDate - b.startsAtDate
+  }))
+const agendaPreviewMatches = computed(() => upcomingConfirmedMatches.value.slice(0, 5))
+const historyMatches = computed(() => participantMatchViews.value
+  .filter(match => !upcomingConfirmedMatches.value.some(upcoming => upcoming.id === match.id)))
+const filteredHistoryMatches = computed(() => props.participantMatchFilter === 'all'
+  ? historyMatches.value
+  : historyMatches.value.filter(match => match.statusId === props.participantMatchFilter))
+const matchFilterLabel = computed(() => (
+  props.participantMatchFilters.find(filter => filter.id === props.participantMatchFilter)?.label || 'Todos'
+))
 const isMapTab = computed(() => activeTab.value.id === 'map')
 const primaryDiscoveryCard = computed(() => (
   props.discoveryCards?.[0]
@@ -355,7 +372,10 @@ function updateGoals(practice, event) {
             </header>
 
             <div class="session-card-main">
-              <p class="session-modality">{{ primaryDiscoveryCard.modalityLabel }}</p>
+              <p class="session-modality">
+                <Icon :name="primaryDiscoveryCard.modalityIcon" :size="15" />
+                <span>{{ primaryDiscoveryCard.modalityLabel }}</span>
+              </p>
               <h2>{{ primaryDiscoveryCard.title }}</h2>
               <p class="session-host">
                 {{ primaryDiscoveryCard.hostRoleLabel }} · {{ primaryDiscoveryCard.hostLabel }}
@@ -450,6 +470,7 @@ function updateGoals(practice, event) {
               :aria-label="session.listAriaLabel"
               @click="selectNearbySession(session.id)"
             >
+              <Icon :name="session.modalityIcon" :size="15" />
               <strong>{{ session.shortModalityLabel }}</strong>
               <span>{{ session.timeCueLabel }}</span>
             </button>
@@ -470,7 +491,7 @@ function updateGoals(practice, event) {
                   <span>{{ session.entryBadge.label }}</span>
                 </span>
                 <strong>{{ session.title }}</strong>
-                <span>{{ session.modalityLabel }} · {{ session.hostRoleLabel }} · {{ session.hostLabel }}</span>
+                <span class="nearby-list-modality"><Icon :name="session.modalityIcon" :size="14" /> {{ session.modalityLabel }} · {{ session.hostRoleLabel }} · {{ session.hostLabel }}</span>
               </div>
               <div class="nearby-list-item-meta">
                 <span>{{ session.timeCueLabel }}</span>
@@ -499,7 +520,10 @@ function updateGoals(practice, event) {
             </span>
 
             <div class="nearby-summary-main">
-              <p class="session-modality">{{ selectedNearbySessionView.modalityLabel }}</p>
+              <p class="session-modality">
+                <Icon :name="selectedNearbySessionView.modalityIcon" :size="15" />
+                <span>{{ selectedNearbySessionView.modalityLabel }}</span>
+              </p>
               <h2>{{ selectedNearbySessionView.title }}</h2>
               <p class="session-host">
                 {{ selectedNearbySessionView.hostRoleLabel }} · {{ selectedNearbySessionView.hostLabel }}
@@ -557,39 +581,91 @@ function updateGoals(practice, event) {
           </section>
         </section>
 
-        <section v-else-if="isMatchesTab" class="participant-matches" aria-label="Partidas do Perfil Esportivo">
-          <div class="match-filter-list" role="group" aria-label="Filtrar Partidas">
+        <section v-else-if="isMatchesTab" class="participant-matches" aria-label="Agenda do Perfil Esportivo">
+          <div class="agenda-toolbar">
+            <p>{{ upcomingConfirmedMatches.length }} confirmados futuros</p>
+            <button
+              type="button"
+              :class="['match-filter-button', { active: filtersOpen || participantMatchFilter !== 'all' }]"
+              :aria-expanded="filtersOpen"
+              aria-controls="match-filters"
+              @click="filtersOpen = !filtersOpen"
+            >
+              <Icon name="filter" :size="15" />
+              <span>{{ matchFilterLabel }}</span>
+            </button>
+          </div>
+
+          <div v-if="filtersOpen" id="match-filters" class="match-filter-sheet" role="group" aria-label="Filtrar historico de participacao">
             <button
               v-for="filter in participantMatchFilters"
               :key="filter.id"
               type="button"
-              :class="['match-filter', { active: filter.id === participantMatchFilter }]"
+              :class="['match-filter-option', { active: filter.id === participantMatchFilter }]"
               :aria-pressed="filter.id === participantMatchFilter"
               @click="emit('setParticipantMatchFilter', filter.id)"
             >
+              <Icon :name="filter.id === participantMatchFilter ? 'check' : 'chevron'" :size="14" />
               {{ filter.label }}
             </button>
           </div>
 
-          <div v-if="participantMatchesLoading" class="participant-placeholder" aria-label="Partidas carregando">
+          <div v-if="participantMatchesLoading" class="participant-placeholder" aria-label="Agenda carregando">
             <div class="placeholder-icon"><Icon name="calendarCheck" :size="28" /></div>
-            <div><h2>Carregando Partidas</h2><p>Buscando o historico do seu Perfil Esportivo.</p></div>
+            <div><h2>Carregando agenda</h2><p>Buscando seus eventos confirmados e historico de participacao.</p></div>
           </div>
           <div v-else-if="participantMatchesError" class="participant-placeholder">
             <div class="placeholder-icon"><Icon name="bolt" :size="28" /></div>
-            <div><h2>Partidas indisponiveis</h2><p>{{ participantMatchesError }}</p><button class="participant-placeholder-action" type="button" @click="emit('retryParticipantMatches')">Tentar novamente</button></div>
+            <div><h2>Agenda indisponivel</h2><p>{{ participantMatchesError }}</p><button class="participant-placeholder-action" type="button" @click="emit('retryParticipantMatches')">Tentar novamente</button></div>
           </div>
-          <div v-else-if="participantMatchViews.length" class="match-list">
-            <article v-for="match in participantMatchViews" :key="match.id" class="match-item">
-              <div class="match-item-heading"><span class="match-modality">{{ match.modality }}</span><span :class="['match-status', match.status.toneClass]"><Icon :name="match.status.icon" :size="14" /><span>{{ match.status.label }}</span></span></div>
-              <h2>{{ match.title }}</h2>
-              <p class="match-host">{{ match.host }}</p>
-              <dl class="match-facts"><div><dt>Data</dt><dd>{{ match.dateTime }}</dd></div></dl>
-              <p v-if="match.pendingNotice" class="match-pending-notice">{{ match.pendingNotice }}</p>
-              <button v-if="match.canOpen" class="session-detail-trigger" type="button" @click="emit('selectParticipantMatch', match.session)">Ver detalhes</button>
-            </article>
+          <div v-else-if="participantMatchViews.length" class="agenda-stack">
+            <section v-if="agendaPreviewMatches.length" class="agenda-rail" aria-label="Resumo dos proximos eventos">
+              <button
+                v-for="match in agendaPreviewMatches"
+                :key="`agenda-${match.id}`"
+                type="button"
+                class="agenda-chip"
+                @click="emit('selectParticipantMatch', match.session)"
+              >
+                <span class="agenda-chip-icon"><Icon :name="match.modalityIcon" :size="18" /></span>
+                <strong>{{ match.modality }}</strong>
+                <span>{{ match.dayLabel }} - {{ match.timeLabel }}</span>
+              </button>
+            </section>
+
+            <div v-if="upcomingConfirmedMatches.length" class="match-list">
+              <article v-for="match in upcomingConfirmedMatches" :key="match.id" class="match-item match-item-confirmed">
+                <div class="match-date-block"><strong>{{ match.dayLabel }}</strong><span>{{ match.timeLabel }}</span></div>
+                <div class="match-item-main">
+                  <div class="match-item-heading"><span class="match-modality"><Icon :name="match.modalityIcon" :size="14" /> {{ match.modality }}</span><span :class="['match-status', match.status.toneClass]"><Icon :name="match.status.icon" :size="14" /><span>{{ match.status.label }}</span></span></div>
+                  <h2>{{ match.title }}</h2>
+                  <p class="match-host">{{ match.host }}</p>
+                  <p class="match-location"><Icon name="map" :size="14" /> {{ match.location }}</p>
+                  <button v-if="match.canOpen" class="session-detail-trigger" type="button" @click="emit('selectParticipantMatch', match.session)">Ver detalhes</button>
+                </div>
+              </article>
+            </div>
+
+            <section v-else class="participant-placeholder agenda-empty">
+              <div class="placeholder-icon"><Icon name="calendarCheck" :size="28" /></div>
+              <div><h2>Nenhum evento confirmado</h2><p>Pedidos aguardando aprovacao e eventos encerrados ficam no historico.</p></div>
+            </section>
+
+            <details v-if="historyMatches.length" class="match-history">
+              <summary>Historico e solicitacoes <span>{{ filteredHistoryMatches.length }}</span></summary>
+              <article v-for="match in filteredHistoryMatches" :key="`history-${match.id}`" class="match-history-item">
+                <div>
+                  <span :class="['match-status', match.status.toneClass]"><Icon :name="match.status.icon" :size="14" /><span>{{ match.status.label }}</span></span>
+                  <h3>{{ match.title }}</h3>
+                  <p class="match-history-modality">{{ match.dateTime }} - <Icon :name="match.modalityIcon" :size="14" /> {{ match.modality }}</p>
+                  <p v-if="match.pendingNotice" class="match-pending-notice">{{ match.pendingNotice }}</p>
+                </div>
+                <button v-if="match.canOpen" class="match-history-action" type="button" @click="emit('selectParticipantMatch', match.session)">Detalhes</button>
+              </article>
+              <p v-if="!filteredHistoryMatches.length" class="match-history-empty">Nenhum item neste filtro.</p>
+            </details>
           </div>
-          <div v-else class="participant-placeholder"><div class="placeholder-icon"><Icon name="calendarCheck" :size="28" /></div><div><h2>Nenhuma Partida neste filtro</h2><p>As sessoes recusadas continuam visiveis em Recusado.</p></div></div>
+          <div v-else class="participant-placeholder"><div class="placeholder-icon"><Icon name="calendarCheck" :size="28" /></div><div><h2>Nenhuma participacao ainda</h2><p>Explore eventos e confirme presenca para montar sua agenda.</p></div></div>
         </section>
 
         <section v-else-if="isProfileTab" class="sport-profile-editor" aria-label="Editar Perfil Esportivo">
@@ -681,8 +757,14 @@ function updateGoals(practice, event) {
           >
             <Icon name="x" :size="18" />
           </button>
-          <p class="participant-eyebrow">Sessao Esportiva</p>
+          <p class="participant-eyebrow session-detail-modality">
+            <Icon v-if="sportSessionDetailView" :name="sportSessionDetailView.modalityIcon || 'sportDefault'" :size="15" />
+            <span>{{ sportSessionDetailView?.modalityLabel || 'Sessao Esportiva' }}</span>
+          </p>
           <h2>{{ sportSessionDetailView?.title || 'Carregando Sessao Esportiva' }}</h2>
+          <p v-if="sportSessionDetailView" class="session-detail-hero-meta">
+            {{ sportSessionDetailView.dateTimeLabel }} - {{ sportSessionDetailView.locationLabel }}
+          </p>
         </header>
 
         <div v-if="sportSessionDetailLoading" class="session-detail-loading" aria-label="Detalhe carregando">
@@ -702,6 +784,48 @@ function updateGoals(practice, event) {
         </div>
 
         <div v-else-if="sportSessionDetailView" class="session-detail-body">
+          <div class="session-detail-status-row">
+            <span :class="['session-entry-badge', sportSessionDetailView.entryBadge.toneClass]">
+              <Icon :name="sportSessionDetailView.entryBadge.icon" :size="14" />
+              <span>{{ sportSessionDetailView.confirmed ? 'Confirmado' : sportSessionDetailView.entryBadge.label }}</span>
+            </span>
+            <span class="session-detail-level">{{ sportSessionDetailView.levelLabel }}</span>
+          </div>
+
+          <dl class="session-detail-quick-facts">
+            <div>
+              <dt>Quando</dt>
+              <dd>{{ sportSessionDetailView.dateTimeLabel }}</dd>
+            </div>
+            <div>
+              <dt>Com quem</dt>
+              <dd>{{ sportSessionDetailView.hostRoleLabel }} - {{ sportSessionDetailView.hostLabel }}</dd>
+            </div>
+          </dl>
+
+          <section class="session-detail-map-preview" aria-label="Local da atividade">
+            <div class="map-preview-art" aria-hidden="true">
+              <img src="/assets/session-map-preview.png" alt="">
+              <strong><Icon name="map" :size="18" /></strong>
+            </div>
+            <div class="map-preview-copy">
+              <p>Local da atividade</p>
+              <h3>{{ sportSessionDetailView.locationLabel }}</h3>
+              <span>{{ sportSessionDetailView.meetingPoint }}</span>
+            </div>
+            <button class="map-preview-action" type="button">
+              <Icon name="external" :size="15" />
+              Navegar
+            </button>
+          </section>
+
+          <p class="session-detail-summary">{{ sportSessionDetailView.description }}</p>
+
+          <p v-if="sportSessionDetailView.participantCountLabel" class="session-detail-people">
+            <Icon name="user" :size="15" />
+            {{ sportSessionDetailView.participantCountLabel }} confirmados
+          </p>
+
           <span :class="['session-entry-badge', sportSessionDetailView.entryBadge.toneClass]">
             <Icon :name="sportSessionDetailView.entryBadge.icon" :size="14" />
             <span>{{ sportSessionDetailView.confirmed ? 'Confirmado' : sportSessionDetailView.entryBadge.label }}</span>

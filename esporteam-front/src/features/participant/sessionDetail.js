@@ -2,6 +2,7 @@ import {
   formatSessionDateTime,
   resolveSessionEntryBadge,
 } from './discoveryCard.js'
+import { resolveSportIcon } from './sportIcons.js'
 
 export function createSportSessionDetailView(detail, {
   confirmed = false,
@@ -49,11 +50,13 @@ export function createSportSessionDetailView(detail, {
   return {
     title: detail.title,
     modalityLabel: detail.modality?.name || 'Modalidade',
+    modalityIcon: resolveSportIcon(detail.modality),
     description: detail.description || 'Descricao a definir pelo Anfitriao da Sessao.',
     hostLabel: detail.hostSportProfile?.displayName || 'Anfitriao da Sessao',
     hostRoleLabel: detail.hostSportProfile?.role || 'Anfitriao da Sessao',
     dateTimeLabel: formatSessionDateTime(detail.startsAt),
     levelLabel: detail.level || 'Nivel a definir',
+    locationLabel: detail.location?.label || detail.meetingPoint || 'Local a definir',
     meetingPoint: detail.meetingPoint || detail.location?.label || 'Ponto de encontro a definir',
     rules: detail.rules?.length ? detail.rules : ['Combinar ajustes com o Anfitriao da Sessao.'],
     equipment: detail.equipment?.length ? detail.equipment : ['Equipamento pessoal da Modalidade.'],

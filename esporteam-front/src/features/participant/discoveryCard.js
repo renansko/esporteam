@@ -1,3 +1,5 @@
+import { resolveSportIcon } from './sportIcons.js'
+
 const CURATED_ENTRY_MODES = new Set([
   'curated',
   'publica_aprovacao',
@@ -88,6 +90,7 @@ export function createSportSessionCardView(card = {}) {
 
   const title = firstValue(session.title, 'Sessao Esportiva')
   const modalityLabel = firstValue(modality.name, modality.title, 'Modalidade')
+  const modalityIcon = resolveSportIcon(modality)
   const dateTimeLabel = formatSessionDateTime(session.startsAt)
   const participantCountLabel = typeof participantCount === 'number'
     ? `${participantCount} ${participantCount === 1 ? 'participante' : 'participantes'}`
@@ -109,6 +112,7 @@ export function createSportSessionCardView(card = {}) {
     id: firstValue(card.id, session.id, title),
     title,
     modalityLabel,
+    modalityIcon,
     hostLabel,
     hostRoleLabel: firstValue(host.role, 'Anfitriao da Sessao'),
     distanceLabel,

@@ -25,13 +25,13 @@ export const PARTICIPANT_TABS = [
   },
   {
     id: 'matches',
-    label: 'Partidas',
+    label: 'Agenda',
     icon: 'calendarCheck',
-    eyebrow: 'Participacao',
-    title: 'Estados de participacao',
+    eyebrow: 'Agenda',
+    title: 'Proximos eventos',
     emptyState: {
-      title: 'Partidas sem registros',
-      description: 'Confirmado, Aguardando aprovacao e Recusado entram aqui com icone, texto e cor compartilhados.',
+      title: 'Nenhum evento confirmado',
+      description: 'Quando uma participacao for confirmada, ela aparece aqui como sua agenda esportiva.',
     },
   },
   {

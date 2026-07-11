@@ -69,6 +69,7 @@ const cardView = createSportSessionCardView({
 
 assert.equal(cardView.title, 'Volei de praia tecnico')
 assert.equal(cardView.modalityLabel, 'Volei de praia')
+assert.equal(cardView.modalityIcon, 'sportVolleyball')
 assert.equal(cardView.hostLabel, 'Luiz Pereira')
 assert.equal(cardView.hostRoleLabel, 'Professor')
 assert.equal(cardView.distanceLabel, '2.4 km')

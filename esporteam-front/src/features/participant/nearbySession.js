@@ -2,6 +2,7 @@ import {
   formatSessionDateTime,
   resolveSessionEntryBadge,
 } from './discoveryCard.js'
+import { resolveSportIcon } from './sportIcons.js'
 
 function firstValue(...values) {
   return values.find(value => value !== undefined && value !== null && value !== '')
@@ -87,6 +88,7 @@ export function createNearbySportSessionView(card = {}, index = 0) {
   const modality = session.modality ?? session.sport ?? {}
   const host = firstValue(card.host, session.hostSportProfile, session.host, {})
   const modalityLabel = firstValue(modality.name, modality.title, 'Modalidade')
+  const modalityIcon = resolveSportIcon(modality)
   const title = firstValue(session.title, 'Sessao Esportiva')
   const hostLabel = firstValue(host.displayName, host.display_name, host.name, 'Anfitriao da Sessao')
   const hostRoleLabel = firstValue(host.role, 'Anfitriao da Sessao')
@@ -115,6 +117,7 @@ export function createNearbySportSessionView(card = {}, index = 0) {
     rawCard: card,
     title,
     modalityLabel,
+    modalityIcon,
     shortModalityLabel: modalityLabel.length > 12 ? `${modalityLabel.slice(0, 12).trim()}…` : modalityLabel,
     hostLabel,
     hostRoleLabel,
