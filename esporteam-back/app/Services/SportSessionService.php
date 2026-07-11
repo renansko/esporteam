@@ -153,6 +153,7 @@ class SportSessionService
             ->whereHas('participationRecords', fn (Builder $query) => $query->where('sport_profile_id', $profile->id))
             ->orderByDesc('starts_at')
             ->orderByDesc('id')
+            ->limit(50)
             ->get();
     }
 

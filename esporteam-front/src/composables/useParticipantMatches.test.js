@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { createParticipantMatchView } from '../features/participant/matches.js'
+import { normalizeParticipationState, normalizeParticipantSportSessions } from '../services/sportDiscovery.js'
 import { useParticipantMatches } from './useParticipantMatches.js'
 
 const sessions = [
@@ -20,3 +21,17 @@ assert.equal(createParticipantMatchView(sessions[2]).canOpen, false)
 
 matches.setMatchFilter('refused')
 assert.deepEqual(matches.filteredMatches.value.map(item => item.id), ['refused'])
+
+assert.deepEqual(
+  ['joined', 'approved', 'interested', 'invited', 'declined', 'removed'].map(normalizeParticipationState),
+  [
+    { status: 'confirmed', label: 'Confirmado', backendStatus: 'joined' },
+    { status: 'confirmed', label: 'Confirmado', backendStatus: 'approved' },
+    { status: 'pending', label: 'Aguardando aprovacao', backendStatus: 'interested' },
+    { status: 'pending', label: 'Aguardando aprovacao', backendStatus: 'invited' },
+    { status: 'refused', label: 'Recusado', backendStatus: 'declined' },
+    { status: 'refused', label: 'Recusado', backendStatus: 'removed' },
+  ],
+)
+assert.deepEqual(normalizeParticipationState('left'), { status: null, label: '', backendStatus: 'left' })
+assert.deepEqual(normalizeParticipantSportSessions([{ id: 'left', participation_status: 'left' }]), [])

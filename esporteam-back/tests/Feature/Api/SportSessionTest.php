@@ -3,6 +3,7 @@
 use App\Models\Connection;
 use App\Models\Sport;
 use App\Models\SportProfile;
+use App\Models\SportSession;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -321,6 +322,45 @@ it('lists participant sessions with current profile status, including declined h
         ->assertJsonPath('data.0.id', $sessionId)
         ->assertJsonPath('data.0.participation.0.profile.id', $participant->id)
         ->assertJsonPath('data.0.participation.0.status', 'declined');
+});
+
+it('returns every persisted participation state and empty history safely', function () {
+    $host = createSessionSportProfileForUser(77, 'Host');
+    $participant = createSessionSportProfileForUser(88, 'Participant');
+    $statuses = ['joined', 'approved', 'interested', 'invited', 'declined', 'removed', 'left'];
+
+    foreach ($statuses as $index => $status) {
+        $session = SportSession::query()->create([
+            'creator_profile_id' => $host->id,
+            'title' => "Historico {$index}",
+            'type' => 'partida',
+            'starts_at' => now()->addDays($index + 1)->setSecond(0),
+            'entry_mode' => 'publica_direta',
+            'status' => 'open',
+            'visibility' => 'public',
+        ]);
+
+        $session->participants()->attach($participant->id, ['status' => $status]);
+    }
+
+    $payload = actingAsWorkspace(1, ['id' => 88])
+        ->getJson('/api/profile/sessions')
+        ->assertOk()
+        ->assertJsonCount(count($statuses), 'data')
+        ->json('data');
+
+    expect(collect($payload)->pluck('participation.0.status')->sort()->values()->all())
+        ->toBe(collect($statuses)->sort()->values()->all());
+
+    createSessionSportProfileForUser(89, 'Empty history');
+    actingAsWorkspace(1, ['id' => 89])
+        ->getJson('/api/profile/sessions')
+        ->assertOk()
+        ->assertJsonCount(0, 'data');
+
+    actingAsWorkspace(1, ['id' => 99])
+        ->getJson('/api/profile/sessions')
+        ->assertNotFound();
 });
 
 it('lets eligible profiles join public direct sessions without prior match', function () {

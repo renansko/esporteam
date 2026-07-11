@@ -32,7 +32,7 @@ Side effects: nenhum.
 
 Assinatura: `participantSessionsForUser(int $userId): Collection`
 
-Lista Sessoes Esportivas em que o Perfil Esportivo autenticado possui participacao, incluindo estados confirmados, aguardando e recusados/removidos. Carrega somente registro de participacao do perfil autenticado para normalizacao segura no front.
+Lista ate 50 Sessoes Esportivas em que o Perfil Esportivo autenticado possui participacao, ordenadas da mais recente para a mais antiga. Inclui `joined`, `approved`, `interested`, `invited`, `declined`, `removed` e `left`; o front normaliza os cinco primeiros grupos para Partidas e deixa `left` fora da primeira interface, conforme PRD. Carrega somente registro de participacao do perfil autenticado para normalizacao segura no front.
 
 Side effects: nenhum.
 
