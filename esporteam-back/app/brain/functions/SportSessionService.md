@@ -28,6 +28,14 @@ Retorna detalhe de Sessao Esportiva publica e aberta. Oculta sessoes privadas/en
 
 Side effects: nenhum.
 
+## participantSessionsForUser
+
+Assinatura: `participantSessionsForUser(int $userId): Collection`
+
+Lista Sessoes Esportivas em que o Perfil Esportivo autenticado possui participacao, incluindo estados confirmados, aguardando e recusados/removidos. Carrega somente registro de participacao do perfil autenticado para normalizacao segura no front.
+
+Side effects: nenhum.
+
 ## recommendationsForHost
 
 Assinatura: `recommendationsForHost(int $userId, SportSession $session, array $filters = []): Collection`

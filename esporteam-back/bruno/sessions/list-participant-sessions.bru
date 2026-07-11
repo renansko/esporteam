@@ -1,0 +1,21 @@
+meta {
+  name: List Participant Sessions
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/profile/sessions
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/profile/sessions lista sessoes em que Perfil Esportivo autenticado possui participacao.
+
+  Inclui estados Confirmado, Aguardando e Recusado/removido para alimentar Partidas.
+}

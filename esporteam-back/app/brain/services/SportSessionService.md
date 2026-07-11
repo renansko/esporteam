@@ -22,6 +22,7 @@ Ele preserva `SportProfile` como identidade de participacao: callers passam `use
 - [`respondToInvite`](../functions/SportSessionService.md#respondToInvite)
 - [`decideParticipant`](../functions/SportSessionService.md#decideParticipant)
 - [`join`](../functions/SportSessionService.md#join)
+- [`participantSessionsForUser`](../functions/SportSessionService.md#participantSessionsForUser)
 
 ## Observacoes
 

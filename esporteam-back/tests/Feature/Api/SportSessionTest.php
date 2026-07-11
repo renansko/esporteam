@@ -291,6 +291,38 @@ it('lets a sport profile join an open session once', function () {
         ->assertUnprocessable();
 });
 
+it('lists participant sessions with current profile status, including declined history', function () {
+    createSessionSportProfileForUser(77, 'Host');
+    $participant = createSessionSportProfileForUser(88, 'Participant');
+
+    $sessionId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'title' => 'Sessao curada',
+            'type' => 'partida',
+            'starts_at' => now()->addDay()->setSecond(0)->toISOString(),
+            'entry_mode' => 'publica_aprovacao',
+        ])
+        ->assertCreated()
+        ->json('data.id');
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->postJson("/api/sessions/{$sessionId}/join")
+        ->assertCreated()
+        ->assertJsonPath('data.participation.1.status', 'interested');
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->patchJson("/api/sessions/{$sessionId}/participants/{$participant->id}", ['action' => 'decline'])
+        ->assertOk();
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->getJson('/api/profile/sessions')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $sessionId)
+        ->assertJsonPath('data.0.participation.0.profile.id', $participant->id)
+        ->assertJsonPath('data.0.participation.0.status', 'declined');
+});
+
 it('lets eligible profiles join public direct sessions without prior match', function () {
     $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
     createSessionSportProfileForUser(77, 'Host');

@@ -54,6 +54,16 @@ class SportSessionController extends Controller
         );
     }
 
+    public function participantSessions(Request $request): JsonResponse
+    {
+        return $this->successResponse(
+            SportSessionResource::collection($this->sessions->participantSessionsForUser(
+                (int) $request->user()->id,
+            )),
+            'Participant sessions loaded.',
+        );
+    }
+
     public function join(Request $request, SportSession $session): JsonResponse
     {
         $session = $this->sessions->join((int) $request->user()->id, $session);

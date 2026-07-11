@@ -138,6 +138,25 @@ class SportSessionService
     }
 
     /**
+     * @wiki app/brain/functions/SportSessionService.md#participantSessionsForUser
+     */
+    public function participantSessionsForUser(int $userId): Collection
+    {
+        $profile = $this->requireProfile($userId);
+
+        return SportSession::query()
+            ->with(['creator', 'sport', 'participants'])
+            ->with(['participationRecords' => fn ($query) => $query
+                ->where('sport_profile_id', $profile->id)
+                ->with('profile')])
+            ->withCount(['participants as participant_count' => fn (Builder $query) => $query->whereIn('session_participants.status', SessionParticipantStatus::activeValues())])
+            ->whereHas('participationRecords', fn (Builder $query) => $query->where('sport_profile_id', $profile->id))
+            ->orderByDesc('starts_at')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    /**
      * @wiki app/brain/functions/SportSessionService.md#recommendationsForHost
      */
     public function recommendationsForHost(int $userId, SportSession $session, array $filters = []): Collection
