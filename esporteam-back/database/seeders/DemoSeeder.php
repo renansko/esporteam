@@ -17,6 +17,7 @@ class DemoSeeder extends Seeder
 {
     private const FIRST_DEMO_USER_ID = 8001;
     private const PROFILE_COUNT = 40;
+    private const PRACTITIONER_EMAIL = 'ana.praticante@esporteam.test';
 
     public function run(): void
     {
@@ -152,7 +153,7 @@ class DemoSeeder extends Seeder
                 ['user_id' => $userId],
                 [
                     'display_name' => $name,
-                    'bio' => $this->bioFor($name, $primarySlug),
+                    'bio' => $this->bioFor($name, $primarySlug, $userId),
                     'city' => $location['city'],
                     'region' => $location['region'],
                     'latitude_approx' => $location['latitude'] + (($index % 5) * 0.003),
@@ -190,6 +191,14 @@ class DemoSeeder extends Seeder
                 'ends_at' => sprintf('%02d:00', 19 + ($index % 3)),
             ]);
 
+            if ($userId === self::FIRST_DEMO_USER_ID) {
+                $profile->availabilityWindows()->create([
+                    'weekday' => 6,
+                    'starts_at' => '09:00',
+                    'ends_at' => '12:00',
+                ]);
+            }
+
             $profiles[] = $profile;
         }
 
@@ -211,8 +220,10 @@ class DemoSeeder extends Seeder
 
         $teachers = [];
         foreach ($teacherSpecs as $index => $spec) {
+            $teacherProfile = $profiles[$index + 24];
+
             $teachers[] = TeacherProfile::query()->create([
-                'sport_profile_id' => $profiles[$index]->id,
+                'sport_profile_id' => $teacherProfile->id,
                 'headline' => $spec['headline'],
                 'credentials' => $spec['credentials'],
                 'hourly_price_cents' => $spec['hourly_price_cents'],
@@ -269,10 +280,10 @@ class DemoSeeder extends Seeder
     private function seedSportSessions(array $profiles, array $sports): array
     {
         $sessionSpecs = [
-            ['title' => 'Pelada leve depois do trabalho', 'sport' => 'futebol', 'type' => 'partida', 'location' => 'Arena Vila Madalena'],
+            ['title' => 'Pelada leve para voltar a jogar', 'sport' => 'futebol', 'type' => 'partida', 'location' => 'Arena Vila Madalena', 'entry_mode' => 'publica_direta', 'min_level' => 'beginner', 'max_level' => 'intermediate', 'weekday' => 1, 'hour' => 7],
             ['title' => 'Corrida 5 km conversada', 'sport' => 'corrida', 'type' => 'corrida', 'location' => 'Parque Ibirapuera'],
             ['title' => 'Racha de basquete 3x3', 'sport' => 'basquete', 'type' => 'partida', 'location' => 'Quadra Augusta'],
-            ['title' => 'Volei misto na quadra aberta', 'sport' => 'volei', 'type' => 'encontro', 'location' => 'Ginasio Lapa'],
+            ['title' => 'Volei misto com aprovacao do anfitriao', 'sport' => 'volei', 'type' => 'encontro', 'location' => 'Ginasio Lapa', 'entry_mode' => 'publica_aprovacao', 'min_level' => 'beginner', 'max_level' => 'advanced', 'weekday' => 3, 'hour' => 18],
             ['title' => 'Treino de saque no tenis', 'sport' => 'tenis', 'type' => 'treino', 'location' => 'Centro Esportivo Pinheiros'],
             ['title' => 'Beach tennis iniciantes', 'sport' => 'beach-tennis', 'type' => 'encontro', 'location' => 'Arena Moema'],
             ['title' => 'Pedal urbano curto', 'sport' => 'ciclismo', 'type' => 'encontro', 'location' => 'Praca Panamericana'],
@@ -295,19 +306,31 @@ class DemoSeeder extends Seeder
 
         foreach ($sessionSpecs as $index => $spec) {
             $location = $locations[$index % count($locations)];
+            $entryMode = $spec['entry_mode'] ?? match ($index % 5) {
+                1 => 'publica_aprovacao',
+                4 => 'convite',
+                default => 'publica_direta',
+            };
+
             $sessions[] = SportSession::query()->create([
                 'creator_profile_id' => $profiles[($index + 8) % count($profiles)]->id,
                 'sport_id' => $sports[$spec['sport']]->id,
                 'title' => $spec['title'],
                 'description' => 'Sessao aberta e gratuita para perfis esportivos da regiao combinarem pratica local.',
                 'type' => $spec['type'],
-                'starts_at' => CarbonImmutable::now()->addDays(intdiv($index, 2) + 1)->setTime(7 + (($index % 6) * 2), 0),
+                'starts_at' => isset($spec['weekday'], $spec['hour'])
+                    ? $this->nextWeekdayAt($spec['weekday'], $spec['hour'])
+                    : CarbonImmutable::now()->addDays(intdiv($index, 2) + 1)->setTime(7 + (($index % 6) * 2), 0),
                 'location_label' => $spec['location'],
                 'city' => $location['city'],
                 'region' => $location['region'],
                 'latitude_approx' => $location['latitude'],
                 'longitude_approx' => $location['longitude'],
                 'capacity' => 6 + ($index % 8),
+                'requires_approval' => $entryMode === 'publica_aprovacao',
+                'entry_mode' => $entryMode,
+                'min_level' => $spec['min_level'] ?? $this->minLevelForSession($index),
+                'max_level' => $spec['max_level'] ?? $this->maxLevelForSession($index),
                 'visibility' => 'public',
                 'status' => 'open',
             ]);
@@ -319,29 +342,56 @@ class DemoSeeder extends Seeder
     private function seedSessionParticipants(array $sessions, array $profiles): void
     {
         foreach ($sessions as $index => $session) {
-            $participants = [];
+            $participants = [
+                $session->creator_profile_id => 'joined',
+            ];
             $offset = 1;
 
             while (count($participants) < 2 + ($index % 3)) {
                 $candidate = $profiles[($index + ($offset * 5)) % count($profiles)];
                 $offset++;
 
-                if ($candidate->id === $session->creator_profile_id || in_array($candidate->id, $participants, true)) {
+                if ($candidate->id === $session->creator_profile_id || array_key_exists($candidate->id, $participants)) {
                     continue;
                 }
 
-                $participants[] = $candidate->id;
+                $participants[$candidate->id] = $this->participantStatusFor($session->entry_mode->value, count($participants), $index);
             }
 
-            foreach ($participants as $profileId) {
+            foreach ($participants as $profileId => $status) {
                 DB::table('session_participants')->insert([
                     'sport_session_id' => $session->id,
                     'sport_profile_id' => $profileId,
-                    'status' => 'joined',
+                    'status' => $status,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
+        }
+
+        $this->seedPractitionerJourney($sessions, $profiles);
+    }
+
+    private function seedPractitionerJourney(array $sessions, array $profiles): void
+    {
+        $practitioner = $profiles[0];
+
+        foreach ([0 => 'joined', 3 => 'interested', 4 => 'invited', 12 => 'declined'] as $sessionIndex => $status) {
+            if ($sessions[$sessionIndex]->creator_profile_id === $practitioner->id) {
+                continue;
+            }
+
+            DB::table('session_participants')->updateOrInsert(
+                [
+                    'sport_session_id' => $sessions[$sessionIndex]->id,
+                    'sport_profile_id' => $practitioner->id,
+                ],
+                [
+                    'status' => $status,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            );
         }
     }
 
@@ -442,8 +492,16 @@ class DemoSeeder extends Seeder
         ];
     }
 
-    private function bioFor(string $name, string $primarySportSlug): string
+    private function bioFor(string $name, string $primarySportSlug, int $userId): string
     {
+        if ($userId === self::FIRST_DEMO_USER_ID) {
+            return sprintf(
+                '%s e o perfil demo de praticante (%s) para testar descoberta, convites e participacao em sessoes reais.',
+                $name,
+                self::PRACTITIONER_EMAIL,
+            );
+        }
+
         return "{$name} usa o Esporteam para encontrar companhia local em {$primarySportSlug}, combinar treinos e descobrir sessoes abertas.";
     }
 
@@ -487,5 +545,45 @@ class DemoSeeder extends Seeder
     private function lastDemoUserId(): int
     {
         return self::FIRST_DEMO_USER_ID + self::PROFILE_COUNT - 1;
+    }
+
+    private function nextWeekdayAt(int $weekday, int $hour): CarbonImmutable
+    {
+        $candidate = CarbonImmutable::now()->next($weekday)->setTime($hour, 0);
+
+        return $candidate->isPast()
+            ? $candidate->addWeek()
+            : $candidate;
+    }
+
+    private function minLevelForSession(int $index): ?string
+    {
+        return match ($index % 4) {
+            0 => 'beginner',
+            1 => 'intermediate',
+            default => null,
+        };
+    }
+
+    private function maxLevelForSession(int $index): ?string
+    {
+        return match ($index % 4) {
+            0 => 'intermediate',
+            1 => 'competitive',
+            default => null,
+        };
+    }
+
+    private function participantStatusFor(string $entryMode, int $participantIndex, int $sessionIndex): string
+    {
+        if ($entryMode === 'publica_aprovacao') {
+            return $participantIndex % 2 === 0 ? 'approved' : 'interested';
+        }
+
+        if ($entryMode === 'convite') {
+            return $sessionIndex % 2 === 0 ? 'invited' : 'approved';
+        }
+
+        return $participantIndex % 4 === 0 ? 'left' : 'joined';
     }
 }
