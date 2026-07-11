@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict'
 import {
+  fetchSportSessionDetail,
+  joinOpenSportSession,
   listCompatibleSportSessions,
   normalizeDiscoveryCard,
   normalizeDiscoveryCards,
   normalizeDiscoverySessionFilters,
+  normalizeSportSessionDetail,
   normalizeSportProfile,
 } from './sportDiscovery.js'
 import { esporteamApi } from './api.js'
@@ -144,6 +147,48 @@ assert.equal(publicCapacityCard.raw.session.remaining_slots, undefined)
 
 assert.equal(normalizeDiscoveryCards({ data: [card.raw] }).length, 1)
 
+const openDetail = normalizeSportSessionDetail({
+  id: 'session-open-detail',
+  title: 'Corrida aberta',
+  description: 'Treino leve para Entusiastas.',
+  entry_mode: 'publica_direta',
+  next_action: 'entrar',
+  sport: { id: 'sport-corrida', name: 'Corrida' },
+  creator: { id: 'host-open', display_name: 'Marina Costa', role: 'Organizador' },
+  starts_at: '2026-07-12T08:00:00-03:00',
+  location_label_public: 'Parque de Coqueiros',
+  meeting_point: 'Portao principal',
+  min_level: 'Iniciante',
+  max_level: 'Iniciante',
+  participant_count: 8,
+  capacity: 12,
+  remaining_slots: 4,
+  rules: ['Chegar cedo'],
+  equipment: ['Tenis'],
+  participants: [{ id: 'profile-1', display_name: 'Ana Silva' }],
+})
+
+assert.equal(openDetail.id, 'session-open-detail')
+assert.equal(openDetail.title, 'Corrida aberta')
+assert.equal(openDetail.description, 'Treino leve para Entusiastas.')
+assert.equal(openDetail.entryMode, 'publica_direta')
+assert.equal(openDetail.nextAction, 'entrar')
+assert.equal(openDetail.hostSportProfile.displayName, 'Marina Costa')
+assert.equal(openDetail.meetingPoint, 'Portao principal')
+assert.deepEqual(openDetail.rules, ['Chegar cedo'])
+assert.deepEqual(openDetail.equipment, ['Tenis'])
+assert.equal(openDetail.participants[0].displayName, 'Ana Silva')
+assert.equal(openDetail.raw.capacity, undefined)
+assert.equal(openDetail.raw.remaining_slots, undefined)
+
+const collectionParticipationDetail = normalizeSportSessionDetail({
+  ...openDetail.raw,
+  participation: [{ status: 'joined' }],
+})
+
+assert.equal(collectionParticipationDetail.participationState.status, 'confirmed')
+assert.equal(collectionParticipationDetail.participationState.backendStatus, 'joined')
+
 assert.deepEqual(normalizeDiscoverySessionFilters({
   sportSlug: 'corrida',
   level: 'iniciante',
@@ -165,6 +210,7 @@ assert.deepEqual(normalizeDiscoverySessionFilters({
 })
 
 const originalGet = esporteamApi.get
+const originalPost = esporteamApi.post
 let requested = null
 esporteamApi.get = async (url, config) => {
   requested = { url, params: config.params }
@@ -230,6 +276,32 @@ try {
 
   assert.equal(openCards.length, 1)
   assert.equal(openCards[0].id, 'open-card')
+
+  esporteamApi.get = async (url) => {
+    assert.equal(url, '/sessions/session-open-detail')
+    return { data: { data: openDetail.raw } }
+  }
+
+  const fetchedDetail = await fetchSportSessionDetail('session-open-detail', { useMockFallback: false })
+  assert.equal(fetchedDetail.title, 'Corrida aberta')
+
+  esporteamApi.post = async (url) => {
+    assert.equal(url, '/sessions/session-open-detail/join')
+    return {
+      data: {
+        data: {
+          ...openDetail.raw,
+          session_participants: [{ status: 'joined' }],
+        },
+      },
+    }
+  }
+
+  const joinedDetail = await joinOpenSportSession('session-open-detail', { useMockFallback: false })
+  assert.equal(joinedDetail.participationState.status, 'confirmed')
+  assert.equal(joinedDetail.participationState.label, 'Confirmado')
+  assert.equal(joinedDetail.participationState.backendStatus, 'joined')
 } finally {
   esporteamApi.get = originalGet
+  esporteamApi.post = originalPost
 }

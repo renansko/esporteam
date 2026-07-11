@@ -99,6 +99,7 @@ export const useAppStore = defineStore('app', {
     page: 'inbox',                  // inbox | ideas | competitors | roadmap
     participantTab: DEFAULT_PARTICIPANT_TAB, // discover | map | matches | profile
     activeSportProfile: MOCK_ACTIVE_SPORT_PROFILE,
+    participantSportSessions: [],
     publicMode: false,
     lang: 'pt',
     theme: 'light',
@@ -298,6 +299,20 @@ export const useAppStore = defineStore('app', {
     setPage(p)     { this.page = p; this.publicMode = (p === 'public') },
     setParticipantTab(tab) { this.participantTab = isParticipantTab(tab) ? tab : DEFAULT_PARTICIPANT_TAB },
     setActiveSportProfile(profile) { this.activeSportProfile = profile || MOCK_ACTIVE_SPORT_PROFILE },
+    upsertParticipantSportSession(sessionDetail) {
+      if (!sessionDetail?.id) return
+      const item = {
+        id: sessionDetail.id,
+        title: sessionDetail.title,
+        status: sessionDetail.participationState?.status ?? null,
+        statusLabel: sessionDetail.participationState?.label ?? '',
+        backendStatus: sessionDetail.participationState?.backendStatus ?? null,
+        startsAt: sessionDetail.startsAt ?? null,
+      }
+      const existing = this.participantSportSessions.findIndex(session => session.id === item.id)
+      if (existing >= 0) this.participantSportSessions.splice(existing, 1, item)
+      else this.participantSportSessions.unshift(item)
+    },
     setLang(l)     { this.lang = l },
     setTheme(t)    { this.theme = t },
     selectIdea(id) { this.selectedIdeaId = id },

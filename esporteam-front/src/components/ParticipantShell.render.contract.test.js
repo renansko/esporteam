@@ -72,8 +72,78 @@ try {
   assert.match(html, /Iniciante a Intermediario/)
   assert.match(html, /7 participantes/)
   assert.match(html, /Boa compatibilidade com sua Disponibilidade/)
+  assert.match(html, /Ver detalhes/)
   assert.doesNotMatch(html, /Voltar|Pular|Tenho interesse/)
   assert.doesNotMatch(html, /capacity|capacidade|vaga|slot|remaining/i)
+
+  const detailHtml = await renderShell({
+    discoveryCards: [],
+    sportSessionDetailOpen: true,
+    sportSessionDetailView: {
+      title: 'Corrida aberta no parque',
+      description: 'Ritmo leve para Entusiastas que querem voltar a correr com constancia.',
+      hostLabel: 'Marina Costa',
+      hostRoleLabel: 'Organizador',
+      dateTimeLabel: '12/07, 08:00',
+      levelLabel: 'Iniciante',
+      meetingPoint: 'Entrada principal do Parque de Coqueiros',
+      participantCountLabel: '8 participantes',
+      participants: [],
+      rules: ['Chegar 10 minutos antes'],
+      equipment: ['Tenis de corrida', 'Garrafa de agua'],
+      entryBadge: {
+        icon: 'check',
+        label: 'Aberta',
+        toneClass: 'session-entry-badge-open',
+      },
+      confirmed: false,
+      canJoinOpen: true,
+    },
+  })
+
+  assert.match(detailHtml, /aria-label="Detalhe da Sessao Esportiva"/)
+  assert.match(detailHtml, /Corrida aberta no parque/)
+  assert.match(detailHtml, /Aberta/)
+  assert.match(detailHtml, /Ritmo leve para Entusiastas/)
+  assert.match(detailHtml, /Organizador · Marina Costa/)
+  assert.match(detailHtml, /12\/07, 08:00/)
+  assert.match(detailHtml, /Iniciante/)
+  assert.match(detailHtml, /Entrada principal do Parque de Coqueiros/)
+  assert.match(detailHtml, /Chegar 10 minutos antes/)
+  assert.match(detailHtml, /Tenis de corrida/)
+  assert.match(detailHtml, /Vou participar/)
+  assert.doesNotMatch(detailHtml, /Ana Silva/)
+  assert.doesNotMatch(detailHtml, /capacity|capacidade|vaga|slot|remaining/i)
+
+  const confirmedDetailHtml = await renderShell({
+    discoveryCards: [],
+    sportSessionDetailOpen: true,
+    sportSessionParticipationConfirmed: true,
+    sportSessionDetailView: {
+      title: 'Corrida aberta no parque',
+      description: 'Ritmo leve para Entusiastas.',
+      hostLabel: 'Marina Costa',
+      hostRoleLabel: 'Organizador',
+      dateTimeLabel: '12/07, 08:00',
+      levelLabel: 'Iniciante',
+      meetingPoint: 'Entrada principal',
+      rules: [],
+      equipment: [],
+      participants: ['Ana Silva'],
+      entryBadge: {
+        icon: 'check',
+        label: 'Aberta',
+        toneClass: 'session-entry-badge-open',
+      },
+      confirmed: true,
+      participationFeedback: 'Confirmado',
+      canJoinOpen: true,
+    },
+  })
+
+  assert.match(confirmedDetailHtml, /Confirmado/)
+  assert.match(confirmedDetailHtml, /Ana Silva/)
+  assert.doesNotMatch(confirmedDetailHtml, /Vou participar/)
 
   const loadingHtml = await renderShell({
     discoveryCards: [],

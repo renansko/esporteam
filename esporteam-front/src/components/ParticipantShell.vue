@@ -20,10 +20,19 @@ const props = defineProps({
   discoveryError: { type: Object, default: null },
   discoveryFilters: { type: Object, default: () => ({}) },
   hasDiscoveryFilters: { type: Boolean, default: false },
+  sportSessionDetailView: { type: Object, default: null },
+  sportSessionDetailOpen: { type: Boolean, default: false },
+  sportSessionDetailLoading: { type: Boolean, default: false },
+  sportSessionDetailError: { type: String, default: null },
+  sportSessionParticipationLoading: { type: Boolean, default: false },
+  sportSessionParticipationConfirmed: { type: Boolean, default: false },
 })
 const emit = defineEmits([
   'applyDiscoveryFilters',
   'retryDiscovery',
+  'selectDiscoveryCard',
+  'closeSportSessionDetail',
+  'joinOpenSportSession',
 ])
 
 const store = useAppStore()
@@ -44,6 +53,7 @@ const primaryDiscoveryCard = computed(() => (
     ? createSportSessionCardView(props.discoveryCards[0])
     : null
 ))
+const primaryRawDiscoveryCard = computed(() => props.discoveryCards?.[0] ?? null)
 
 const sportProfile = computed(() => store.activeSportProfile)
 const modalityList = computed(() => (
@@ -83,7 +93,6 @@ const activeFilterSummary = computed(() => {
 
   return parts.length ? `Filtros ativos: ${parts.join(' · ')}` : ''
 })
-
 function applyFilters() {
   emit('applyDiscoveryFilters', { ...draftFilters })
 }
@@ -272,6 +281,14 @@ function clearFilters() {
             <p v-if="primaryDiscoveryCard.recommendationReason" class="session-reason">
               {{ primaryDiscoveryCard.recommendationReason }}
             </p>
+
+            <button
+              class="session-detail-trigger"
+              type="button"
+              @click="emit('selectDiscoveryCard', primaryRawDiscoveryCard)"
+            >
+              Ver detalhes
+            </button>
           </article>
         </div>
 
@@ -303,6 +320,112 @@ function clearFilters() {
             <dd>{{ availabilityList }}</dd>
           </div>
         </dl>
+      </section>
+
+      <section
+        v-if="sportSessionDetailOpen"
+        class="session-detail-panel"
+        aria-label="Detalhe da Sessao Esportiva"
+      >
+        <header class="session-detail-header">
+          <button
+            class="session-detail-close"
+            type="button"
+            aria-label="Fechar detalhe da Sessao Esportiva"
+            @click="emit('closeSportSessionDetail')"
+          >
+            <Icon name="x" :size="18" />
+          </button>
+          <p class="participant-eyebrow">Sessao Esportiva</p>
+          <h2>{{ sportSessionDetailView?.title || 'Carregando Sessao Esportiva' }}</h2>
+        </header>
+
+        <div v-if="sportSessionDetailLoading" class="session-detail-loading" aria-label="Detalhe carregando">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div v-else-if="sportSessionDetailError" class="participant-placeholder session-detail-error">
+          <div class="placeholder-icon">
+            <Icon name="bolt" :size="28" />
+          </div>
+          <div>
+            <h2>Detalhe indisponivel</h2>
+            <p>{{ sportSessionDetailError }}</p>
+          </div>
+        </div>
+
+        <div v-else-if="sportSessionDetailView" class="session-detail-body">
+          <span :class="['session-entry-badge', sportSessionDetailView.entryBadge.toneClass]">
+            <Icon :name="sportSessionDetailView.entryBadge.icon" :size="14" />
+            <span>{{ sportSessionDetailView.confirmed ? 'Confirmado' : sportSessionDetailView.entryBadge.label }}</span>
+          </span>
+
+          <p class="session-detail-description">{{ sportSessionDetailView.description }}</p>
+
+          <dl class="session-detail-facts">
+            <div>
+              <dt>Anfitriao da Sessao</dt>
+              <dd>{{ sportSessionDetailView.hostRoleLabel }} · {{ sportSessionDetailView.hostLabel }}</dd>
+            </div>
+            <div>
+              <dt>Data</dt>
+              <dd>{{ sportSessionDetailView.dateTimeLabel }}</dd>
+            </div>
+            <div>
+              <dt>Nivel Esportivo</dt>
+              <dd>{{ sportSessionDetailView.levelLabel }}</dd>
+            </div>
+            <div>
+              <dt>Ponto de encontro</dt>
+              <dd>{{ sportSessionDetailView.meetingPoint }}</dd>
+            </div>
+            <div v-if="sportSessionDetailView.participantCountLabel">
+              <dt>Participantes</dt>
+              <dd>{{ sportSessionDetailView.participantCountLabel }}</dd>
+            </div>
+          </dl>
+
+          <section class="session-detail-section">
+            <h3>Regras</h3>
+            <ul>
+              <li v-for="rule in sportSessionDetailView.rules" :key="rule">{{ rule }}</li>
+            </ul>
+          </section>
+
+          <section class="session-detail-section">
+            <h3>Equipamentos</h3>
+            <ul>
+              <li v-for="item in sportSessionDetailView.equipment" :key="item">{{ item }}</li>
+            </ul>
+          </section>
+
+          <section v-if="sportSessionDetailView.participants.length" class="session-detail-section">
+            <h3>Pessoas indo</h3>
+            <p>{{ sportSessionDetailView.participants.join(', ') }}</p>
+          </section>
+
+          <p
+            v-if="sportSessionDetailView.participationFeedback"
+            class="session-detail-feedback"
+            aria-live="polite"
+          >
+            {{ sportSessionDetailView.participationFeedback }}
+          </p>
+        </div>
+
+        <footer v-if="sportSessionDetailView?.canJoinOpen" class="session-detail-footer">
+          <button
+            class="session-detail-primary"
+            type="button"
+            :disabled="sportSessionParticipationLoading || sportSessionParticipationConfirmed"
+            @click="emit('joinOpenSportSession')"
+          >
+            <Icon name="check" :size="18" />
+            <span>{{ sportSessionParticipationConfirmed ? 'Confirmado' : sportSessionParticipationLoading ? 'Confirmando' : 'Vou participar' }}</span>
+          </button>
+        </footer>
       </section>
 
       <nav class="participant-nav" aria-label="Navegacao do Modo Participante">

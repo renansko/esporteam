@@ -59,6 +59,28 @@ export function useDiscoverySessions({ initialCards = [] } = {}) {
     discoverySessionCards.value = Array.isArray(cards) ? [...cards] : []
   }
 
+  function updateSessionParticipation(updatedDetail) {
+    const sessionId = updatedDetail?.id
+    if (!sessionId) return
+
+    discoverySessionCards.value = discoverySessionCards.value.map(card => {
+      const cardSessionId = card.session?.id ?? card.id
+      if (String(cardSessionId) !== String(sessionId)) return card
+
+      return {
+        ...card,
+        participationStatus: updatedDetail.participationState?.backendStatus ?? card.participationStatus,
+        session: {
+          ...card.session,
+          participationStatus: updatedDetail.participationState?.backendStatus ?? card.session?.participationStatus,
+          participation_status: updatedDetail.participationState?.backendStatus ?? card.session?.participation_status,
+          participantCount: updatedDetail.participantCount ?? card.session?.participantCount,
+          participant_count: updatedDetail.participantCount ?? card.session?.participant_count,
+        },
+      }
+    })
+  }
+
   async function loadCompatibleSportSessions(activeSportProfile, nextFilters = discoverySessionFilters) {
     discoverySessionsLoading.value = true
     discoverySessionsError.value = null
@@ -88,5 +110,6 @@ export function useDiscoverySessions({ initialCards = [] } = {}) {
     setDiscoverySessionFilters,
     loadCompatibleSportSessions,
     replaceDiscoverySessionCards,
+    updateSessionParticipation,
   }
 }

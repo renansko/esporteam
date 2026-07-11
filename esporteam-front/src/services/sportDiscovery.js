@@ -2,6 +2,7 @@ import { esporteamApi } from './api.js'
 import {
   MOCK_ACTIVE_SPORT_PROFILE,
   MOCK_COMPATIBLE_SPORT_SESSIONS,
+  MOCK_SPORT_SESSION_DETAILS,
 } from '../mock/sportDiscovery.js'
 
 function firstValue(...values) {
@@ -154,6 +155,52 @@ function normalizeApprovedParticipant(payload = {}) {
   }
 }
 
+function normalizeList(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).map(item => String(item))
+  if (typeof value === 'string' && value.trim()) return [value.trim()]
+  return []
+}
+
+function normalizeParticipationState(status) {
+  switch (status) {
+    case 'joined':
+    case 'approved':
+      return { status: 'confirmed', label: 'Confirmado', backendStatus: status }
+    case 'interested':
+    case 'invited':
+      return { status: 'pending', label: 'Aguardando aprovacao', backendStatus: status }
+    case 'declined':
+    case 'removed':
+      return { status: 'refused', label: 'Recusado', backendStatus: status }
+    default:
+      return { status: null, label: '', backendStatus: status ?? null }
+  }
+}
+
+function normalizeParticipationStatus(payload = {}, session = {}) {
+  const directParticipation = firstValue(payload.participation, payload.current_participation, payload.currentParticipation, null)
+  const sessionParticipants = firstValue(payload.session_participants, payload.sessionParticipants, payload.participants, [])
+  const participationRecord = Array.isArray(directParticipation)
+    ? directParticipation.find(item => firstValue(item.status, item.participation_status, item.participationStatus, null))
+    : directParticipation
+  const participantRecord = Array.isArray(sessionParticipants)
+    ? sessionParticipants.find(item => firstValue(item.status, item.participation_status, item.participationStatus, null))
+    : sessionParticipants
+
+  return firstValue(
+    participationRecord?.status,
+    participationRecord?.participation_status,
+    participationRecord?.participationStatus,
+    participantRecord?.status,
+    participantRecord?.participation_status,
+    participantRecord?.participationStatus,
+    payload.participation_status,
+    payload.participationStatus,
+    session.participationStatus,
+    null,
+  )
+}
+
 function normalizeLevel(session = {}) {
   const explicitLevel = firstValue(session.level, session.sport_level, session.sportLevel, null)
   if (explicitLevel) return explicitLevel
@@ -250,6 +297,50 @@ export function normalizeDiscoveryCards(payload = []) {
   return Array.isArray(items) ? items.map(normalizeDiscoveryCard) : []
 }
 
+export function normalizeSportSessionDetail(payload = {}) {
+  const session = normalizeSportSession(payload)
+  const rawSession = payload.session ?? payload.sport_session ?? payload
+  const participants = firstValue(
+    rawSession.participants,
+    rawSession.approved_participants,
+    rawSession.approvedParticipants,
+    [],
+  )
+  const participation = firstValue(payload.participation, rawSession.participation, null)
+  const participationStatus = normalizeParticipationStatus(rawSession, session)
+
+  return {
+    ...session,
+    description: firstValue(rawSession.description, ''),
+    meetingPoint: firstValue(
+      rawSession.meeting_point,
+      rawSession.meetingPoint,
+      rawSession.location_label_public,
+      rawSession.locationLabelPublic,
+      session.location.label,
+      '',
+    ),
+    rules: normalizeList(firstValue(rawSession.rules, rawSession.session_rules, rawSession.sessionRules, [])),
+    equipment: normalizeList(firstValue(rawSession.equipment, rawSession.equipment_list, rawSession.equipmentList, [])),
+    entryMode: firstValue(rawSession.entry_mode, rawSession.entryMode, session.entryMode),
+    entryRule: firstValue(rawSession.entry_rule, rawSession.entryRule, session.entryRule),
+    nextAction: firstValue(rawSession.next_action, rawSession.nextAction, session.nextAction),
+    hostSportProfile: normalizeHostSportProfile(
+      rawSession.creator
+      ?? rawSession.host_sport_profile
+      ?? rawSession.hostSportProfile
+      ?? rawSession.host
+      ?? session.hostSportProfile,
+    ),
+    participants: Array.isArray(participants)
+      ? participants.map(normalizeApprovedParticipant)
+      : [],
+    participation,
+    participationState: normalizeParticipationState(participationStatus),
+    raw: publicDiscoveryRaw(rawSession),
+  }
+}
+
 export async function fetchActiveSportProfile({ useMockFallback = true } = {}) {
   try {
     const { data } = await esporteamApi.get('/sport-profiles/me')
@@ -275,4 +366,32 @@ export async function listCompatibleSportSessions(params = {}, { useMockFallback
     }
     throw err
   }
+}
+
+function mockSportSessionDetail(sessionId, fallbackPayload = null) {
+  const detail = MOCK_SPORT_SESSION_DETAILS.find(item => String(item.id) === String(sessionId))
+  if (detail) return normalizeSportSessionDetail(detail)
+  return fallbackPayload ? normalizeSportSessionDetail(fallbackPayload) : null
+}
+
+export async function fetchSportSessionDetail(sessionId, { fallbackPayload = null, useMockFallback = true } = {}) {
+  if (!sessionId) throw new Error('session_id_required')
+
+  try {
+    const { data } = await esporteamApi.get(`/sessions/${sessionId}`)
+    return normalizeSportSessionDetail(data?.data ?? data)
+  } catch (err) {
+    if (useMockFallback) {
+      const detail = mockSportSessionDetail(sessionId, fallbackPayload)
+      if (detail) return detail
+    }
+    throw err
+  }
+}
+
+export async function joinOpenSportSession(sessionId) {
+  if (!sessionId) throw new Error('session_id_required')
+
+  const { data } = await esporteamApi.post(`/sessions/${sessionId}/join`)
+  return normalizeSportSessionDetail(data?.data ?? data)
 }
