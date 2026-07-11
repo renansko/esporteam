@@ -2,6 +2,8 @@ import { esporteamApi } from './api.js'
 import {
   MOCK_ACTIVE_SPORT_PROFILE,
   MOCK_COMPATIBLE_SPORT_SESSIONS,
+  MOCK_NEARBY_SPORT_SESSIONS,
+  MOCK_PARTICIPANT_SPORT_SESSIONS,
   MOCK_SPORT_SESSION_DETAILS,
 } from '../mock/sportDiscovery.js'
 
@@ -161,11 +163,12 @@ function normalizeList(value) {
   return []
 }
 
-function normalizeParticipationState(status) {
+export function normalizeParticipationState(status) {
   switch (status) {
     case 'joined':
     case 'approved':
       return { status: 'confirmed', label: 'Confirmado', backendStatus: status }
+    case 'pending':
     case 'interested':
     case 'invited':
       return { status: 'pending', label: 'Aguardando aprovacao', backendStatus: status }
@@ -175,6 +178,13 @@ function normalizeParticipationState(status) {
     default:
       return { status: null, label: '', backendStatus: status ?? null }
   }
+}
+
+export function normalizeParticipantSportSessions(payload = []) {
+  const items = Array.isArray(payload) ? payload : firstValue(payload.data, payload.items, [])
+  return Array.isArray(items)
+    ? items.map(item => normalizeSportSessionDetail(item)).filter(session => session.id && session.participationState.status)
+    : []
 }
 
 function normalizeParticipationStatus(payload = {}, session = {}) {
@@ -294,7 +304,7 @@ export function normalizeDiscoveryCard(payload = {}) {
 
 export function normalizeDiscoveryCards(payload = []) {
   const items = Array.isArray(payload) ? payload : firstValue(payload.data, payload.items, [])
-  return Array.isArray(items) ? items.map(normalizeDiscoveryCard) : []
+  return Array.isArray(items) ? items.filter(Boolean).map(normalizeDiscoveryCard) : []
 }
 
 export function normalizeSportSessionDetail(payload = {}) {
@@ -368,6 +378,33 @@ export async function listCompatibleSportSessions(params = {}, { useMockFallback
   }
 }
 
+export async function listParticipantSportSessions({ useMockFallback = true } = {}) {
+  try {
+    const { data } = await esporteamApi.get('/profile/sessions')
+    return normalizeParticipantSportSessions(data?.data ?? data)
+  } catch (err) {
+    if (useMockFallback) return normalizeParticipantSportSessions(MOCK_PARTICIPANT_SPORT_SESSIONS)
+    throw err
+  }
+}
+
+export async function listNearbySportSessions(params = {}, { useMockFallback = true } = {}) {
+  const discoveryParams = normalizeDiscoverySessionFilters(params)
+  const participationType = firstValue(params.participationType, params.participation_type, 'all')
+
+  try {
+    const { data } = await esporteamApi.get('/sessions', { params: discoveryParams })
+    return normalizeDiscoveryCards(data?.data ?? data)
+      .filter(card => matchesParticipationType(card, participationType))
+  } catch (err) {
+    if (useMockFallback) {
+      return normalizeDiscoveryCards(MOCK_NEARBY_SPORT_SESSIONS)
+        .filter(card => matchesParticipationType(card, participationType))
+    }
+    throw err
+  }
+}
+
 function mockSportSessionDetail(sessionId, fallbackPayload = null) {
   const detail = MOCK_SPORT_SESSION_DETAILS.find(item => String(item.id) === String(sessionId))
   if (detail) return normalizeSportSessionDetail(detail)
@@ -389,9 +426,17 @@ export async function fetchSportSessionDetail(sessionId, { fallbackPayload = nul
   }
 }
 
-export async function joinOpenSportSession(sessionId) {
+export async function joinSportSession(sessionId) {
   if (!sessionId) throw new Error('session_id_required')
 
   const { data } = await esporteamApi.post(`/sessions/${sessionId}/join`)
   return normalizeSportSessionDetail(data?.data ?? data)
+}
+
+export async function joinOpenSportSession(sessionId) {
+  return joinSportSession(sessionId)
+}
+
+export async function requestCuratedSportSessionParticipation(sessionId) {
+  return joinSportSession(sessionId)
 }

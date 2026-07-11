@@ -4,6 +4,7 @@ import { esporteamApi } from '../services/api.js'
 
 const deck = useDiscoverySessions({
   initialCards: [
+    null,
     {
       id: 'card-seed',
       session: {
@@ -16,6 +17,7 @@ const deck = useDiscoverySessions({
 })
 
 assert.equal(deck.discoverySessionCards.value.length, 1)
+assert.equal(deck.discoverySessionCards.value[0].session.id, 'session-seed')
 assert.equal(deck.hasDiscoverySessionFilters.value, false)
 
 deck.setDiscoverySessionFilters({
@@ -78,3 +80,23 @@ try {
 } finally {
   esporteamApi.get = originalGet
 }
+
+const actionDeck = useDiscoverySessions({
+  initialCards: [
+    { id: 'action-card-1', session: { id: 'action-session-1', title: 'Corrida', entry_mode: 'publica_direta' } },
+    { id: 'action-card-2', session: { id: 'action-session-2', title: 'Volei', entry_mode: 'publica_aprovacao' } },
+  ],
+  joinSession: async (sessionId) => ({
+    id: sessionId,
+    participationState: { status: 'confirmed', label: 'Confirmado', backendStatus: 'joined' },
+  }),
+})
+
+assert.equal(await actionDeck.showInterestInCurrentSession(), true)
+assert.equal(actionDeck.discoverySessionCards.value[0].id, 'action-card-2')
+assert.match(actionDeck.discoveryActionFeedback.value, /Confirmado/)
+assert.equal(actionDeck.canUndoDiscovery.value, true)
+assert.equal(actionDeck.undoDiscoveryAction(), true)
+assert.equal(actionDeck.discoverySessionCards.value[0].id, 'action-card-1')
+assert.equal(actionDeck.skipCurrentSession(), true)
+assert.equal(actionDeck.discoverySessionCards.value[0].id, 'action-card-2')

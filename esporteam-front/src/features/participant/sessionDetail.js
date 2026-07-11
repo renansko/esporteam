@@ -6,6 +6,7 @@ import {
 export function createSportSessionDetailView(detail, {
   confirmed = false,
   participationFeedback = null,
+  participationFeedbackTone = null,
 } = {}) {
   if (!detail) return null
 
@@ -14,12 +15,36 @@ export function createSportSessionDetailView(detail, {
     entryRule: detail.entryRule,
     requiresApproval: detail.requiresApproval,
   })
+  const isCurated = detail.entryMode === 'publica_aprovacao'
+    || detail.entryMode === 'curated'
+    || detail.entryRule === 'approval_required'
+    || detail.requiresApproval === true
+  const isOpen = detail.entryMode === 'publica_direta' && detail.nextAction === 'entrar'
+  const participationState = detail.participationState ?? { status: null, label: '', backendStatus: null }
   const participantCountLabel = typeof detail.participantCount === 'number'
     ? `${detail.participantCount} ${detail.participantCount === 1 ? 'participante' : 'participantes'}`
     : ''
   const participants = confirmed && Array.isArray(detail.participants)
     ? detail.participants.map(participant => participant.displayName).filter(Boolean).slice(0, 4)
     : []
+  const canSubmitParticipation = !participationState.status
+    && (isOpen || (isCurated && ['pedir_vaga', 'request_approval', 'request_participation'].includes(detail.nextAction)))
+  const primaryActionLabel = participationState.status === 'confirmed'
+    ? 'Confirmado'
+    : participationState.status === 'pending'
+      ? 'Aguardando aprovacao'
+      : participationState.status === 'refused'
+        ? 'Recusado'
+        : isCurated
+          ? 'Pedir para participar'
+          : isOpen
+            ? 'Vou participar'
+            : ''
+  const primaryActionIcon = participationState.status === 'confirmed'
+    ? 'check'
+    : isCurated
+      ? 'lock'
+      : 'check'
 
   return {
     title: detail.title,
@@ -37,6 +62,14 @@ export function createSportSessionDetailView(detail, {
     entryBadge,
     confirmed,
     participationFeedback,
-    canJoinOpen: detail.entryMode === 'publica_direta' && detail.nextAction === 'entrar',
+    participationFeedbackTone,
+    participationState,
+    approvalNotice: isCurated
+      ? 'O Anfitriao da Sessao revisa os pedidos antes de confirmar sua participacao.'
+      : '',
+    canSubmitParticipation,
+    primaryActionLabel,
+    primaryActionIcon,
+    primaryActionToneClass: isCurated ? 'session-detail-primary-curated' : 'session-detail-primary-open',
   }
 }

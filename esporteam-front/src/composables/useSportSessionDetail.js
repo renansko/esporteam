@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import {
   fetchSportSessionDetail,
-  joinOpenSportSession,
+  joinSportSession,
 } from '../services/sportDiscovery.js'
 import { createSportSessionDetailView } from '../features/participant/sessionDetail.js'
 
@@ -17,7 +17,8 @@ function sessionIdFromCard(card = {}) {
 
 export function useSportSessionDetail({
   fetchDetail = fetchSportSessionDetail,
-  joinSession = joinOpenSportSession,
+  joinSession = joinSportSession,
+  onParticipationUpdated = () => {},
   onParticipationConfirmed = () => {},
 } = {}) {
   const selectedSessionCard = ref(null)
@@ -26,17 +27,35 @@ export function useSportSessionDetail({
   const sportSessionDetailError = ref(null)
   const sportSessionParticipationLoading = ref(false)
   const sportSessionParticipationFeedback = ref(null)
+  const sportSessionParticipationFeedbackTone = ref(null)
   const isSportSessionDetailOpen = computed(() => Boolean(selectedSessionCard.value || sportSessionDetail.value))
   const isOpenParticipationDetail = computed(() => (
     sportSessionDetail.value?.entryMode === 'publica_direta'
     && sportSessionDetail.value?.nextAction === 'entrar'
   ))
+  const isCuratedParticipationDetail = computed(() => (
+    sportSessionDetail.value?.entryMode === 'publica_aprovacao'
+    || sportSessionDetail.value?.entryRule === 'approval_required'
+    || sportSessionDetail.value?.requiresApproval === true
+  ))
   const isParticipationConfirmed = computed(() => (
     sportSessionDetail.value?.participationState?.status === 'confirmed'
+  ))
+  const isParticipationPending = computed(() => (
+    sportSessionDetail.value?.participationState?.status === 'pending'
+  ))
+  const isParticipationResolved = computed(() => (
+    ['confirmed', 'pending', 'refused'].includes(sportSessionDetail.value?.participationState?.status)
+  ))
+  const canSubmitParticipation = computed(() => (
+    !sportSessionParticipationLoading.value
+    && !isParticipationResolved.value
+    && (isOpenParticipationDetail.value || isCuratedParticipationDetail.value)
   ))
   const sportSessionDetailView = computed(() => createSportSessionDetailView(sportSessionDetail.value, {
     confirmed: isParticipationConfirmed.value,
     participationFeedback: sportSessionParticipationFeedback.value,
+    participationFeedbackTone: sportSessionParticipationFeedbackTone.value,
   }))
 
   async function openSportSessionDetail(card) {
@@ -44,6 +63,7 @@ export function useSportSessionDetail({
     sportSessionDetail.value = null
     sportSessionDetailError.value = null
     sportSessionParticipationFeedback.value = null
+    sportSessionParticipationFeedbackTone.value = null
 
     const sessionId = sessionIdFromCard(card)
     if (!sessionId) {
@@ -71,14 +91,16 @@ export function useSportSessionDetail({
     sportSessionDetail.value = null
     sportSessionDetailError.value = null
     sportSessionParticipationFeedback.value = null
+    sportSessionParticipationFeedbackTone.value = null
   }
 
-  async function confirmOpenSportSessionParticipation() {
+  async function submitSportSessionParticipation() {
     const detail = sportSessionDetail.value
-    if (!detail?.id) return false
+    if (!detail?.id || !canSubmitParticipation.value) return false
 
     sportSessionParticipationLoading.value = true
     sportSessionParticipationFeedback.value = null
+    sportSessionParticipationFeedbackTone.value = null
 
     try {
       const updatedDetail = await joinSession(detail.id, {
@@ -87,14 +109,25 @@ export function useSportSessionDetail({
       })
       sportSessionDetail.value = updatedDetail
       sportSessionParticipationFeedback.value = updatedDetail.participationState?.label || 'Confirmado'
+      sportSessionParticipationFeedbackTone.value = updatedDetail.participationState?.status === 'pending'
+        ? 'pending'
+        : updatedDetail.participationState?.status === 'refused'
+          ? 'refused'
+          : 'success'
+      onParticipationUpdated(updatedDetail)
       onParticipationConfirmed(updatedDetail)
       return true
     } catch (err) {
       sportSessionParticipationFeedback.value = detailError(err)
+      sportSessionParticipationFeedbackTone.value = 'error'
       return false
     } finally {
       sportSessionParticipationLoading.value = false
     }
+  }
+
+  async function confirmOpenSportSessionParticipation() {
+    return submitSportSessionParticipation()
   }
 
   return {
@@ -104,12 +137,18 @@ export function useSportSessionDetail({
     sportSessionDetailError,
     sportSessionParticipationLoading,
     sportSessionParticipationFeedback,
+    sportSessionParticipationFeedbackTone,
     sportSessionDetailView,
     isSportSessionDetailOpen,
     isOpenParticipationDetail,
+    isCuratedParticipationDetail,
     isParticipationConfirmed,
+    isParticipationPending,
+    isParticipationResolved,
+    canSubmitParticipation,
     openSportSessionDetail,
     closeSportSessionDetail,
+    submitSportSessionParticipation,
     confirmOpenSportSessionParticipation,
   }
 }

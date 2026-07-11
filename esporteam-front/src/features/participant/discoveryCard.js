@@ -118,6 +118,8 @@ export function createSportSessionCardView(card = {}) {
     participantCountLabel,
     recommendationReason,
     entryBadge,
+    canShowInterest: !['convite', 'indisponivel'].includes(card.entryMode)
+      && !['convite', 'indisponivel'].includes(card.nextAction),
     accessibilityLabel: accessibilityParts.join('. '),
   }
 }

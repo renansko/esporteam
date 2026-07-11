@@ -19,6 +19,9 @@ import {
   fetchMe,
   fetchSportProfile,
   saveSportProfile,
+  updateSportProfile,
+  updateSportProfileSports,
+  updateSportProfileAvailability,
   logoutOnAuth,
   listIdeas as apiListIdeas,
   createIdea as apiCreateIdea,
@@ -69,6 +72,11 @@ function sportProfileFromApi(profile, user = null) {
   return {
     id: profile.id,
     displayName: profile.display_name || user?.name || 'Perfil Esportivo',
+    bio: profile.bio || '',
+    city: profile.city || '',
+    region: profile.region || '',
+    visibility: profile.visibility || 'public',
+    avatarUrl: profile.avatar_url || '',
     role: 'Entusiasta',
     locationLabel,
     primaryModality: modalities[0]?.name || 'Modalidade a definir',
@@ -299,6 +307,14 @@ export const useAppStore = defineStore('app', {
     setPage(p)     { this.page = p; this.publicMode = (p === 'public') },
     setParticipantTab(tab) { this.participantTab = isParticipantTab(tab) ? tab : DEFAULT_PARTICIPANT_TAB },
     setActiveSportProfile(profile) { this.activeSportProfile = profile || MOCK_ACTIVE_SPORT_PROFILE },
+    async saveActiveSportProfile(payload) {
+      await updateSportProfile(payload.profile)
+      await updateSportProfileSports(payload.sports)
+      await updateSportProfileAvailability(payload.availability)
+      const refreshed = await fetchSportProfile()
+      this.activeSportProfile = sportProfileFromApi(refreshed, this.currentUser)
+      return this.activeSportProfile
+    },
     upsertParticipantSportSession(sessionDetail) {
       if (!sessionDetail?.id) return
       const item = {

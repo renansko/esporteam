@@ -18,13 +18,17 @@ const server = await createServer({
 
 try {
   const { default: ParticipantShell } = await server.ssrLoadModule('/src/components/ParticipantShell.vue')
+  const { useAppStore } = await server.ssrLoadModule('/src/stores/app.js')
 
-  async function renderShell(props) {
+  async function renderShell(props, { participantTab } = {}) {
     const app = createSSRApp({
       render: () => h(ParticipantShell, props),
     })
 
-    app.use(createPinia())
+    const pinia = createPinia()
+    app.use(pinia)
+    const store = useAppStore(pinia)
+    if (participantTab) store.setParticipantTab(participantTab)
     return renderToString(app)
   }
 
@@ -59,7 +63,7 @@ try {
     })
 
   assert.match(html, /class="discovery-deck"/)
-  assert.match(html, /class="session-card"/)
+  assert.match(html, /class="session-card discovery-action-card"/)
   assert.match(html, /Filtros/)
   assert.match(html, /aria-label="Sessao Esportiva Corrida orientada no parque/)
   assert.match(html, /class="session-entry-badge session-entry-badge-curated"/)
@@ -73,7 +77,9 @@ try {
   assert.match(html, /7 participantes/)
   assert.match(html, /Boa compatibilidade com sua Disponibilidade/)
   assert.match(html, /Ver detalhes/)
-  assert.doesNotMatch(html, /Voltar|Pular|Tenho interesse/)
+  assert.match(html, /Voltar/)
+  assert.match(html, /Pular/)
+  assert.match(html, /Tenho interesse/)
   assert.doesNotMatch(html, /capacity|capacidade|vaga|slot|remaining/i)
 
   const detailHtml = await renderShell({
@@ -97,7 +103,10 @@ try {
         toneClass: 'session-entry-badge-open',
       },
       confirmed: false,
-      canJoinOpen: true,
+      canSubmitParticipation: true,
+      primaryActionLabel: 'Vou participar',
+      primaryActionIcon: 'check',
+      primaryActionToneClass: 'session-detail-primary-open',
     },
   })
 
@@ -114,6 +123,41 @@ try {
   assert.match(detailHtml, /Vou participar/)
   assert.doesNotMatch(detailHtml, /Ana Silva/)
   assert.doesNotMatch(detailHtml, /capacity|capacidade|vaga|slot|remaining/i)
+
+  const curatedDetailHtml = await renderShell({
+    discoveryCards: [],
+    sportSessionDetailOpen: true,
+    sportSessionDetailView: {
+      title: 'Volei com curadoria',
+      description: 'Sessao guiada pelo Professor para fundamentos.',
+      hostLabel: 'Luiz Pereira',
+      hostRoleLabel: 'Professor',
+      dateTimeLabel: '13/07, 19:00',
+      levelLabel: 'Iniciante',
+      meetingPoint: 'Posto 3',
+      participantCountLabel: '5 participantes',
+      participants: [],
+      rules: ['Chegar antes'],
+      equipment: ['Agua'],
+      entryBadge: {
+        icon: 'lock',
+        label: 'Com curadoria',
+        toneClass: 'session-entry-badge-curated',
+      },
+      confirmed: false,
+      approvalNotice: 'O Anfitriao da Sessao revisa os pedidos antes de confirmar sua participacao.',
+      canSubmitParticipation: true,
+      primaryActionLabel: 'Pedir para participar',
+      primaryActionIcon: 'lock',
+      primaryActionToneClass: 'session-detail-primary-curated',
+    },
+  })
+
+  assert.match(curatedDetailHtml, /class="session-entry-badge session-entry-badge-curated"/)
+  assert.match(curatedDetailHtml, /Com curadoria/)
+  assert.match(curatedDetailHtml, /O Anfitriao da Sessao revisa os pedidos/)
+  assert.match(curatedDetailHtml, /Pedir para participar/)
+  assert.doesNotMatch(curatedDetailHtml, /capacity|capacidade|vaga|slot|remaining/i)
 
   const confirmedDetailHtml = await renderShell({
     discoveryCards: [],
@@ -137,13 +181,151 @@ try {
       },
       confirmed: true,
       participationFeedback: 'Confirmado',
-      canJoinOpen: true,
+      canSubmitParticipation: false,
+      primaryActionLabel: 'Confirmado',
+      primaryActionIcon: 'check',
+      primaryActionToneClass: 'session-detail-primary-open',
     },
   })
 
   assert.match(confirmedDetailHtml, /Confirmado/)
   assert.match(confirmedDetailHtml, /Ana Silva/)
   assert.doesNotMatch(confirmedDetailHtml, /Vou participar/)
+
+  const pendingDetailHtml = await renderShell({
+    discoveryCards: [],
+    sportSessionDetailOpen: true,
+    sportSessionDetailView: {
+      title: 'Volei com curadoria',
+      description: 'Sessao guiada pelo Professor.',
+      hostLabel: 'Luiz Pereira',
+      hostRoleLabel: 'Professor',
+      dateTimeLabel: '13/07, 19:00',
+      levelLabel: 'Iniciante',
+      meetingPoint: 'Posto 3',
+      rules: [],
+      equipment: [],
+      participants: [],
+      entryBadge: {
+        icon: 'lock',
+        label: 'Com curadoria',
+        toneClass: 'session-entry-badge-curated',
+      },
+      confirmed: false,
+      participationFeedback: 'Aguardando aprovacao',
+      participationFeedbackTone: 'pending',
+      canSubmitParticipation: false,
+      primaryActionLabel: 'Aguardando aprovacao',
+      primaryActionIcon: 'lock',
+      primaryActionToneClass: 'session-detail-primary-curated',
+    },
+  })
+
+  assert.match(pendingDetailHtml, /Aguardando aprovacao/)
+  assert.match(pendingDetailHtml, /session-detail-feedback session-detail-feedback-pending/)
+
+  const nearbyMapHtml = await renderShell({
+    discoveryCards: [],
+    nearbySessions: [
+      {
+        id: 'nearby-open',
+        distanceKm: 2.4,
+        entryMode: 'publica_direta',
+        participantCount: 8,
+        session: {
+          id: 'nearby-session-open',
+          title: 'Corrida no parque',
+          modality: { id: 'mod-corrida', name: 'Corrida' },
+          hostSportProfile: { id: 'host-open', displayName: 'Marina Costa', role: 'Organizador' },
+          startsAt: '2026-07-12T08:00:00-03:00',
+          location: { label: 'Parque de Coqueiros' },
+          entryMode: 'publica_direta',
+          participantCount: 8,
+        },
+      },
+      {
+        id: 'nearby-curated',
+        distanceKm: 5.1,
+        entryMode: 'publica_aprovacao',
+        entryRule: 'approval_required',
+        participantCount: 5,
+        session: {
+          id: 'nearby-session-curated',
+          title: 'Volei tecnico',
+          modality: { id: 'mod-volei', name: 'Volei de praia' },
+          hostSportProfile: { id: 'host-curated', displayName: 'Luiz Pereira', role: 'Professor' },
+          startsAt: '2026-07-13T19:00:00-03:00',
+          location: { label: 'Beira-mar Norte' },
+          entryMode: 'publica_aprovacao',
+          entryRule: 'approval_required',
+          requiresApproval: true,
+          participantCount: 5,
+        },
+      },
+    ],
+    nearbySurfaceMode: 'map',
+    nearbySelectedSessionId: 'nearby-open',
+  }, { participantTab: 'map' })
+
+  assert.match(nearbyMapHtml, /Alternar entre Mapa e Lista/)
+  assert.match(nearbyMapHtml, /class="nearby-map"/)
+  assert.match(nearbyMapHtml, /Corrida/)
+  assert.match(nearbyMapHtml, /08:00/)
+  assert.match(nearbyMapHtml, /Resumo da Sessao Esportiva/)
+  assert.match(nearbyMapHtml, /Vou participar/)
+  assert.match(nearbyMapHtml, /Ver detalhes/)
+
+  const nearbyListHtml = await renderShell({
+    discoveryCards: [],
+    nearbySessions: [
+      {
+        id: 'nearby-open',
+        distanceKm: 2.4,
+        entryMode: 'publica_direta',
+        participantCount: 8,
+        session: {
+          id: 'nearby-session-open',
+          title: 'Corrida no parque',
+          modality: { id: 'mod-corrida', name: 'Corrida' },
+          hostSportProfile: { id: 'host-open', displayName: 'Marina Costa', role: 'Organizador' },
+          startsAt: '2026-07-12T08:00:00-03:00',
+          location: { label: 'Parque de Coqueiros' },
+          entryMode: 'publica_direta',
+          participantCount: 8,
+        },
+      },
+      {
+        id: 'nearby-curated',
+        distanceKm: 5.1,
+        entryMode: 'publica_aprovacao',
+        entryRule: 'approval_required',
+        participantCount: 5,
+        session: {
+          id: 'nearby-session-curated',
+          title: 'Volei tecnico',
+          modality: { id: 'mod-volei', name: 'Volei de praia' },
+          hostSportProfile: { id: 'host-curated', displayName: 'Luiz Pereira', role: 'Professor' },
+          startsAt: '2026-07-13T19:00:00-03:00',
+          location: { label: 'Beira-mar Norte' },
+          entryMode: 'publica_aprovacao',
+          entryRule: 'approval_required',
+          requiresApproval: true,
+          participantCount: 5,
+        },
+      },
+    ],
+    nearbySurfaceMode: 'list',
+    nearbySelectedSessionId: 'nearby-curated',
+    nearbySessionParticipationFeedback: 'Aguardando aprovacao',
+    nearbySessionParticipationFeedbackTone: 'pending',
+  }, { participantTab: 'map' })
+
+  assert.match(nearbyListHtml, /class="nearby-list"/)
+  assert.match(nearbyListHtml, /Corrida no parque/)
+  assert.match(nearbyListHtml, /Volei tecnico/)
+  assert.match(nearbyListHtml, /Professor · Luiz Pereira/)
+  assert.match(nearbyListHtml, /Aguardando aprovacao/)
+  assert.match(nearbyListHtml, /session-detail-feedback session-detail-feedback-pending/)
 
   const loadingHtml = await renderShell({
     discoveryCards: [],

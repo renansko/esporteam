@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
 import {
   fetchSportSessionDetail,
+  joinSportSession,
   joinOpenSportSession,
   listCompatibleSportSessions,
+  listNearbySportSessions,
   normalizeDiscoveryCard,
   normalizeDiscoveryCards,
   normalizeDiscoverySessionFilters,
@@ -44,7 +46,7 @@ const card = normalizeDiscoveryCard({
   id: 'card-1',
   sport_profile_id: 'sport-profile-1',
   distance_meters: 2600,
-  next_action: 'request_participation',
+  next_action: 'pedir_vaga',
   sport_session: {
     id: 'session-1',
     title: 'Volei de praia tecnico',
@@ -56,8 +58,10 @@ const card = normalizeDiscoveryCard({
     },
     starts_at: '2026-07-13T19:00:00-03:00',
     location: { label: 'Beira-mar Norte', city: 'Florianopolis', region: 'SC' },
-    entry_mode: 'curated',
-    participation_status: 'pending',
+    entry_mode: 'publica_aprovacao',
+    entry_rule: 'approval_required',
+    next_action: 'pedir_vaga',
+    participation_status: 'interested',
     participant_count: 5,
   },
 })
@@ -65,9 +69,9 @@ const card = normalizeDiscoveryCard({
 assert.equal(card.id, 'card-1')
 assert.equal(card.sportProfileId, 'sport-profile-1')
 assert.equal(card.distanceLabel, '2.6 km')
-assert.equal(card.entryMode, 'curated')
-assert.equal(card.nextAction, 'request_participation')
-assert.equal(card.participationStatus, 'pending')
+assert.equal(card.entryMode, 'publica_aprovacao')
+assert.equal(card.nextAction, 'pedir_vaga')
+assert.equal(card.participationStatus, 'interested')
 assert.equal(card.session.title, 'Volei de praia tecnico')
 assert.equal(card.session.hostSportProfile.displayName, 'Luiz Professor')
 assert.equal(card.session.modality.name, 'Volei de praia')
@@ -189,6 +193,28 @@ const collectionParticipationDetail = normalizeSportSessionDetail({
 assert.equal(collectionParticipationDetail.participationState.status, 'confirmed')
 assert.equal(collectionParticipationDetail.participationState.backendStatus, 'joined')
 
+const curatedDetail = normalizeSportSessionDetail({
+  id: 'session-curated-detail',
+  title: 'Volei com curadoria',
+  description: 'Sessao guiada pelo Professor.',
+  entry_mode: 'publica_aprovacao',
+  entry_rule: 'approval_required',
+  next_action: 'pedir_vaga',
+  requires_approval: true,
+  participation_status: 'interested',
+  sport: { id: 'sport-volei', name: 'Volei de praia' },
+  creator: { id: 'host-curated', display_name: 'Luiz Pereira', role: 'Professor' },
+  starts_at: '2026-07-13T19:00:00-03:00',
+  location_label_public: 'Beira-mar Norte',
+  meeting_point: 'Posto 3',
+  rules: ['Chegar antes'],
+  equipment: ['Agua'],
+})
+
+assert.equal(curatedDetail.entryMode, 'publica_aprovacao')
+assert.equal(curatedDetail.participationState.status, 'pending')
+assert.equal(curatedDetail.participationState.label, 'Aguardando aprovacao')
+
 assert.deepEqual(normalizeDiscoverySessionFilters({
   sportSlug: 'corrida',
   level: 'iniciante',
@@ -277,6 +303,47 @@ try {
   assert.equal(openCards.length, 1)
   assert.equal(openCards[0].id, 'open-card')
 
+  esporteamApi.get = async (url, config) => {
+    requested = { url, params: config.params }
+    return {
+      data: {
+        data: [
+          {
+            id: 'nearby-open',
+            distance_km: 2.1,
+            entry_mode: 'publica_direta',
+            participant_count: 8,
+            title: 'Corrida no parque',
+            sport: 'Corrida',
+          },
+          {
+            id: 'nearby-curated',
+            distance_km: 4.4,
+            entry_mode: 'publica_aprovacao',
+            entry_rule: 'approval_required',
+            participant_count: 5,
+            title: 'Volei com curadoria',
+            sport: 'Volei',
+          },
+        ],
+      },
+    }
+  }
+
+  const nearbyCards = await listNearbySportSessions({
+    distanceKm: 10,
+    participationType: 'curated',
+  }, { useMockFallback: false })
+
+  assert.deepEqual(requested, {
+    url: '/sessions',
+    params: {
+      distance_km: 10,
+    },
+  })
+  assert.equal(nearbyCards.length, 1)
+  assert.equal(nearbyCards[0].id, 'nearby-curated')
+
   esporteamApi.get = async (url) => {
     assert.equal(url, '/sessions/session-open-detail')
     return { data: { data: openDetail.raw } }
@@ -301,6 +368,23 @@ try {
   assert.equal(joinedDetail.participationState.status, 'confirmed')
   assert.equal(joinedDetail.participationState.label, 'Confirmado')
   assert.equal(joinedDetail.participationState.backendStatus, 'joined')
+
+  esporteamApi.post = async (url) => {
+    assert.equal(url, '/sessions/session-curated-detail/join')
+    return {
+      data: {
+        data: {
+          ...curatedDetail.raw,
+          session_participants: [{ status: 'interested' }],
+        },
+      },
+    }
+  }
+
+  const requestedDetail = await joinSportSession('session-curated-detail')
+  assert.equal(requestedDetail.participationState.status, 'pending')
+  assert.equal(requestedDetail.participationState.label, 'Aguardando aprovacao')
+  assert.equal(requestedDetail.participationState.backendStatus, 'interested')
 } finally {
   esporteamApi.get = originalGet
   esporteamApi.post = originalPost

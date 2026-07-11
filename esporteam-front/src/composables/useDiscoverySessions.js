@@ -1,5 +1,5 @@
 import { computed, reactive, ref } from 'vue'
-import { listCompatibleSportSessions } from '../services/sportDiscovery.js'
+import { joinSportSession, listCompatibleSportSessions } from '../services/sportDiscovery.js'
 import {
   DEFAULT_DISCOVERY_SESSION_FILTERS,
   createDefaultDiscoverySessionFilters,
@@ -33,11 +33,22 @@ function createDiscoveryError(err) {
   }
 }
 
-export function useDiscoverySessions({ initialCards = [] } = {}) {
-  const discoverySessionCards = ref([...initialCards])
+function validDiscoveryCards(cards) {
+  return Array.isArray(cards)
+    ? cards.filter(card => card && typeof card === 'object')
+    : []
+}
+
+export function useDiscoverySessions({ initialCards = [], joinSession = joinSportSession } = {}) {
+  const discoverySessionCards = ref(validDiscoveryCards(initialCards))
   const discoverySessionsLoading = ref(false)
   const discoverySessionsError = ref(null)
   const discoverySessionFilters = reactive(createDefaultDiscoverySessionFilters())
+  const discoveryHistory = ref([])
+  const discoveryActionLoading = ref(false)
+  const discoveryActionError = ref(null)
+  const discoveryActionFeedback = ref(null)
+  const canUndoDiscovery = computed(() => discoveryHistory.value.length > 0)
   const hasDiscoverySessionFilters = computed(() => (
     discoverySessionFilters.sportSlug !== DEFAULT_DISCOVERY_SESSION_FILTERS.sportSlug
     || discoverySessionFilters.level !== DEFAULT_DISCOVERY_SESSION_FILTERS.level
@@ -56,7 +67,64 @@ export function useDiscoverySessions({ initialCards = [] } = {}) {
   }
 
   function replaceDiscoverySessionCards(cards = []) {
-    discoverySessionCards.value = Array.isArray(cards) ? [...cards] : []
+    discoverySessionCards.value = validDiscoveryCards(cards)
+    discoveryHistory.value = []
+    discoveryActionFeedback.value = null
+    discoveryActionError.value = null
+  }
+
+  function advanceCurrentCard(action) {
+    const current = discoverySessionCards.value.shift()
+    if (!current) return false
+    discoveryHistory.value.push({ card: current, action })
+    return true
+  }
+
+  function skipCurrentSession() {
+    discoveryActionError.value = null
+    discoveryActionFeedback.value = 'Sessao Esportiva pulada.'
+    return advanceCurrentCard('skip')
+  }
+
+  function undoDiscoveryAction() {
+    const previous = discoveryHistory.value.pop()
+    if (!previous) return false
+    discoverySessionCards.value.unshift(previous.card)
+    discoveryActionFeedback.value = 'Sessao Esportiva restaurada.'
+    discoveryActionError.value = null
+    return true
+  }
+
+  async function showInterestInCurrentSession() {
+    const card = discoverySessionCards.value[0]
+    const sessionId = card?.session?.id ?? card?.id
+    if (!card || !sessionId || discoveryActionLoading.value) return false
+    const entryMode = card.entryMode ?? card.session?.entryMode
+    const nextAction = card.nextAction ?? card.session?.nextAction
+    if (entryMode === 'convite' || nextAction === 'indisponivel') {
+      discoveryActionFeedback.value = 'Esta Sessao Esportiva nao esta disponivel para participacao publica.'
+      return false
+    }
+    if (card.participationStatus || card.session?.participationStatus) {
+      discoveryActionFeedback.value = 'Esta Sessao Esportiva ja recebeu uma acao.'
+      return false
+    }
+
+    discoveryActionLoading.value = true
+    discoveryActionError.value = null
+    discoveryActionFeedback.value = null
+    try {
+      const updatedDetail = await joinSession(sessionId)
+      updateSessionParticipation(updatedDetail)
+      advanceCurrentCard('interest')
+      discoveryActionFeedback.value = updatedDetail.participationState?.label || 'Interesse registrado.'
+      return true
+    } catch (err) {
+      discoveryActionError.value = err?.response?.data?.message || err?.message || 'Nao foi possivel registrar seu interesse.'
+      return false
+    } finally {
+      discoveryActionLoading.value = false
+    }
   }
 
   function updateSessionParticipation(updatedDetail) {
@@ -111,5 +179,12 @@ export function useDiscoverySessions({ initialCards = [] } = {}) {
     loadCompatibleSportSessions,
     replaceDiscoverySessionCards,
     updateSessionParticipation,
+    discoveryActionLoading,
+    discoveryActionError,
+    discoveryActionFeedback,
+    canUndoDiscovery,
+    skipCurrentSession,
+    undoDiscoveryAction,
+    showInterestInCurrentSession,
   }
 }

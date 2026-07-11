@@ -31,7 +31,7 @@ const detail = useSportSessionDetail({
     assert.equal(options.useMockFallback, false)
     return confirmed
   },
-  onParticipationConfirmed: updated => confirmedUpdates.push(updated),
+  onParticipationUpdated: updated => confirmedUpdates.push(updated),
 })
 
 assert.equal(detail.isSportSessionDetailOpen.value, false)
@@ -45,10 +45,13 @@ assert.equal(detail.isSportSessionDetailOpen.value, true)
 assert.equal(detail.sportSessionDetail.value.title, 'Corrida aberta')
 assert.equal(detail.isOpenParticipationDetail.value, true)
 assert.equal(detail.isParticipationConfirmed.value, false)
+assert.equal(detail.canSubmitParticipation.value, true)
 
-assert.equal(await detail.confirmOpenSportSessionParticipation(), true)
+assert.equal(await detail.submitSportSessionParticipation(), true)
 assert.equal(detail.isParticipationConfirmed.value, true)
 assert.equal(detail.sportSessionParticipationFeedback.value, 'Confirmado')
+assert.equal(detail.sportSessionParticipationFeedbackTone.value, 'success')
+assert.equal(detail.canSubmitParticipation.value, false)
 assert.equal(confirmedUpdates[0].id, 'session-open')
 
 detail.closeSportSessionDetail()
@@ -66,7 +69,50 @@ const rejectedDetail = useSportSessionDetail({
 await rejectedDetail.openSportSessionDetail({
   session: { id: 'session-open', title: 'Corrida aberta' },
 })
-assert.equal(await rejectedDetail.confirmOpenSportSessionParticipation(), false)
+assert.equal(await rejectedDetail.submitSportSessionParticipation(), false)
 assert.equal(rejectedDetail.isSportSessionDetailOpen.value, true)
 assert.equal(rejectedDetail.isParticipationConfirmed.value, false)
 assert.equal(rejectedDetail.sportSessionParticipationFeedback.value, 'Perfil Esportivo ja confirmado nesta Sessao Esportiva.')
+assert.equal(rejectedDetail.sportSessionParticipationFeedbackTone.value, 'error')
+
+const curatedOpened = {
+  id: 'session-curated',
+  title: 'Volei tecnico',
+  entryMode: 'publica_aprovacao',
+  entryRule: 'approval_required',
+  nextAction: 'pedir_vaga',
+  requiresApproval: true,
+  participationState: { status: null, label: '', backendStatus: null },
+  raw: {
+    id: 'session-curated',
+    title: 'Volei tecnico',
+    entry_mode: 'publica_aprovacao',
+    next_action: 'pedir_vaga',
+  },
+}
+const curatedPending = {
+  ...curatedOpened,
+  participationState: { status: 'pending', label: 'Aguardando aprovacao', backendStatus: 'interested' },
+}
+let curatedJoinCalls = 0
+const curatedDetail = useSportSessionDetail({
+  fetchDetail: async () => curatedOpened,
+  joinSession: async () => {
+    curatedJoinCalls += 1
+    return curatedPending
+  },
+})
+
+await curatedDetail.openSportSessionDetail({
+  session: { id: 'session-curated', title: 'Volei tecnico' },
+})
+assert.equal(curatedDetail.isCuratedParticipationDetail.value, true)
+assert.equal(curatedDetail.canSubmitParticipation.value, true)
+assert.equal(await curatedDetail.submitSportSessionParticipation(), true)
+assert.equal(curatedJoinCalls, 1)
+assert.equal(curatedDetail.isParticipationPending.value, true)
+assert.equal(curatedDetail.sportSessionParticipationFeedback.value, 'Aguardando aprovacao')
+assert.equal(curatedDetail.sportSessionParticipationFeedbackTone.value, 'pending')
+assert.equal(curatedDetail.canSubmitParticipation.value, false)
+assert.equal(await curatedDetail.submitSportSessionParticipation(), false)
+assert.equal(curatedJoinCalls, 1)

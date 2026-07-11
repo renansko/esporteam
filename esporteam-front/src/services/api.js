@@ -77,6 +77,21 @@ export async function saveSportProfile({ displayName, city, region } = {}) {
   return data?.data ?? data
 }
 
+export async function updateSportProfile(payload = {}) {
+  const { data } = await esporteamApi.put('/profile', payload)
+  return data?.data ?? data
+}
+
+export async function updateSportProfileSports(sports = []) {
+  const { data } = await esporteamApi.put('/profile/sports', { sports })
+  return data?.data ?? data
+}
+
+export async function updateSportProfileAvailability(windows = []) {
+  const { data } = await esporteamApi.put('/profile/availability', { windows })
+  return data?.data ?? data
+}
+
 export async function logoutOnAuth() {
   try {
     await authApi.post('/logout')

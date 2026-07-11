@@ -2,6 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useAppStore } from '../stores/app'
 import { createSportSessionCardView } from '../features/participant/discoveryCard'
+import { createNearbySportSessionView } from '../features/participant/nearbySession'
 import {
   DISCOVERY_GOAL_OPTIONS,
   DISCOVERY_LEVEL_OPTIONS,
@@ -13,6 +14,7 @@ import {
 } from '../features/participant/discoveryFilters'
 import { PARTICIPANT_TABS, resolveParticipantTab } from '../features/participant/shell'
 import Icon from './Icon.vue'
+import { createParticipantMatchView } from '../features/participant/matches'
 
 const props = defineProps({
   discoveryCards: { type: Array, default: null },
@@ -20,24 +22,59 @@ const props = defineProps({
   discoveryError: { type: Object, default: null },
   discoveryFilters: { type: Object, default: () => ({}) },
   hasDiscoveryFilters: { type: Boolean, default: false },
+  discoveryActionLoading: { type: Boolean, default: false },
+  discoveryActionError: { type: String, default: null },
+  discoveryActionFeedback: { type: String, default: null },
+  discoveryCanUndo: { type: Boolean, default: false },
+  nearbySessions: { type: Array, default: null },
+  nearbySessionsLoading: { type: Boolean, default: false },
+  nearbySessionsError: { type: Object, default: null },
+  nearbySurfaceMode: { type: String, default: null },
+  nearbySelectedSessionId: { type: String, default: null },
+  nearbySessionParticipationLoading: { type: Boolean, default: false },
+  nearbySessionParticipationFeedback: { type: String, default: null },
+  nearbySessionParticipationFeedbackTone: { type: String, default: null },
   sportSessionDetailView: { type: Object, default: null },
   sportSessionDetailOpen: { type: Boolean, default: false },
   sportSessionDetailLoading: { type: Boolean, default: false },
   sportSessionDetailError: { type: String, default: null },
   sportSessionParticipationLoading: { type: Boolean, default: false },
   sportSessionParticipationConfirmed: { type: Boolean, default: false },
+  sportSessionParticipationFeedbackTone: { type: String, default: null },
+  participantMatches: { type: Array, default: () => [] },
+  participantMatchFilter: { type: String, default: 'all' },
+  participantMatchesLoading: { type: Boolean, default: false },
+  participantMatchesError: { type: String, default: null },
+  participantMatchFilters: { type: Array, default: () => [] },
+  sportProfileDraft: { type: Object, default: null },
+  sportProfileSaving: { type: Boolean, default: false },
+  sportProfileSaveError: { type: String, default: null },
+  sportProfileSaveSuccess: { type: Boolean, default: false },
 })
 const emit = defineEmits([
   'applyDiscoveryFilters',
   'retryDiscovery',
+  'retryNearbySessions',
   'selectDiscoveryCard',
+  'skipDiscoverySession',
+  'undoDiscoveryAction',
+  'showInterestInDiscoverySession',
+  'selectNearbySession',
+  'closeNearbySessionSummary',
+  'submitNearbySessionParticipation',
   'closeSportSessionDetail',
-  'joinOpenSportSession',
+  'submitSportSessionParticipation',
+  'setParticipantMatchFilter',
+  'selectParticipantMatch',
+  'retryParticipantMatches',
+  'saveSportProfile',
 ])
 
 const store = useAppStore()
 const filtersOpen = ref(false)
 const draftFilters = reactive(createDefaultDiscoverySessionFilters())
+const nearbySurface = ref(props.nearbySurfaceMode || 'map')
+const selectedNearbySessionId = ref(props.nearbySelectedSessionId || null)
 
 watch(() => props.discoveryFilters, (filters = {}) => {
   Object.assign(draftFilters, {
@@ -46,14 +83,57 @@ watch(() => props.discoveryFilters, (filters = {}) => {
   })
 }, { immediate: true, deep: true })
 
+watch(() => props.nearbySessions, (sessions = []) => {
+  if (!selectedNearbySessionId.value) return
+
+  const stillExists = sessions.some((card, index) => {
+    const id = createNearbySportSessionView(card, index).id
+    return String(id) === String(selectedNearbySessionId.value)
+  })
+
+  if (!stillExists) selectedNearbySessionId.value = null
+}, { deep: true })
+
+watch(() => props.nearbySurfaceMode, (mode) => {
+  if (mode === 'map' || mode === 'list') nearbySurface.value = mode
+})
+
+watch(() => props.nearbySelectedSessionId, (sessionId) => {
+  selectedNearbySessionId.value = sessionId || null
+})
+
 const activeTab = computed(() => resolveParticipantTab(store.participantTab))
 const isDiscoverTab = computed(() => activeTab.value.id === 'discover')
+const isMatchesTab = computed(() => activeTab.value.id === 'matches')
+const isProfileTab = computed(() => activeTab.value.id === 'profile')
+const participantMatchViews = computed(() => props.participantMatches.map(createParticipantMatchView))
+const isMapTab = computed(() => activeTab.value.id === 'map')
 const primaryDiscoveryCard = computed(() => (
   props.discoveryCards?.[0]
     ? createSportSessionCardView(props.discoveryCards[0])
     : null
 ))
 const primaryRawDiscoveryCard = computed(() => props.discoveryCards?.[0] ?? null)
+const pointerStartX = ref(null)
+function beginDiscoveryPointer(event) {
+  pointerStartX.value = event.clientX
+}
+function endDiscoveryPointer(event) {
+  if (pointerStartX.value === null) return
+  const delta = event.clientX - pointerStartX.value
+  pointerStartX.value = null
+  if (Math.abs(delta) < 72) return
+  if (delta < 0) emit('skipDiscoverySession')
+  else emit('showInterestInDiscoverySession')
+}
+const nearbySessionViews = computed(() => (
+  Array.isArray(props.nearbySessions)
+    ? props.nearbySessions.map((card, index) => createNearbySportSessionView(card, index))
+    : []
+))
+const selectedNearbySessionView = computed(() => (
+  nearbySessionViews.value.find(item => item.id === selectedNearbySessionId.value) || null
+))
 
 const sportProfile = computed(() => store.activeSportProfile)
 const modalityList = computed(() => (
@@ -99,6 +179,27 @@ function applyFilters() {
 
 function clearFilters() {
   emit('applyDiscoveryFilters', createDefaultDiscoverySessionFilters())
+}
+
+function selectNearbySession(sessionId) {
+  selectedNearbySessionId.value = sessionId
+  emit('selectNearbySession')
+}
+
+function closeNearbySessionSummary() {
+  selectedNearbySessionId.value = null
+  emit('closeNearbySessionSummary')
+}
+
+const weekdayLabels = ['Domingo', 'Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta', 'Sabado']
+function addAvailability() {
+  if (props.sportProfileDraft?.availability) props.sportProfileDraft.availability.push({ weekday: 6, starts_at: '08:00', ends_at: '10:00' })
+}
+function removeAvailability(index) {
+  props.sportProfileDraft?.availability?.splice(index, 1)
+}
+function updateGoals(practice, event) {
+  practice.goals = event.target.value.split(',').map(goal => goal.trim()).filter(Boolean)
 }
 
 </script>
@@ -238,8 +339,10 @@ function clearFilters() {
           <div class="deck-shadow deck-shadow-mid" aria-hidden="true"></div>
 
           <article
-            class="session-card"
+            class="session-card discovery-action-card"
             :aria-label="primaryDiscoveryCard.accessibilityLabel"
+            @pointerdown="beginDiscoveryPointer"
+            @pointerup="endDiscoveryPointer"
           >
             <header class="session-card-header">
               <span :class="['session-entry-badge', primaryDiscoveryCard.entryBadge.toneClass]">
@@ -289,16 +392,250 @@ function clearFilters() {
             >
               Ver detalhes
             </button>
+            <div class="discovery-action-buttons" aria-label="Acoes da Descoberta">
+              <button type="button" class="discovery-action-button discovery-action-back" :disabled="!discoveryCanUndo || discoveryActionLoading" @click="emit('undoDiscoveryAction')">
+                <Icon name="back" :size="16" /><span>Voltar</span>
+              </button>
+              <button type="button" class="discovery-action-button discovery-action-skip" :disabled="discoveryActionLoading" @click="emit('skipDiscoverySession')">
+                <Icon name="x" :size="16" /><span>Pular</span>
+              </button>
+              <button type="button" class="discovery-action-button discovery-action-interest" :disabled="discoveryActionLoading || !primaryDiscoveryCard.canShowInterest" @click="emit('showInterestInDiscoverySession')">
+                <Icon name="check" :size="16" /><span>{{ discoveryActionLoading ? 'Enviando' : 'Tenho interesse' }}</span>
+              </button>
+            </div>
+            <p v-if="discoveryActionFeedback" class="discovery-action-feedback" aria-live="polite">{{ discoveryActionFeedback }}</p>
+            <p v-if="discoveryActionError" class="discovery-action-feedback discovery-action-feedback-error" role="alert">{{ discoveryActionError }}</p>
           </article>
         </div>
 
-        <div v-else class="participant-placeholder">
+        <div v-else-if="isMapTab && nearbySessionsLoading" class="participant-placeholder" aria-label="Sessoes proximas carregando">
           <div class="placeholder-icon">
-            <Icon :name="discoveryError ? 'bolt' : activeTab.icon" :size="28" />
+            <Icon name="map" :size="28" />
           </div>
           <div>
-            <h2>{{ isDiscoverTab ? discoveryEmptyState.title : activeTab.emptyState.title }}</h2>
-            <p>{{ isDiscoverTab ? discoveryEmptyState.description : activeTab.emptyState.description }}</p>
+            <h2>Carregando sessoes proximas</h2>
+            <p>Mapa e Lista estao sincronizando as Sessoes Esportivas proximas ao seu Perfil Esportivo.</p>
+          </div>
+        </div>
+
+        <section v-else-if="isMapTab && nearbySessionViews.length" class="nearby-stage" aria-label="Mapa e Lista de Sessoes proximas">
+          <div class="nearby-surface-toggle" role="tablist" aria-label="Alternar entre Mapa e Lista">
+            <button
+              type="button"
+              :class="['nearby-surface-button', { active: nearbySurface === 'map' }]"
+              :aria-selected="nearbySurface === 'map'"
+              @click="nearbySurface = 'map'"
+            >
+              Mapa
+            </button>
+            <button
+              type="button"
+              :class="['nearby-surface-button', { active: nearbySurface === 'list' }]"
+              :aria-selected="nearbySurface === 'list'"
+              @click="nearbySurface = 'list'"
+            >
+              Lista
+            </button>
+          </div>
+
+          <section v-if="nearbySurface === 'map'" class="nearby-map" aria-label="Mapa de Sessoes proximas">
+            <div class="nearby-map-grid" aria-hidden="true"></div>
+
+            <button
+              v-for="session in nearbySessionViews"
+              :key="`pin-${session.id}`"
+              type="button"
+              :class="['nearby-pin', { active: session.id === selectedNearbySessionId }]"
+              :style="session.pinPosition"
+              :aria-label="session.listAriaLabel"
+              @click="selectNearbySession(session.id)"
+            >
+              <strong>{{ session.shortModalityLabel }}</strong>
+              <span>{{ session.timeCueLabel }}</span>
+            </button>
+          </section>
+
+          <section v-else class="nearby-list" aria-label="Lista de Sessoes proximas">
+            <button
+              v-for="session in nearbySessionViews"
+              :key="`list-${session.id}`"
+              type="button"
+              class="nearby-list-item"
+              :aria-label="session.listAriaLabel"
+              @click="selectNearbySession(session.id)"
+            >
+              <div class="nearby-list-item-main">
+                <span :class="['session-entry-badge', session.entryBadge.toneClass]">
+                  <Icon :name="session.entryBadge.icon" :size="14" />
+                  <span>{{ session.entryBadge.label }}</span>
+                </span>
+                <strong>{{ session.title }}</strong>
+                <span>{{ session.modalityLabel }} · {{ session.hostRoleLabel }} · {{ session.hostLabel }}</span>
+              </div>
+              <div class="nearby-list-item-meta">
+                <span>{{ session.timeCueLabel }}</span>
+                <span v-if="session.distanceLabel">{{ session.distanceLabel }}</span>
+              </div>
+            </button>
+          </section>
+
+          <section
+            v-if="selectedNearbySessionView"
+            class="nearby-summary-sheet"
+            aria-label="Resumo da Sessao Esportiva"
+          >
+            <button
+              class="nearby-summary-close"
+              type="button"
+              aria-label="Fechar resumo da Sessao Esportiva"
+              @click="closeNearbySessionSummary"
+            >
+              <Icon name="x" :size="16" />
+            </button>
+
+            <span :class="['session-entry-badge', selectedNearbySessionView.entryBadge.toneClass]">
+              <Icon :name="selectedNearbySessionView.entryBadge.icon" :size="14" />
+              <span>{{ selectedNearbySessionView.entryBadge.label }}</span>
+            </span>
+
+            <div class="nearby-summary-main">
+              <p class="session-modality">{{ selectedNearbySessionView.modalityLabel }}</p>
+              <h2>{{ selectedNearbySessionView.title }}</h2>
+              <p class="session-host">
+                {{ selectedNearbySessionView.hostRoleLabel }} · {{ selectedNearbySessionView.hostLabel }}
+              </p>
+            </div>
+
+            <dl class="nearby-summary-facts">
+              <div>
+                <dt>Data</dt>
+                <dd>{{ selectedNearbySessionView.dateTimeLabel }}</dd>
+              </div>
+              <div v-if="selectedNearbySessionView.distanceLabel">
+                <dt>Distancia</dt>
+                <dd>{{ selectedNearbySessionView.distanceLabel }}</dd>
+              </div>
+              <div>
+                <dt>Local</dt>
+                <dd>{{ selectedNearbySessionView.locationLabel }}</dd>
+              </div>
+              <div v-if="selectedNearbySessionView.participantCountLabel">
+                <dt>Participantes</dt>
+                <dd>{{ selectedNearbySessionView.participantCountLabel }}</dd>
+              </div>
+            </dl>
+
+            <p
+              v-if="nearbySessionParticipationFeedback"
+              :class="[
+                'session-detail-feedback',
+                nearbySessionParticipationFeedbackTone ? `session-detail-feedback-${nearbySessionParticipationFeedbackTone}` : '',
+              ]"
+            >
+              {{ nearbySessionParticipationFeedback }}
+            </p>
+
+            <div class="nearby-summary-actions">
+              <button
+                :class="['nearby-summary-primary', selectedNearbySessionView.summaryAction.toneClass]"
+                type="button"
+                :disabled="nearbySessionParticipationLoading || selectedNearbySessionView.summaryAction.disabled"
+                @click="emit('submitNearbySessionParticipation', selectedNearbySessionView.rawCard)"
+              >
+                <Icon :name="selectedNearbySessionView.summaryAction.icon" :size="16" />
+                <span>{{ nearbySessionParticipationLoading ? 'Enviando' : selectedNearbySessionView.summaryAction.label }}</span>
+              </button>
+
+              <button
+                class="nearby-summary-secondary"
+                type="button"
+                @click="emit('selectDiscoveryCard', selectedNearbySessionView.rawCard)"
+              >
+                Ver detalhes
+              </button>
+            </div>
+          </section>
+        </section>
+
+        <section v-else-if="isMatchesTab" class="participant-matches" aria-label="Partidas do Perfil Esportivo">
+          <div class="match-filter-list" role="group" aria-label="Filtrar Partidas">
+            <button
+              v-for="filter in participantMatchFilters"
+              :key="filter.id"
+              type="button"
+              :class="['match-filter', { active: filter.id === participantMatchFilter }]"
+              :aria-pressed="filter.id === participantMatchFilter"
+              @click="emit('setParticipantMatchFilter', filter.id)"
+            >
+              {{ filter.label }}
+            </button>
+          </div>
+
+          <div v-if="participantMatchesLoading" class="participant-placeholder" aria-label="Partidas carregando">
+            <div class="placeholder-icon"><Icon name="calendarCheck" :size="28" /></div>
+            <div><h2>Carregando Partidas</h2><p>Buscando o historico do seu Perfil Esportivo.</p></div>
+          </div>
+          <div v-else-if="participantMatchesError" class="participant-placeholder">
+            <div class="placeholder-icon"><Icon name="bolt" :size="28" /></div>
+            <div><h2>Partidas indisponiveis</h2><p>{{ participantMatchesError }}</p><button class="participant-placeholder-action" type="button" @click="emit('retryParticipantMatches')">Tentar novamente</button></div>
+          </div>
+          <div v-else-if="participantMatchViews.length" class="match-list">
+            <article v-for="match in participantMatchViews" :key="match.id" class="match-item">
+              <div class="match-item-heading"><span class="match-modality">{{ match.modality }}</span><span :class="['match-status', match.status.toneClass]"><Icon :name="match.status.icon" :size="14" /><span>{{ match.status.label }}</span></span></div>
+              <h2>{{ match.title }}</h2>
+              <p class="match-host">{{ match.host }}</p>
+              <dl class="match-facts"><div><dt>Data</dt><dd>{{ match.dateTime }}</dd></div></dl>
+              <p v-if="match.pendingNotice" class="match-pending-notice">{{ match.pendingNotice }}</p>
+              <button v-if="match.canOpen" class="session-detail-trigger" type="button" @click="emit('selectParticipantMatch', match.session)">Ver detalhes</button>
+            </article>
+          </div>
+          <div v-else class="participant-placeholder"><div class="placeholder-icon"><Icon name="calendarCheck" :size="28" /></div><div><h2>Nenhuma Partida neste filtro</h2><p>As sessoes recusadas continuam visiveis em Recusado.</p></div></div>
+        </section>
+
+        <section v-else-if="isProfileTab" class="sport-profile-editor" aria-label="Editar Perfil Esportivo">
+          <div class="profile-editor-intro">
+            <span class="profile-editor-icon"><Icon name="user" :size="22" /></span>
+            <div><h2>Perfil Esportivo ativo</h2><p>Estas preferencias orientam a Descoberta. Elas pertencem ao Perfil Esportivo, nao ao User de autenticacao.</p></div>
+          </div>
+          <form v-if="sportProfileDraft" class="profile-form" @submit.prevent="emit('saveSportProfile')">
+            <label><span>Nome do Perfil Esportivo</span><input v-model="sportProfileDraft.profile.display_name" required maxlength="80"></label>
+            <label><span>Bio</span><textarea v-model="sportProfileDraft.profile.bio" maxlength="1000" rows="3"></textarea></label>
+            <div class="profile-form-grid"><label><span>Cidade</span><input v-model="sportProfileDraft.profile.city"></label><label><span>Regiao</span><input v-model="sportProfileDraft.profile.region"></label></div>
+
+            <fieldset class="profile-practices"><legend>Modalidades, Nivel Esportivo e Objetivos Esportivos</legend>
+              <div v-for="practice in sportProfileDraft.sports" :key="practice.sport_id || practice.name" class="profile-practice">
+                <strong>{{ practice.name }}</strong>
+                <label><span>Nivel Esportivo</span><input v-model="practice.level"></label>
+                <label><span>Objetivos Esportivos (separados por virgula)</span><input :value="practice.goals.join(', ')" @input="updateGoals(practice, $event)"></label>
+                <label><span>Posicoes preferidas</span><input v-model="practice.preferred_positions"></label>
+              </div>
+              <p v-if="!sportProfileDraft.sports.length" class="profile-form-note">Nenhuma Modalidade cadastrada. Adicione suas praticas pelo backend antes de editar preferencias aqui.</p>
+            </fieldset>
+
+            <fieldset class="profile-practices"><legend>Disponibilidade</legend>
+              <div v-for="(window, index) in sportProfileDraft.availability" :key="index" class="profile-availability">
+                <select v-model.number="window.weekday" aria-label="Dia da semana"><option v-for="(label, day) in weekdayLabels" :key="day" :value="day">{{ label }}</option></select>
+                <input v-model="window.starts_at" type="time" aria-label="Inicio"><input v-model="window.ends_at" type="time" aria-label="Fim">
+                <button type="button" class="profile-remove-button" aria-label="Remover disponibilidade" @click="removeAvailability(index)"><Icon name="x" :size="15" /></button>
+              </div>
+              <button type="button" class="profile-add-button" @click="addAvailability"><Icon name="plus" :size="15" /> Adicionar horario</button>
+            </fieldset>
+
+            <p class="profile-discovery-note"><Icon name="sparkles" :size="15" /> Atualizar o Perfil Esportivo atualiza os criterios usados pela Descoberta.</p>
+            <p v-if="sportProfileSaveError" class="profile-feedback profile-feedback-error" role="alert">{{ sportProfileSaveError }}</p>
+            <p v-if="sportProfileSaveSuccess" class="profile-feedback profile-feedback-success" role="status">Perfil Esportivo salvo. A Descoberta foi atualizada.</p>
+            <button class="profile-save-button" type="submit" :disabled="sportProfileSaving"><Icon name="check" :size="17" /> {{ sportProfileSaving ? 'Salvando' : 'Salvar Perfil Esportivo' }}</button>
+          </form>
+          <div class="profile-mode-affordance"><Icon name="sparkles" :size="17" /><span>Participante agora · Anfitriao em breve</span></div>
+        </section>
+
+        <div v-else class="participant-placeholder">
+          <div class="placeholder-icon">
+            <Icon :name="discoveryError || nearbySessionsError ? 'bolt' : activeTab.icon" :size="28" />
+          </div>
+          <div>
+            <h2>{{ isDiscoverTab ? discoveryEmptyState.title : isMapTab ? (nearbySessionsError?.title || activeTab.emptyState.title) : activeTab.emptyState.title }}</h2>
+            <p>{{ isDiscoverTab ? discoveryEmptyState.description : isMapTab ? (nearbySessionsError?.description || activeTab.emptyState.description) : activeTab.emptyState.description }}</p>
             <button
               v-if="isDiscoverTab && discoveryError"
               class="participant-placeholder-action"
@@ -306,6 +643,14 @@ function clearFilters() {
               @click="emit('retryDiscovery')"
             >
               {{ discoveryError.retryLabel }}
+            </button>
+            <button
+              v-if="isMapTab && nearbySessionsError"
+              class="participant-placeholder-action"
+              type="button"
+              @click="emit('retryNearbySessions')"
+            >
+              {{ nearbySessionsError.retryLabel }}
             </button>
           </div>
         </div>
@@ -362,6 +707,10 @@ function clearFilters() {
             <span>{{ sportSessionDetailView.confirmed ? 'Confirmado' : sportSessionDetailView.entryBadge.label }}</span>
           </span>
 
+          <p v-if="sportSessionDetailView.approvalNotice" class="session-detail-notice">
+            {{ sportSessionDetailView.approvalNotice }}
+          </p>
+
           <p class="session-detail-description">{{ sportSessionDetailView.description }}</p>
 
           <dl class="session-detail-facts">
@@ -408,22 +757,35 @@ function clearFilters() {
 
           <p
             v-if="sportSessionDetailView.participationFeedback"
-            class="session-detail-feedback"
+            :class="[
+              'session-detail-feedback',
+              sportSessionDetailView.participationFeedbackTone
+                ? `session-detail-feedback-${sportSessionDetailView.participationFeedbackTone}`
+                : sportSessionParticipationFeedbackTone
+                  ? `session-detail-feedback-${sportSessionParticipationFeedbackTone}`
+                  : '',
+            ]"
             aria-live="polite"
           >
             {{ sportSessionDetailView.participationFeedback }}
           </p>
         </div>
 
-        <footer v-if="sportSessionDetailView?.canJoinOpen" class="session-detail-footer">
+        <footer v-if="sportSessionDetailView?.primaryActionLabel" class="session-detail-footer">
           <button
-            class="session-detail-primary"
+            :class="['session-detail-primary', sportSessionDetailView.primaryActionToneClass]"
             type="button"
-            :disabled="sportSessionParticipationLoading || sportSessionParticipationConfirmed"
-            @click="emit('joinOpenSportSession')"
+            :disabled="sportSessionParticipationLoading || !sportSessionDetailView.canSubmitParticipation"
+            @click="emit('submitSportSessionParticipation')"
           >
-            <Icon name="check" :size="18" />
-            <span>{{ sportSessionParticipationConfirmed ? 'Confirmado' : sportSessionParticipationLoading ? 'Confirmando' : 'Vou participar' }}</span>
+            <Icon :name="sportSessionDetailView.primaryActionIcon" :size="18" />
+            <span>{{
+              sportSessionParticipationLoading
+                ? 'Enviando'
+                : sportSessionParticipationConfirmed
+                  ? 'Confirmado'
+                  : sportSessionDetailView.primaryActionLabel
+            }}</span>
           </button>
         </footer>
       </section>
