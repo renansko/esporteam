@@ -180,6 +180,92 @@ it('lists public sessions by match filters without exposing vacancy counts', fun
     expect($host->id)->toBeInt();
 });
 
+it('opens public session detail with requester participation and safe public fields', function () {
+    $host = createSessionSportProfileForUser(77, 'Host');
+    $participant = createSessionSportProfileForUser(88, 'Participant');
+
+    $sessionId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'title' => 'Sessao no parque',
+            'description' => 'Treino aberto.',
+            'type' => 'treino',
+            'starts_at' => now()->addDay()->setSecond(0)->toISOString(),
+            'location_label' => 'Parque municipal',
+            'city' => 'Sao Paulo',
+            'region' => 'SP',
+            'latitude_approx' => -23.55,
+            'longitude_approx' => -46.63,
+            'capacity' => 3,
+            'entry_mode' => 'publica_direta',
+        ])
+        ->assertCreated()
+        ->json('data.id');
+
+    $detail = actingAsWorkspace(1, ['id' => 88])
+        ->getJson("/api/sessions/{$sessionId}")
+        ->assertOk()
+        ->assertJsonPath('data.id', $sessionId)
+        ->assertJsonPath('data.creator.id', $host->id)
+        ->assertJsonPath('data.location.latitude_approx', -23.55)
+        ->assertJsonPath('data.next_action', 'entrar')
+        ->json('data');
+
+    expect($detail)->not->toHaveKey('capacity')
+        ->and($detail['participation'])->toBe([]);
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->postJson("/api/sessions/{$sessionId}/join")
+        ->assertCreated()
+        ->assertJsonPath('data.participant_count', 2);
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->getJson("/api/sessions/{$sessionId}")
+        ->assertOk()
+        ->assertJsonPath('data.participation.0.profile.id', $participant->id)
+        ->assertJsonPath('data.participation.0.status', 'joined');
+});
+
+it('hides private and blocked-host session detail', function () {
+    $host = createSessionSportProfileForUser(77, 'Host');
+    $viewer = createSessionSportProfileForUser(88, 'Viewer');
+
+    $sessionId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'title' => 'Sessao privada',
+            'type' => 'treino',
+            'starts_at' => now()->addDay()->setSecond(0)->toISOString(),
+            'visibility' => 'private',
+        ])
+        ->assertCreated()
+        ->json('data.id');
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->getJson("/api/sessions/{$sessionId}")
+        ->assertNotFound();
+
+    Connection::query()->create([
+        'requester_profile_id' => $host->id,
+        'target_profile_id' => $viewer->id,
+        'profile_low_id' => min($host->id, $viewer->id),
+        'profile_high_id' => max($host->id, $viewer->id),
+        'type' => 'block',
+        'status' => 'blocked',
+    ]);
+
+    $blockedSessionId = actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions', [
+            'title' => 'Sessao bloqueada',
+            'type' => 'treino',
+            'starts_at' => now()->addDay()->setSecond(0)->toISOString(),
+        ])
+        ->assertCreated()
+        ->json('data.id');
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->getJson("/api/sessions/{$blockedSessionId}")
+        ->assertNotFound();
+});
+
 it('lets a sport profile join an open session once', function () {
     createSessionSportProfileForUser(77, 'Creator');
     $participant = createSessionSportProfileForUser(88, 'Participant');

@@ -20,6 +20,14 @@ Cada sessao recebe `next_action`: `entrar`, `pedir_vaga` ou `indisponivel`, calc
 
 Side effects: nenhum.
 
+## detailForUser
+
+Assinatura: `detailForUser(int $userId, SportSession $session): SportSession`
+
+Retorna detalhe de Sessao Esportiva publica e aberta. Oculta sessoes privadas/encerradas e sessoes cujo anfitriao bloqueou ou foi bloqueado pelo Perfil Esportivo autenticado. Carrega participacao somente do perfil autenticado; capacidade continua privada para nao-anfitrioes.
+
+Side effects: nenhum.
+
 ## recommendationsForHost
 
 Assinatura: `recommendationsForHost(int $userId, SportSession $session, array $filters = []): Collection`

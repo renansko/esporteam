@@ -1,0 +1,23 @@
+meta {
+  name: Get Session Detail
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/sessions/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/sessions/{id} retorna detalhe de Sessao Esportiva publica e aberta.
+
+  O payload inclui anfitriao, modalidade, local aproximado, participacao do
+  Perfil Esportivo autenticado e proxima acao. Capacidade nao aparece para
+  quem nao e anfitriao.
+}

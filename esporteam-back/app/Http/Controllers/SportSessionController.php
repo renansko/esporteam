@@ -43,6 +43,17 @@ class SportSessionController extends Controller
         return $this->createdResponse(new SportSessionResource($session), 'Session created.');
     }
 
+    public function show(Request $request, SportSession $session): JsonResponse
+    {
+        return $this->successResponse(
+            new SportSessionResource($this->sessions->detailForUser(
+                (int) $request->user()->id,
+                $session,
+            )),
+            'Session detail loaded.',
+        );
+    }
+
     public function join(Request $request, SportSession $session): JsonResponse
     {
         $session = $this->sessions->join((int) $request->user()->id, $session);

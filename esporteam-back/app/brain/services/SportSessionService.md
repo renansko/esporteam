@@ -16,6 +16,7 @@ Ele preserva `SportProfile` como identidade de participacao: callers passam `use
 
 - [`createForUser`](../functions/SportSessionService.md#createForUser)
 - [`openSessions`](../functions/SportSessionService.md#openSessions)
+- [`detailForUser`](../functions/SportSessionService.md#detailForUser)
 - [`recommendationsForHost`](../functions/SportSessionService.md#recommendationsForHost)
 - [`inviteProfiles`](../functions/SportSessionService.md#inviteProfiles)
 - [`respondToInvite`](../functions/SportSessionService.md#respondToInvite)
@@ -30,4 +31,5 @@ Ele preserva `SportProfile` como identidade de participacao: callers passam `use
 - Convites usam `invited`; aceite vira `approved`, recusa vira `declined`.
 - Capacidade conta `joined` e `approved`; convites `invited` reservam vagas antes do aceite.
 - `GET /api/sessions` calcula `next_action` e filtra por distancia, nivel, horario e disponibilidade interna de vagas sem expor a quantidade de vagas restantes.
+- `GET /api/sessions/{id}` retorna detalhe somente de sessoes publicas abertas e bloqueia detalhe de anfitrioes bloqueados; carrega apenas participacao do Perfil Esportivo autenticado.
 - Nenhum fluxo de match em grupo aceita preco, taxa ou pagamento por vaga.

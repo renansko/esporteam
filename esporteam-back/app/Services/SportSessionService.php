@@ -106,6 +106,38 @@ class SportSessionService
     }
 
     /**
+     * Returns one public session detail without exposing private sessions or
+     * sessions hosted by a blocked profile.
+     */
+    public function detailForUser(int $userId, SportSession $session): SportSession
+    {
+        $profile = $this->profileForUser($userId);
+
+        if (
+            $session->status !== SportSessionStatus::Open
+            || $session->visibility !== 'public'
+            || ($profile !== null && $session->creator_profile_id !== $profile->id
+                && $this->profilesAreBlocked($session->creator_profile_id, $profile->id))
+        ) {
+            abort(404, 'Session not found.');
+        }
+
+        $session = SportSession::query()
+            ->whereKey($session->id)
+            ->with(['creator', 'sport', 'participants'])
+            ->withCount(['participants as participant_count' => fn (Builder $query) => $query->whereIn('session_participants.status', SessionParticipantStatus::activeValues())])
+            ->when(
+                $profile !== null,
+                fn (Builder $query) => $query->with(['participationRecords' => fn ($query) => $query
+                    ->where('sport_profile_id', $profile->id)
+                    ->with('profile')]),
+            )
+            ->firstOrFail();
+
+        return $this->withPublicSessionState($session, $profile);
+    }
+
+    /**
      * @wiki app/brain/functions/SportSessionService.md#recommendationsForHost
      */
     public function recommendationsForHost(int $userId, SportSession $session, array $filters = []): Collection
