@@ -1,6 +1,47 @@
 <?php
 
 return [
+    'accepted' => 'O campo :attribute deve ser aceito.',
+    'active_url' => 'O campo :attribute não é uma URL válida.',
+    'after' => 'O campo :attribute deve ser uma data posterior a :date.',
+    'after_or_equal' => 'O campo :attribute deve ser uma data posterior ou igual a :date.',
+    'array' => 'O campo :attribute deve ser um array.',
+    'before' => 'O campo :attribute deve ser uma data anterior a :date.',
+    'before_or_equal' => 'O campo :attribute deve ser uma data anterior ou igual a :date.',
+    'boolean' => 'O campo :attribute deve ser verdadeiro ou falso.',
+    'confirmed' => 'A confirmação de :attribute não corresponde.',
+    'date' => 'O campo :attribute não é uma data válida.',
+    'date_format' => 'O campo :attribute não corresponde ao formato :format.',
+    'different' => 'Os campos :attribute e :other devem ser diferentes.',
+    'email' => 'O campo :attribute deve ser um endereço de email válido.',
+    'exists' => 'O valor selecionado para :attribute é inválido.',
+    'filled' => 'O campo :attribute deve ter um valor.',
+    'integer' => 'O campo :attribute deve ser um inteiro.',
+    'in' => 'O valor selecionado para :attribute é inválido.',
+    'max' => [
+        'numeric' => 'O campo :attribute não pode ser maior que :max.',
+        'string' => 'O campo :attribute não pode ter mais que :max caracteres.',
+        'array' => 'O campo :attribute não pode ter mais que :max itens.',
+    ],
+    'min' => [
+        'numeric' => 'O campo :attribute deve ser pelo menos :min.',
+        'string' => 'O campo :attribute deve ter pelo menos :min caracteres.',
+        'array' => 'O campo :attribute deve ter pelo menos :min itens.',
+    ],
+    'numeric' => 'O campo :attribute deve ser um número.',
+    'nullable' => 'O campo :attribute pode ser nulo.',
+    'required' => 'O campo :attribute é obrigatório.',
+    'required_if' => 'O campo :attribute é obrigatório quando :other é :value.',
+    'same' => 'Os campos :attribute e :other devem corresponder.',
+    'size' => [
+        'numeric' => 'O campo :attribute deve ser :size.',
+        'string' => 'O campo :attribute deve ter :size caracteres.',
+        'array' => 'O campo :attribute deve conter :size itens.',
+    ],
+    'string' => 'O campo :attribute deve ser uma string.',
+    'unique' => 'O valor para :attribute já existe.',
+    'url' => 'O formato do campo :attribute é inválido.',
+
     'password' => [
         'letters' => 'O campo :attribute deve conter pelo menos uma letra.',
         'mixed' => 'O campo :attribute deve conter pelo menos uma letra maiúscula e uma minúscula.',
@@ -8,7 +49,14 @@ return [
         'symbols' => 'O campo :attribute deve conter pelo menos um símbolo.',
         'uncompromised' => 'O valor do campo :attribute apareceu em um vazamento de dados. Escolha outro :attribute.',
     ],
-    'min' => [
-        'string' => 'O campo :attribute deve ter pelo menos :min caracteres.',
+    'attributes' => [
+        'email' => 'email',
+        'name' => 'nome',
+        'password' => 'senha',
+        'password_confirmation' => 'confirmação de senha',
+        'permissions' => 'permissões',
+        'invite_token' => 'token de convite',
+        'code' => 'código',
+        'user_id' => 'ID do usuário',
     ],
 ];
