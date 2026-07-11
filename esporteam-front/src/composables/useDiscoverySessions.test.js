@@ -74,7 +74,8 @@ try {
   esporteamApi.get = async () => { throw err }
   await deck.loadCompatibleSportSessions({ id: 'sport-profile-1' })
 
-  assert.equal(deck.discoverySessionCards.value.length, 0)
+  assert.equal(deck.discoverySessionCards.value.length, 1)
+  assert.equal(deck.discoverySessionCards.value[0].session.title, 'Corrida filtrada')
   assert.equal(deck.discoverySessionsError.value.title, 'Descoberta sem atualizacao')
   assert.match(deck.discoverySessionsError.value.description, /tente novamente/)
 } finally {

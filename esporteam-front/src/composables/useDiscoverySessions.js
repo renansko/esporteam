@@ -163,7 +163,7 @@ export function useDiscoverySessions({ initialCards = [], joinSession = joinSpor
       replaceDiscoverySessionCards(cards)
     } catch (err) {
       discoverySessionsError.value = createDiscoveryError(err)
-      replaceDiscoverySessionCards([])
+      discoveryActionError.value = null
     } finally {
       discoverySessionsLoading.value = false
     }

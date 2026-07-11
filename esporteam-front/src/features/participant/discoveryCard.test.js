@@ -39,7 +39,6 @@ const cardView = createSportSessionCardView({
   entryMode: 'publica_aprovacao',
   entryRule: 'approval_required',
   participantCount: 5,
-  vacancyStatus: 'hidden',
   session: {
     id: 'session-1',
     title: 'Volei de praia tecnico',

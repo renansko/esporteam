@@ -18,6 +18,12 @@ use Illuminate\Support\Collection;
  */
 class DiscoveryService
 {
+    private const LEVEL_ORDER = [
+        'beginner' => 0,
+        'intermediate' => 1,
+        'advanced' => 2,
+        'competitive' => 3,
+    ];
     /**
      * @return array{mode:string,cards:Collection<int,array<string,mixed>>,empty_state:?array<string,mixed>}
      */
@@ -79,7 +85,7 @@ class DiscoveryService
         $blockedProfileIds = $currentProfile === null ? [] : $this->blockedProfileIds($currentProfile->id);
 
         $sessions = SportSession::query()
-            ->with(['creator.sports.sport', 'creator.availabilityWindows', 'participants', 'sport'])
+            ->with(['creator.sports.sport', 'creator.availabilityWindows', 'participants', 'participationRecords', 'sport'])
             ->withCount(['participants as participant_count' => fn (Builder $query) => $query->whereIn('session_participants.status', SessionParticipantStatus::activeValues())])
             ->where('status', SportSessionStatus::Open->value)
             ->where('visibility', 'public')
@@ -87,12 +93,14 @@ class DiscoveryService
             ->when($blockedProfileIds !== [], fn (Builder $query) => $query->whereNotIn('creator_profile_id', $blockedProfileIds))
             ->when(isset($filters['sport_id']), fn (Builder $query) => $query->where('sport_id', (int) $filters['sport_id']))
             ->when(isset($filters['sport_slug']), fn (Builder $query) => $query->whereHas('sport', fn (Builder $query) => $query->where('slug', $filters['sport_slug'])))
+            ->when(isset($filters['type']), fn (Builder $query) => $query->where('type', $filters['type']))
             ->orderBy('starts_at')
             ->orderBy('id')
             ->get();
 
         return $sessions
             ->map(fn (SportSession $session) => $this->cardForSession($session, $currentProfile, $filters))
+            ->filter(fn (array $card) => $this->passesSessionCompatibilityGate($card['session'], $currentProfile))
             ->filter(fn (array $card) => $this->passesSessionCapacityGate($card['session']))
             ->filter(fn (array $card) => $this->passesDistanceFilter($card, $filters))
             ->filter(fn (array $card) => $this->passesSessionAvailabilityFilter($card['session'], $filters))
@@ -273,7 +281,7 @@ class DiscoveryService
             'host' => $session->creator,
             'entry_rule' => $entryRule,
             'participant_count' => $participantCount,
-            'vacancy_status' => $this->vacancyStatus($session, $participantCount),
+            'participation_status' => $this->participationStatusFor($session, $currentProfile),
             'recommendation_reason' => $this->recommendationReason($reasons),
         ];
     }
@@ -352,6 +360,49 @@ class DiscoveryService
         }
 
         return (int) ($session->participant_count ?? 0) < $session->capacity;
+    }
+
+    private function passesSessionCompatibilityGate(SportSession $session, ?SportProfile $profile): bool
+    {
+        if ($profile === null) {
+            return true;
+        }
+
+        if ($session->sport_id !== null && ! $profile->sports->contains('sport_id', $session->sport_id)) {
+            return false;
+        }
+
+        if (($session->min_level !== null || $session->max_level !== null)
+            && ! $profile->sports->contains(function (ProfileSport $practice) use ($session): bool {
+                if ($session->sport_id !== null && $practice->sport_id !== $session->sport_id) {
+                    return false;
+                }
+
+                $level = $practice->level?->value;
+                if ($level === null) {
+                    return false;
+                }
+
+                $order = self::LEVEL_ORDER[$level];
+
+                return ($session->min_level === null || $order >= self::LEVEL_ORDER[$session->min_level])
+                    && ($session->max_level === null || $order <= self::LEVEL_ORDER[$session->max_level]);
+            })) {
+            return false;
+        }
+
+        return $profile->availabilityWindows->isEmpty()
+            || $this->hasCompatibleSessionTime($session, $profile, []);
+    }
+
+    private function participationStatusFor(SportSession $session, ?SportProfile $profile): ?string
+    {
+        if ($profile === null || ! $session->relationLoaded('participationRecords')) {
+            return null;
+        }
+
+        return $session->participationRecords
+            ->firstWhere('sport_profile_id', $profile->id)?->status?->value;
     }
 
     private function passesSessionAvailabilityFilter(SportSession $session, array $filters): bool
@@ -633,15 +684,6 @@ class DiscoveryService
             'has_availability' => $profile->availabilityWindows->isNotEmpty(),
             'teacher_verified' => $profile->teacherProfile?->verified_at !== null,
         ];
-    }
-
-    private function vacancyStatus(SportSession $session, int $participantCount): string
-    {
-        if ($session->capacity === null) {
-            return 'unlimited';
-        }
-
-        return $participantCount >= $session->capacity ? 'full' : 'available';
     }
 
     private function locationLabel(?string $city, ?string $region): ?string

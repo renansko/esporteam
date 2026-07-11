@@ -346,7 +346,7 @@ it('returns typed session discovery cards with trust safety and approved partici
     ]);
 
     $payload = actingAsWorkspace(1, ['id' => 77])
-        ->getJson('/api/discovery?mode=sessions&sport_slug=tenis&level=intermediate&goal=jogar&distance_km=5&weekday=2&starts_at=19:00&ends_at=21:00')
+        ->getJson('/api/discovery?mode=sessions&type=partida&sport_slug=tenis&level=intermediate&goal=jogar&distance_km=5&weekday=2&starts_at=19:00&ends_at=21:00')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('mode', 'sessions')
@@ -355,7 +355,7 @@ it('returns typed session discovery cards with trust safety and approved partici
         ->assertJsonPath('data.0.session.sport.slug', 'tenis')
         ->assertJsonPath('data.0.host.display_name', 'Session host')
         ->assertJsonPath('data.0.entry_rule', 'approval_required')
-        ->assertJsonPath('data.0.vacancy_status', 'available')
+        ->assertJsonMissingPath('data.0.vacancy_status')
         ->assertJsonPath('data.0.participant_count', 1)
         ->assertJsonPath('data.0.session.participant_count', 1)
         ->assertJsonPath('data.0.session.requires_approval', true)
@@ -363,7 +363,7 @@ it('returns typed session discovery cards with trust safety and approved partici
         ->assertJsonPath('data.0.session.approved_participants.0.id', $host->id)
         ->json('data.0');
 
-    expect($payload)->not->toHaveKeys(['price', 'price_cents', 'payment_url', 'slots', 'capacity', 'available'])
+    expect($payload)->not->toHaveKeys(['price', 'price_cents', 'payment_url', 'slots', 'capacity', 'available', 'vacancy_status'])
         ->and($payload['session'])->not->toHaveKeys(['price', 'price_cents', 'payment_url', 'slots', 'capacity', 'available'])
         ->and($payload['session'])->not->toHaveKey('location')
         ->and($payload['host'])->not->toHaveKey('location')

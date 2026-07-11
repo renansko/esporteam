@@ -120,7 +120,6 @@ assert.equal(backendCard.distanceLabel, '3.4 km')
 assert.equal(backendCard.recommendationReason, 'Compativel com sua Disponibilidade')
 assert.equal(backendCard.entryRule, 'approval_required')
 assert.equal(backendCard.participantCount, 6)
-assert.equal(backendCard.vacancyStatus, 'hidden')
 assert.deepEqual(backendCard.safetyActions, ['report'])
 assert.equal(backendCard.host.displayName, 'Marina Organizadora')
 assert.equal(backendCard.session.entryMode, 'publica_aprovacao')
@@ -144,7 +143,6 @@ const publicCapacityCard = normalizeDiscoveryCard({
   },
 })
 
-assert.equal(publicCapacityCard.vacancyStatus, null)
 assert.equal(publicCapacityCard.raw.vacancy_status, undefined)
 assert.equal(publicCapacityCard.raw.session.capacity, undefined)
 assert.equal(publicCapacityCard.raw.session.remaining_slots, undefined)

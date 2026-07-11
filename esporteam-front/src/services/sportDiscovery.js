@@ -33,11 +33,6 @@ function publicDiscoveryRaw(payload = {}) {
   )
 }
 
-function normalizePublicVacancyStatus(value) {
-  const status = firstValue(value, null)
-  return status === 'hidden' ? status : null
-}
-
 function present(value) {
   return value !== undefined && value !== null && value !== ''
 }
@@ -292,9 +287,13 @@ export function normalizeDiscoveryCard(payload = {}) {
     entryMode: firstValue(payload.entry_mode, payload.entryMode, session.entryMode),
     entryRule: firstValue(payload.entry_rule, payload.entryRule, session.entryRule),
     nextAction: firstValue(payload.next_action, payload.nextAction, session.nextAction),
-    participationStatus: firstValue(payload.participation_status, payload.participationStatus, session.participationStatus),
     participantCount: firstValue(payload.participant_count, payload.participantCount, session.participantCount),
-    vacancyStatus: normalizePublicVacancyStatus(firstValue(payload.vacancy_status, payload.vacancyStatus, null)),
+    participationStatus: firstValue(
+      payload.participation_status,
+      payload.participationStatus,
+      session.participationStatus,
+      null,
+    ),
     safetyActions: Array.isArray(payload.safety_actions)
       ? payload.safety_actions
       : Array.isArray(payload.safetyActions) ? payload.safetyActions : [],

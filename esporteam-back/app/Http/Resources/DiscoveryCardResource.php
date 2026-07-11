@@ -18,7 +18,7 @@ class DiscoveryCardResource extends JsonResource
                 'recommendation_reason' => $this->resource['recommendation_reason'],
                 'entry_rule' => $this->resource['entry_rule'],
                 'participant_count' => $this->resource['participant_count'],
-                'vacancy_status' => $this->resource['vacancy_status'],
+                'participation_status' => $this->resource['participation_status'] ?? null,
                 'safety_actions' => $this->safetyActions($this->resource['host']),
                 'host' => new PublicSportProfileResource($this->resource['host']),
                 'session' => $this->sessionSummary($this->resource['session'], $this->resource['participant_count']),
