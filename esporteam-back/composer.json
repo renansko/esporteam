@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.4",
         "firebase/php-jwt": "^7.0",
+        "laravel/ai": "^0.7.2",
         "laravel/framework": "^13.7",
         "laravel/tinker": "^3.0"
     },

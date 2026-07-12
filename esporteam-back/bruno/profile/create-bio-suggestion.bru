@@ -1,0 +1,29 @@
+meta {
+  name: Create Bio Suggestion
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/profile/bio-suggestions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "instruction": "Tom leve, direto e convidativo."
+  }
+}
+
+docs {
+  POST /api/profile/bio-suggestions
+
+  Gera um rascunho privado usando apenas modalidades, níveis, objetivos,
+  posições, disponibilidade e a orientação opcional do Perfil Esportivo.
+  O campo público bio nunca é alterado automaticamente.
+}

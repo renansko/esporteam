@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BioSuggestionController;
 use App\Http\Controllers\ClassOfferingController;
 use App\Http\Controllers\ClusteringRunController;
 use App\Http\Controllers\ConnectionController;
@@ -27,6 +28,9 @@ Route::middleware('auth.service')->group(function () {
     Route::put('/profile', [SportProfileController::class, 'upsert']);
     Route::put('/profile/sports', [SportProfileController::class, 'sports']);
     Route::put('/profile/availability', [SportProfileController::class, 'availability']);
+    Route::get('/profile/bio-suggestions', [BioSuggestionController::class, 'index']);
+    Route::post('/profile/bio-suggestions', [BioSuggestionController::class, 'store'])
+        ->middleware('throttle.bio-suggestion');
 
     Route::get('/teacher-profile', [TeacherProfileController::class, 'show']);
     Route::put('/teacher-profile', [TeacherProfileController::class, 'upsert']);

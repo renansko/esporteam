@@ -33,6 +33,11 @@ class SportProfile extends Model
         return $this->hasMany(ProfileSport::class);
     }
 
+    public function bioSuggestions(): HasMany
+    {
+        return $this->hasMany(BioSuggestion::class);
+    }
+
     public function availabilityWindows(): HasMany
     {
         return $this->hasMany(AvailabilityWindow::class);

@@ -1,0 +1,21 @@
+meta {
+  name: List Bio Suggestions
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/profile/bio-suggestions
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  GET /api/profile/bio-suggestions
+
+  Lista somente os rascunhos privados do Perfil Esportivo autenticado.
+}
