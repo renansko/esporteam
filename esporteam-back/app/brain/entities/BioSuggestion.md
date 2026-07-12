@@ -6,7 +6,7 @@ Rascunho privado de bio gerado para um Perfil Esportivo. Nunca publica ou altera
 ## Campos
 
 - `sport_profile_id`: proprietário do rascunho.
-- `status`: `generating`, `generated` ou `failed`.
+- `status`: `generating`, `generated`, `accepted` ou `failed`.
 - `generated_bio` e `structured_output`: resultado estruturado validado.
 - `prompt_version`, `provider`, `model`: rastreabilidade da geração.
 - `tokens_input`, `tokens_output`: uso mínimo para observabilidade.
@@ -17,3 +17,6 @@ Rascunho privado de bio gerado para um Perfil Esportivo. Nunca publica ou altera
 
 A relação pertence a um único Perfil Esportivo. Controllers nunca recebem um
 ID arbitrário de perfil para listar rascunhos; o proprietário vem do JWT.
+
+Aceitar um rascunho copia somente `generated_bio` validado para a bio pública e
+agenda o embedding após o commit. Um rascunho já aceito é idempotente.

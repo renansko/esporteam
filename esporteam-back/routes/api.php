@@ -31,6 +31,8 @@ Route::middleware('auth.service')->group(function () {
     Route::get('/profile/bio-suggestions', [BioSuggestionController::class, 'index']);
     Route::post('/profile/bio-suggestions', [BioSuggestionController::class, 'store'])
         ->middleware('throttle.bio-suggestion');
+    Route::post('/profile/bio-suggestions/{suggestion}/accept', [BioSuggestionController::class, 'accept'])
+        ->whereNumber('suggestion');
 
     Route::get('/teacher-profile', [TeacherProfileController::class, 'show']);
     Route::put('/teacher-profile', [TeacherProfileController::class, 'upsert']);

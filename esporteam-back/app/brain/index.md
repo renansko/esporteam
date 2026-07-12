@@ -21,6 +21,7 @@
 - [`entities/ClusteringRun.md`](entities/ClusteringRun.md) — execução de clustering com cost/cache/fallback tracking
 - [`entities/ClusteringDecision.md`](entities/ClusteringDecision.md) — auditoria atômica do trace LLM
 - [`entities/BioSuggestion.md`](entities/BioSuggestion.md) — rascunho privado de bio assistida
+- [`entities/ProfileBioEmbedding.md`](entities/ProfileBioEmbedding.md) — vetor da bio aceita do Perfil Esportivo
 
 ## Services
 
@@ -30,7 +31,7 @@
 - [`services/IdeaIngestionService.md`](services/IdeaIngestionService.md) — ponto único de criação de Ideas (gera embedding)
 - [`services/ClusteringService.md`](services/ClusteringService.md) — orquestrador da run (LLM + fallback)
 - [`services/LlmFactory.md`](services/LlmFactory.md) — hub multi-provider de LLM/Embedding
-- [`services/BioSuggestionService.md`](services/BioSuggestionService.md) — geração e isolamento de rascunhos de bio
+- [`services/BioSuggestionService.md`](services/BioSuggestionService.md) — geração, aceite e isolamento de rascunhos de bio
 
 ## Functions
 
@@ -39,7 +40,7 @@
 - [`functions/PostMatchSportActionService.md`](functions/PostMatchSportActionService.md) — `actionsForUser` e `saveSessionForUser`
 - [`functions/IdeaIngestionService.md`](functions/IdeaIngestionService.md) — contratos das funções públicas
 - [`functions/ClusteringService.md`](functions/ClusteringService.md) — `executeRun` e side effects
-- [`functions/BioSuggestionService.md`](functions/BioSuggestionService.md) — criação e listagem de sugestões privadas
+- [`functions/BioSuggestionService.md`](functions/BioSuggestionService.md) — criação, listagem e aceite de sugestões privadas
 
 ## Resources
 

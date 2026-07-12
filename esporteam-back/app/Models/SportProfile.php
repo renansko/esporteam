@@ -38,6 +38,11 @@ class SportProfile extends Model
         return $this->hasMany(BioSuggestion::class);
     }
 
+    public function bioEmbedding(): HasOne
+    {
+        return $this->hasOne(ProfileBioEmbedding::class);
+    }
+
     public function availabilityWindows(): HasMany
     {
         return $this->hasMany(AvailabilityWindow::class);

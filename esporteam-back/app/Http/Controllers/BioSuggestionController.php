@@ -37,4 +37,11 @@ class BioSuggestionController extends Controller
 
         return $this->createdResponse(new BioSuggestionResource($suggestion), 'Bio suggestion created.');
     }
+
+    public function accept(Request $request, int $suggestion): JsonResponse
+    {
+        $accepted = $this->suggestions->acceptForUser((int) $request->user()->id, $suggestion);
+
+        return $this->successResponse(new BioSuggestionResource($accepted), 'Bio suggestion accepted.');
+    }
 }

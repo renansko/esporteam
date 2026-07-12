@@ -7,10 +7,14 @@ use App\Enums\BioSuggestionStatus;
 use App\Exceptions\BioSuggestionGenerationFailed;
 use App\Exceptions\InsufficientBioContext;
 use App\Exceptions\UnsafeBioSuggestion;
+use App\Jobs\GenerateProfileBioEmbedding;
 use App\Models\BioSuggestion;
+use App\Models\ProfileBioEmbedding;
 use App\Models\Sport;
 use App\Models\SportProfile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 /**
@@ -106,6 +110,50 @@ class BioSuggestionService
         return $profile->bioSuggestions()
             ->latest('id')
             ->get();
+    }
+
+    /**
+     * @wiki app/brain/functions/BioSuggestionService.md#acceptForUser
+     */
+    public function acceptForUser(int $userId, int $suggestionId): BioSuggestion
+    {
+        return DB::transaction(function () use ($userId, $suggestionId) {
+            $profile = $this->profileForUser($userId);
+            $suggestion = $profile->bioSuggestions()->lockForUpdate()->findOrFail($suggestionId);
+
+            if ($suggestion->status === BioSuggestionStatus::Accepted) {
+                return $suggestion;
+            }
+
+            $bio = trim((string) ($suggestion->structured_output['bio'] ?? ''));
+            if ($suggestion->status !== BioSuggestionStatus::Generated
+                || $bio === ''
+                || $bio !== trim((string) $suggestion->generated_bio)
+            ) {
+                throw ValidationException::withMessages(['suggestion' => 'A sugestão não pode ser aceita.']);
+            }
+
+            $profile->forceFill(['bio' => $bio])->save();
+            $suggestion->forceFill(['status' => BioSuggestionStatus::Accepted])->save();
+
+            $sourceHash = hash('sha256', $bio);
+            ProfileBioEmbedding::query()->updateOrCreate(
+                ['sport_profile_id' => $profile->id],
+                [
+                    'status' => 'pending',
+                    'source_hash' => $sourceHash,
+                    'model' => null,
+                    'embedded_at' => null,
+                    'failure_code' => null,
+                    'metadata' => null,
+                    'embedding' => null,
+                ],
+            );
+
+            DB::afterCommit(fn () => GenerateProfileBioEmbedding::dispatch($profile->id, $sourceHash));
+
+            return $suggestion->fresh();
+        });
     }
 
     /**

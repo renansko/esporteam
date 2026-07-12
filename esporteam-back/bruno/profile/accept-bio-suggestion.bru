@@ -1,0 +1,22 @@
+meta {
+  name: Accept Bio Suggestion
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/profile/bio-suggestions/{{bioSuggestionId}}/accept
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  POST /api/profile/bio-suggestions/{bioSuggestionId}/accept
+
+  Aceita um rascunho privado do Perfil Esportivo autenticado, salva somente o
+  texto validado como bio pública e agenda o embedding após o commit.
+}

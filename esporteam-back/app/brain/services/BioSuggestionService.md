@@ -9,6 +9,9 @@ Módulo de Bio Assistida. Monta o contexto esportivo permitido, chama o
 - `SportProfile` e relações de práticas/disponibilidade.
 - `BioSuggestion` — histórico privado e metadados sanitizados.
 
+Também aceita explicitamente um rascunho do dono, atualiza a bio pública em
+transação e agenda seu embedding depois do commit.
+
 ## Contratos
 
-- [[functions/BioSuggestionService]] — criar e listar sugestões do perfil atual.
+- [[functions/BioSuggestionService]] — criar, listar e aceitar sugestões do perfil atual.
