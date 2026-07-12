@@ -14,6 +14,7 @@ const {
   draft: sportProfileDraft,
   loading: sportProfileSaving,
   error: sportProfileSaveError,
+  validationErrors: sportProfileSaveErrors,
   success: sportProfileSaveSuccess,
   saveDraft: saveSportProfileDraft,
 } = useSportProfileEditor(activeSportProfile, {
@@ -141,6 +142,7 @@ function saveProfile() {
     :sport-profile-draft="sportProfileDraft"
     :sport-profile-saving="sportProfileSaving"
     :sport-profile-save-error="sportProfileSaveError"
+    :sport-profile-save-errors="sportProfileSaveErrors"
     :sport-profile-save-success="sportProfileSaveSuccess"
     @apply-discovery-filters="applyDiscoveryFilters"
     @retry-discovery="reloadParticipantSessions"

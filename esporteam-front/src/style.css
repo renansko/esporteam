@@ -170,6 +170,11 @@ body {
   padding: 18px;
   overflow: auto;
 }
+.input.is-valid, .textarea.is-valid, .select.is-valid,
+.profile-form input.is-valid, .profile-form textarea.is-valid, .profile-form select.is-valid { border-color: #2c7a4c; box-shadow: 0 0 0 2px rgba(44, 122, 76, .12); }
+.input.is-invalid, .textarea.is-invalid, .select.is-invalid,
+.profile-form input.is-invalid, .profile-form textarea.is-invalid, .profile-form select.is-invalid { border-color: #c0392b; box-shadow: 0 0 0 2px rgba(192, 57, 43, .1); }
+.profile-practices.is-invalid { border-color: #c0392b; }
 .participant-shell {
   width: min(100%, 430px);
   min-height: min(820px, calc(100vh - 36px));
@@ -245,6 +250,7 @@ body {
 }
 .participant-content {
   padding: 26px 18px 18px;
+  min-height: 0;
   overflow: auto;
 }
 .participant-eyebrow {
@@ -1534,12 +1540,15 @@ body {
 @media (max-width: 520px) {
   #app { height: 100dvh; }
   .participant-stage {
+    height: 100dvh;
+    min-height: 0;
     padding: 0;
     place-items: stretch;
   }
   .participant-shell {
     width: 100%;
-    min-height: 100dvh;
+    height: 100%;
+    min-height: 0;
     border-radius: 0;
     border: 0;
   }

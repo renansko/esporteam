@@ -15,6 +15,7 @@ import {
 import { PARTICIPANT_TABS, resolveParticipantTab } from '../features/participant/shell'
 import Icon from './Icon.vue'
 import { createParticipantMatchView } from '../features/participant/matches'
+import { firstValidationError } from '../services/validation'
 
 const props = defineProps({
   discoveryCards: { type: Array, default: null },
@@ -49,6 +50,7 @@ const props = defineProps({
   sportProfileDraft: { type: Object, default: null },
   sportProfileSaving: { type: Boolean, default: false },
   sportProfileSaveError: { type: String, default: null },
+  sportProfileSaveErrors: { type: Object, default: () => ({}) },
   sportProfileSaveSuccess: { type: Boolean, default: false },
 })
 const emit = defineEmits([
@@ -688,13 +690,14 @@ function updateGoals(practice, event) {
               <p v-if="!sportProfileDraft.sports.length" class="profile-form-note">Nenhuma Modalidade cadastrada. Adicione suas praticas pelo backend antes de editar preferencias aqui.</p>
             </fieldset>
 
-            <fieldset class="profile-practices"><legend>Disponibilidade</legend>
+            <fieldset :class="['profile-practices', { 'is-invalid': sportProfileSaveErrors.windows }]" :aria-invalid="sportProfileSaveErrors.windows ? 'true' : undefined"><legend>Disponibilidade</legend>
               <div v-for="(window, index) in sportProfileDraft.availability" :key="index" class="profile-availability">
                 <select v-model.number="window.weekday" aria-label="Dia da semana"><option v-for="(label, day) in weekdayLabels" :key="day" :value="day">{{ label }}</option></select>
                 <input v-model="window.starts_at" type="time" aria-label="Inicio"><input v-model="window.ends_at" type="time" aria-label="Fim">
                 <button type="button" class="profile-remove-button" aria-label="Remover disponibilidade" @click="removeAvailability(index)"><Icon name="x" :size="15" /></button>
               </div>
               <button type="button" class="profile-add-button" @click="addAvailability"><Icon name="plus" :size="15" /> Adicionar horario</button>
+              <p v-if="firstValidationError(sportProfileSaveErrors, 'windows')" class="field-error">{{ firstValidationError(sportProfileSaveErrors, 'windows') }}</p>
             </fieldset>
 
             <p class="profile-discovery-note"><Icon name="sparkles" :size="15" /> Atualizar o Perfil Esportivo atualiza os criterios usados pela Descoberta.</p>

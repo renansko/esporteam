@@ -1,4 +1,5 @@
 import { reactive, ref, watch } from 'vue'
+import { normalizeValidationErrors } from '../services/validation.js'
 
 export function createSportProfileDraft(profile = {}) {
   const raw = profile.raw || profile
@@ -50,6 +51,7 @@ export function useSportProfileEditor(profile, { save = null, onSaved = () => {}
   const draft = reactive(createSportProfileDraft(profile?.value || profile))
   const loading = ref(false)
   const error = ref(null)
+  const validationErrors = ref({})
   const success = ref(false)
 
   watch(profile, next => Object.assign(draft, createSportProfileDraft(next)), { deep: true })
@@ -57,6 +59,7 @@ export function useSportProfileEditor(profile, { save = null, onSaved = () => {}
   async function saveDraft() {
     loading.value = true
     error.value = null
+    validationErrors.value = {}
     success.value = false
     try {
       const result = await save(draft)
@@ -64,6 +67,7 @@ export function useSportProfileEditor(profile, { save = null, onSaved = () => {}
       success.value = true
       return result
     } catch (err) {
+      validationErrors.value = normalizeValidationErrors(err)
       error.value = err?.response?.data?.message || err?.message || 'Nao foi possivel salvar o Perfil Esportivo.'
       return null
     } finally {
@@ -71,5 +75,5 @@ export function useSportProfileEditor(profile, { save = null, onSaved = () => {}
     }
   }
 
-  return { draft, loading, error, success, saveDraft }
+  return { draft, loading, error, validationErrors, success, saveDraft }
 }

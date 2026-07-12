@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useAppStore } from '../stores/app'
 import Icon from './Icon.vue'
+import { firstValidationError, isValidField } from '../services/validation'
 
 const store = useAppStore()
 const name = ref('')
@@ -10,13 +11,35 @@ const password = ref('')
 const passwordConfirmation = ref('')
 const city = ref('')
 const region = ref('')
+const submitted = ref(false)
+const touched = ref({})
 
 const fieldError = (key) => {
-  const errs = store.registerErrors?.[key]
-  return Array.isArray(errs) ? errs[0] : errs || null
+  return firstValidationError(store.registerErrors, key)
+}
+
+function touch(key) {
+  touched.value = { ...touched.value, [key]: true }
+}
+
+function fieldClass(key, value, options = {}) {
+  if (fieldError(key)) return 'is-invalid'
+  if ((submitted.value || touched.value[key]) && !isValidField(value, options)) return 'is-invalid'
+  if ((submitted.value || touched.value[key]) && isValidField(value, options)) return 'is-valid'
+  return ''
+}
+
+function fieldMessage(key, value, options = {}, message) {
+  return fieldError(key) || (((submitted.value || touched.value[key]) && !isValidField(value, options)) ? message : null)
+}
+
+function clearError(key) {
+  store.clearRegisterFieldError(key)
 }
 
 function submit() {
+  submitted.value = true
+  ;['name', 'email', 'password', 'password_confirmation'].forEach(touch)
   store.register({
     name: name.value.trim(),
     email: email.value.trim(),
@@ -76,20 +99,21 @@ function submit() {
         </p>
 
       <label for="register-name">Nome</label>
-      <input id="register-name" class="input" type="text" v-model="name" autocomplete="name" autofocus required />
-      <div v-if="fieldError('name')" class="field-error">{{ fieldError('name') }}</div>
+      <input id="register-name" :class="['input', fieldClass('name', name, { required: true })]" type="text" v-model="name" autocomplete="name" autofocus required @blur="touch('name')" @input="clearError('name')" />
+      <div v-if="fieldMessage('name', name, { required: true }, 'Informe seu nome.')" class="field-error">{{ fieldMessage('name', name, { required: true }, 'Informe seu nome.') }}</div>
 
       <label for="register-email">Email</label>
-      <input id="register-email" class="input" type="email" v-model="email" autocomplete="email" required />
-      <div v-if="fieldError('email')" class="field-error">{{ fieldError('email') }}</div>
+      <input id="register-email" :class="['input', fieldClass('email', email, { type: 'email', required: true })]" type="email" v-model="email" autocomplete="email" required @blur="touch('email')" @input="clearError('email')" />
+      <div v-if="fieldMessage('email', email, { type: 'email', required: true }, 'Informe um e-mail válido.')" class="field-error">{{ fieldMessage('email', email, { type: 'email', required: true }, 'Informe um e-mail válido.') }}</div>
 
       <label for="register-password">Senha</label>
-      <input id="register-password" class="input" type="password" v-model="password" autocomplete="new-password" required />
+      <input id="register-password" :class="['input', fieldClass('password', password, { required: true })]" type="password" v-model="password" autocomplete="new-password" required @blur="touch('password')" @input="clearError('password')" />
       <div class="field-hint">Minimo 8 caracteres, com maiuscula, minuscula e numero.</div>
-      <div v-if="fieldError('password')" class="field-error">{{ fieldError('password') }}</div>
+      <div v-if="fieldMessage('password', password, { required: true }, 'Informe uma senha.')" class="field-error">{{ fieldMessage('password', password, { required: true }, 'Informe uma senha.') }}</div>
 
       <label for="register-password-confirm">Confirmar senha</label>
-      <input id="register-password-confirm" class="input" type="password" v-model="passwordConfirmation" autocomplete="new-password" required />
+      <input id="register-password-confirm" :class="['input', fieldClass('password_confirmation', passwordConfirmation, { required: true })]" type="password" v-model="passwordConfirmation" autocomplete="new-password" required @blur="touch('password_confirmation')" @input="clearError('password_confirmation')" />
+      <div v-if="fieldMessage('password_confirmation', passwordConfirmation, { required: true }, 'Confirme sua senha.')" class="field-error">{{ fieldMessage('password_confirmation', passwordConfirmation, { required: true }, 'Confirme sua senha.') }}</div>
 
       <div class="auth-grid">
         <div>

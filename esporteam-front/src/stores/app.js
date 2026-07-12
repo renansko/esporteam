@@ -8,6 +8,7 @@ import {
 import { STR } from '../mock/i18n'
 import { MOCK_ACTIVE_SPORT_PROFILE } from '../mock/sportDiscovery'
 import { DEFAULT_PARTICIPANT_TAB, isParticipantTab } from '../features/participant/shell'
+import { normalizeValidationErrors } from '../services/validation'
 import {
   loadToken,
   saveToken,
@@ -98,8 +99,10 @@ export const useAppStore = defineStore('app', {
     workspaceSetupRequired: false,
     workspaceOptions: [],
     workspaceSetupError: null,
+    workspaceSetupErrors: null,
     workspaceSetupLoading: false,
     loginError: null,
+    loginErrors: null,
     loginLoading: false,
     registerError: null,
     registerErrors: null,
@@ -134,10 +137,23 @@ export const useAppStore = defineStore('app', {
   },
   actions: {
     setAuth(v)     { this.auth = v },
-    setAuthView(v) { this.authView = v; this.loginError = null; this.registerError = null; this.registerErrors = null },
+    setAuthView(v) { this.authView = v; this.loginError = null; this.loginErrors = null; this.registerError = null; this.registerErrors = null },
+    clearRegisterFieldError(field) {
+      if (!this.registerErrors?.[field]) return
+      const next = { ...this.registerErrors }
+      delete next[field]
+      this.registerErrors = Object.keys(next).length ? next : null
+    },
+    clearLoginFieldError(field) {
+      if (!this.loginErrors?.[field]) return
+      const next = { ...this.loginErrors }
+      delete next[field]
+      this.loginErrors = Object.keys(next).length ? next : null
+    },
 
     async login(email, password) {
       this.loginError = null
+      this.loginErrors = null
       this.loginLoading = true
       try {
         const { token } = await apiLogin(email, password)
@@ -146,6 +162,8 @@ export const useAppStore = defineStore('app', {
         this.token = token
         await this.loadParticipantSession()
       } catch (err) {
+        const apiErrors = normalizeValidationErrors(err)
+        this.loginErrors = Object.keys(apiErrors).length ? apiErrors : null
         this.loginError = err?.response?.data?.message || err?.message || 'login_failed'
         saveToken(null)
         this.token = null
@@ -169,8 +187,8 @@ export const useAppStore = defineStore('app', {
         await this.loadParticipantSession()
         this.authView = 'login'
       } catch (err) {
-        const apiErrors = err?.response?.data?.errors
-        this.registerErrors = apiErrors || null
+        const apiErrors = normalizeValidationErrors(err)
+        this.registerErrors = Object.keys(apiErrors).length ? apiErrors : null
         this.registerError = err?.response?.data?.message || err?.message || 'register_failed'
         saveToken(null)
         this.token = null
@@ -223,10 +241,13 @@ export const useAppStore = defineStore('app', {
 
     async refreshWorkspaceOptions() {
       this.workspaceSetupError = null
+      this.workspaceSetupErrors = null
       this.workspaceSetupLoading = true
       try {
         this.workspaceOptions = await listWorkspaces()
       } catch (err) {
+        const apiErrors = normalizeValidationErrors(err)
+        this.workspaceSetupErrors = Object.keys(apiErrors).length ? apiErrors : null
         this.workspaceSetupError = err?.response?.data?.message || err?.message || 'workspace_list_failed'
       } finally {
         this.workspaceSetupLoading = false
@@ -235,12 +256,15 @@ export const useAppStore = defineStore('app', {
 
     async createAndSelectWorkspace(name) {
       this.workspaceSetupError = null
+      this.workspaceSetupErrors = null
       this.workspaceSetupLoading = true
       try {
         const workspace = await apiCreateWorkspace({ name })
         if (!workspace?.id) throw new Error('workspace_create_failed')
         await this.selectAndLoadWorkspace(workspace)
       } catch (err) {
+        const apiErrors = normalizeValidationErrors(err)
+        this.workspaceSetupErrors = Object.keys(apiErrors).length ? apiErrors : null
         this.workspaceSetupError = err?.response?.data?.message || err?.message || 'workspace_create_failed'
       } finally {
         this.workspaceSetupLoading = false

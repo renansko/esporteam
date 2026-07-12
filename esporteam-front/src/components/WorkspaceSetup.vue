@@ -3,9 +3,11 @@ import { computed, onMounted, ref } from 'vue'
 import { useAppStore } from '../stores/app'
 import { STR, pickLang } from '../mock/i18n'
 import Icon from './Icon.vue'
+import { firstValidationError, isValidField } from '../services/validation'
 
 const store = useAppStore()
 const workspaceName = ref('')
+const touched = ref(false)
 
 const lang = computed(() => store.lang)
 const t = (k) => pickLang(STR[k], lang.value)
@@ -18,7 +20,12 @@ onMounted(() => {
 function createWorkspace() {
   const name = workspaceName.value.trim()
   if (!name) return
+  touched.value = true
   store.createAndSelectWorkspace(name)
+}
+
+function clearError() {
+  if (store.workspaceSetupErrors) store.workspaceSetupErrors = null
 }
 </script>
 
@@ -38,7 +45,8 @@ function createWorkspace() {
 
       <form @submit.prevent="createWorkspace">
         <label>{{ t('register_workspace') }}</label>
-        <input class="input" type="text" v-model="workspaceName" autocomplete="organization" required />
+        <input :class="['input', touched && (firstValidationError(store.workspaceSetupErrors, 'name') ? 'is-invalid' : isValidField(workspaceName, { required: true }) ? 'is-valid' : 'is-invalid')]" type="text" v-model="workspaceName" autocomplete="organization" required @blur="touched = true" @input="clearError" />
+        <div v-if="firstValidationError(store.workspaceSetupErrors, 'name')" class="field-error">{{ firstValidationError(store.workspaceSetupErrors, 'name') }}</div>
         <div style="margin-top: 14px">
           <button class="btn btn-primary" type="submit" :disabled="store.workspaceSetupLoading">
             {{ store.workspaceSetupLoading ? '...' : t('workspace_setup_create') }} <Icon name="plus" />

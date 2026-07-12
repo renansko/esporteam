@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useAppStore } from '../stores/app'
 import { STR, pickLang } from '../mock/i18n'
+import { normalizeValidationErrors } from '../services/validation'
 
 const emit = defineEmits(['close'])
 const store = useAppStore()
@@ -32,10 +33,10 @@ async function submit() {
     })
     emit('close')
   } catch (err) {
-    const apiErrors = err?.response?.data?.errors
-    if (apiErrors) {
+    const apiErrors = normalizeValidationErrors(err)
+    if (Object.keys(apiErrors).length) {
       const first = Object.values(apiErrors)[0]
-      error.value = Array.isArray(first) ? first[0] : String(first)
+      error.value = first?.[0] || 'Revise os dados informados.'
     } else {
       error.value = err?.response?.data?.message || err?.message || 'create_failed'
     }

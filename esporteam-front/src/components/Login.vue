@@ -2,13 +2,47 @@
 import { ref } from 'vue'
 import { useAppStore } from '../stores/app'
 import Icon from './Icon.vue'
+import { firstValidationError, isValidField } from '../services/validation'
 
 const store = useAppStore()
 const email = ref('')
 const password = ref('')
+const submitted = ref(false)
+const touched = ref({})
+
+function touch(key) {
+  touched.value = { ...touched.value, [key]: true }
+}
+
+function fieldClass(value, options = {}, key) {
+  const active = submitted.value || touched.value[key]
+  if (firstValidationError(store.loginErrors, key)) return 'is-invalid'
+  if (!active) return ''
+  return isValidField(value, options) ? 'is-valid' : 'is-invalid'
+}
+
+function emailError() {
+  return firstValidationError(store.loginErrors, 'email') || ((submitted.value || touched.value.email) && !isValidField(email.value, { type: 'email', required: true })
+    ? 'Informe um e-mail válido.'
+    : null)
+}
+
+function passwordError() {
+  return firstValidationError(store.loginErrors, 'password') || ((submitted.value || touched.value.password) && !isValidField(password.value, { required: true })
+    ? 'Informe sua senha.'
+    : null)
+}
 
 function submit() {
+  submitted.value = true
+  touch('email')
+  touch('password')
+  if (emailError()) return
   store.login(email.value, password.value)
+}
+
+function clearError(key) {
+  store.clearLoginFieldError(key)
 }
 </script>
 
@@ -70,10 +104,12 @@ function submit() {
         </p>
 
         <label for="login-email">Email</label>
-        <input id="login-email" class="input" type="email" v-model="email" autocomplete="email" autofocus required />
+        <input id="login-email" :class="['input', fieldClass(email, { type: 'email', required: true }, 'email')]" type="email" v-model="email" autocomplete="email" autofocus required @blur="touch('email')" @input="clearError('email')" />
+        <div v-if="emailError()" class="field-error">{{ emailError() }}</div>
 
         <label for="login-password">Senha</label>
-        <input id="login-password" class="input" type="password" v-model="password" autocomplete="current-password" required />
+        <input id="login-password" :class="['input', fieldClass(password, { required: true }, 'password')]" type="password" v-model="password" autocomplete="current-password" required @blur="touch('password')" @input="clearError('password')" />
+        <div v-if="passwordError()" class="field-error">{{ passwordError() }}</div>
 
         <div v-if="store.loginError" class="field-error auth-error">
           {{ store.loginError }}
