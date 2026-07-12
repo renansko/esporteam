@@ -7,9 +7,7 @@ use App\Enums\BioSuggestionStatus;
 use App\Exceptions\BioSuggestionGenerationFailed;
 use App\Exceptions\InsufficientBioContext;
 use App\Exceptions\UnsafeBioSuggestion;
-use App\Jobs\GenerateProfileBioEmbedding;
 use App\Models\BioSuggestion;
-use App\Models\ProfileBioEmbedding;
 use App\Models\Sport;
 use App\Models\SportProfile;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +20,10 @@ use Throwable;
  */
 class BioSuggestionService
 {
-    public function __construct(private readonly BioAssistant $assistant) {}
+    public function __construct(
+        private readonly BioAssistant $assistant,
+        private readonly ProfileBioEmbeddingService $bioEmbeddings,
+    ) {}
 
     /**
      * @wiki app/brain/functions/BioSuggestionService.md#createForUser
@@ -136,21 +137,7 @@ class BioSuggestionService
             $profile->forceFill(['bio' => $bio])->save();
             $suggestion->forceFill(['status' => BioSuggestionStatus::Accepted])->save();
 
-            $sourceHash = hash('sha256', $bio);
-            ProfileBioEmbedding::query()->updateOrCreate(
-                ['sport_profile_id' => $profile->id],
-                [
-                    'status' => 'pending',
-                    'source_hash' => $sourceHash,
-                    'model' => null,
-                    'embedded_at' => null,
-                    'failure_code' => null,
-                    'metadata' => null,
-                    'embedding' => null,
-                ],
-            );
-
-            DB::afterCommit(fn () => GenerateProfileBioEmbedding::dispatch($profile->id, $sourceHash));
+            $this->bioEmbeddings->synchronize($profile);
 
             return $suggestion->fresh();
         });

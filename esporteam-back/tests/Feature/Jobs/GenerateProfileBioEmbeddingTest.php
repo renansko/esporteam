@@ -32,7 +32,11 @@ it('records a sanitized embedding failure without changing the accepted bio', fu
     $embedding->intercept(fn (EmbeddingRequest $request) => throw new RuntimeException('private provider payload'));
     app()->instance(EmbeddingClient::class, $embedding);
 
-    (new GenerateProfileBioEmbedding($profile->id, hash('sha256', $profile->bio)))->handle(app(EmbeddingClient::class));
+    try {
+        (new GenerateProfileBioEmbedding($profile->id, hash('sha256', $profile->bio)))->handle(app(EmbeddingClient::class));
+    } catch (RuntimeException) {
+        // Queue workers rethrow provider errors so Laravel can retry them.
+    }
 
     $record = ProfileBioEmbedding::query()->sole();
     expect($profile->fresh()->bio)->toBe('Bio aceita.')

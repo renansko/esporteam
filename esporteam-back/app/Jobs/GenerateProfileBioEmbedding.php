@@ -23,6 +23,9 @@ class GenerateProfileBioEmbedding implements ShouldQueue
 
     public int $timeout = 60;
 
+    /** @var list<int> */
+    public array $backoff = [10, 60, 300];
+
     public function __construct(
         public int $profileId,
         public string $sourceHash,
@@ -42,7 +45,7 @@ class GenerateProfileBioEmbedding implements ShouldQueue
             ['source_hash' => $this->sourceHash, 'status' => 'pending'],
         );
 
-        if ($record->source_hash !== $this->sourceHash || $record->status === 'completed') {
+        if (! $record || $record->source_hash !== $this->sourceHash || $record->status === 'completed') {
             return;
         }
 
@@ -69,29 +72,46 @@ class GenerateProfileBioEmbedding implements ShouldQueue
                 'updated_at' => now(),
             ];
 
-            if (DB::connection()->getDriverName() === 'pgsql') {
-                $literal = '['.implode(',', array_map(static fn (float $value) => (string) $value, $vector)).']';
-                $record->forceFill($values)->save();
-                DB::update('UPDATE profile_bio_embeddings SET embedding = ?::vector WHERE id = ?', [$literal, $record->id]);
-            } else {
-                $record->forceFill($values + ['embedding' => $vector])->save();
-            }
+            DB::transaction(function () use ($record, $profile, $values, $vector): void {
+                $query = ProfileBioEmbedding::query()
+                    ->whereKey($record->id)
+                    ->where('source_hash', $this->sourceHash)
+                    ->whereHas('profile', fn ($profiles) => $profiles->where('bio', $profile->bio));
+
+                if (DB::connection()->getDriverName() === 'pgsql') {
+                    if ($query->update($values) === 0) {
+                        return;
+                    }
+
+                    $literal = '['.implode(',', array_map(static fn (float $value) => (string) $value, $vector)).']';
+                    DB::update('UPDATE profile_bio_embeddings SET embedding = ?::vector WHERE id = ? AND source_hash = ?', [$literal, $record->id, $this->sourceHash]);
+
+                    return;
+                }
+
+                $query->update($values + ['embedding' => $vector]);
+            });
         } catch (Throwable $exception) {
             $this->markFailed($record, 'provider_unavailable');
             Log::warning('profile_bio_embedding.failed', [
                 'sport_profile_id' => $this->profileId,
                 'exception' => $exception::class,
             ]);
+
+            throw $exception;
         }
     }
 
     private function markFailed(ProfileBioEmbedding $record, string $failureCode): void
     {
-        $record->forceFill([
-            'status' => 'failed',
-            'failure_code' => $failureCode,
-            'metadata' => ['outcome' => 'failed'],
-        ])->save();
+        ProfileBioEmbedding::query()
+            ->whereKey($record->id)
+            ->where('source_hash', $this->sourceHash)
+            ->update([
+                'status' => 'failed',
+                'failure_code' => $failureCode,
+                'metadata' => ['outcome' => 'failed'],
+            ]);
     }
 
     private function validVector(mixed $vector): bool

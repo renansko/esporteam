@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\DB;
 
 class SportProfileService
 {
+    public function __construct(
+        private readonly ProfileBioEmbeddingService $bioEmbeddings,
+    ) {}
+
     public function findForUser(int $userId): ?SportProfile
     {
         return SportProfile::query()
@@ -18,19 +22,30 @@ class SportProfileService
 
     public function upsertForUser(int $userId, array $data): SportProfile
     {
-        $profile = SportProfile::query()->updateOrCreate(
-            ['user_id' => $userId],
-            [
-                'display_name' => $data['display_name'],
-                'bio' => $data['bio'] ?? null,
-                'city' => $data['city'] ?? null,
-                'region' => $data['region'] ?? null,
-                'latitude_approx' => $this->approximateCoordinate($data['latitude_approx'] ?? null),
-                'longitude_approx' => $this->approximateCoordinate($data['longitude_approx'] ?? null),
-                'visibility' => $data['visibility'] ?? ProfileVisibility::Public->value,
-                'avatar_url' => $data['avatar_url'] ?? null,
-            ],
-        );
+        $profile = DB::transaction(function () use ($userId, $data): SportProfile {
+            $previousBio = SportProfile::query()
+                ->where('user_id', $userId)
+                ->value('bio');
+            $profile = SportProfile::query()->updateOrCreate(
+                ['user_id' => $userId],
+                [
+                    'display_name' => $data['display_name'],
+                    'bio' => $data['bio'] ?? null,
+                    'city' => $data['city'] ?? null,
+                    'region' => $data['region'] ?? null,
+                    'latitude_approx' => $this->approximateCoordinate($data['latitude_approx'] ?? null),
+                    'longitude_approx' => $this->approximateCoordinate($data['longitude_approx'] ?? null),
+                    'visibility' => $data['visibility'] ?? ProfileVisibility::Public->value,
+                    'avatar_url' => $data['avatar_url'] ?? null,
+                ],
+            );
+
+            if ($previousBio !== $profile->bio) {
+                $this->bioEmbeddings->synchronize($profile);
+            }
+
+            return $profile;
+        });
 
         return $profile->load(['sports.sport', 'availabilityWindows']);
     }
