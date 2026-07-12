@@ -301,15 +301,16 @@ body {
   font-size: 12px;
   line-height: 1.45;
 }
-.discovery-filters {
-  margin-top: 18px;
-  border: 1px solid var(--sport-line);
-  border-radius: 8px;
-  padding: 12px;
-  display: grid;
-  gap: 10px;
-  background: var(--sport-surface-elevated);
-}
+.bottom-sheet-open { overflow: hidden; }
+.bottom-sheet-layer { position: fixed; z-index: 30; inset: 0; display: grid; align-items: end; }
+.bottom-sheet-backdrop { appearance: none; position: absolute; inset: 0; border: 0; background: rgba(24, 30, 42, 0.48); cursor: default; }
+.bottom-sheet { position: relative; max-height: min(84dvh, 760px); overflow: auto; border-radius: 22px 22px 0 0; padding: 10px 18px calc(20px + env(safe-area-inset-bottom)); background: var(--sport-surface); box-shadow: 0 -18px 48px rgba(20, 27, 38, 0.24); }
+.bottom-sheet-handle { width: 42px; height: 4px; margin: 0 auto 12px; border-radius: 999px; background: var(--sport-line); }
+.bottom-sheet-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.bottom-sheet-header h2 { margin: 0; font-size: 18px; }
+.bottom-sheet-close { appearance: none; width: 38px; height: 38px; border: 1px solid var(--sport-line); border-radius: 50%; display: grid; place-items: center; background: var(--sport-surface-elevated); color: var(--sport-text); cursor: pointer; }
+.bottom-sheet-content { margin-top: 16px; }
+.discovery-filters { padding-bottom: 2px; display: grid; gap: 18px; }
 .discovery-filters label,
 .filter-time-range {
   min-width: 0;
@@ -326,7 +327,6 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.discovery-filters select,
 .discovery-filters input[type="time"] {
   width: 100%;
   min-height: 34px;
@@ -352,21 +352,29 @@ body {
   flex-wrap: wrap;
   gap: 8px;
 }
-.discovery-filters fieldset label {
+.filter-choice,
+.weekday-picker-option {
+  appearance: none;
   min-height: 32px;
   border: 1px solid color-mix(in oklab, var(--sport-line) 82%, transparent);
   border-radius: 999px;
   padding: 0 10px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   background: var(--sport-surface);
   color: var(--sport-text);
+  font: inherit;
   font-size: 12px;
   font-weight: 650;
+  cursor: pointer;
 }
-.discovery-filters input[type="radio"] {
-  margin: 0;
+.filter-choice.active,
+.weekday-picker-option.active {
+  border-color: var(--sport-accent);
+  background: color-mix(in oklab, var(--sport-accent) 12%, var(--sport-surface));
+  color: var(--sport-accent);
 }
 .discovery-filter-actions {
   display: grid;
@@ -921,6 +929,8 @@ body {
   background: var(--sport-surface);
   box-shadow: 0 16px 28px rgba(38, 35, 29, 0.1);
 }
+.match-filter-chips { margin-top: 12px; display: flex; gap: 8px; overflow-x: auto; padding: 2px 1px 6px; scrollbar-width: none; }
+.match-filter-chips::-webkit-scrollbar { display: none; }
 .match-filter-option {
   appearance: none;
   min-height: 40px;
@@ -941,6 +951,10 @@ body {
   background: color-mix(in oklab, var(--sport-accent) 10%, var(--sport-surface));
   color: var(--sport-accent);
 }
+.match-filter-chips .match-filter-option { flex: 0 0 auto; border: 1px solid var(--sport-line); border-radius: 999px; }
+.weekday-picker { display: grid; gap: 8px; }
+.weekday-picker-option { width: 100%; min-height: 46px; border-radius: 12px; justify-content: flex-start; padding: 0 14px; }
+.profile-weekday-trigger { appearance: none; min-height: 34px; border: 1px solid color-mix(in oklab, var(--sport-line) 82%, transparent); border-radius: 8px; padding: 0 9px; background: var(--sport-surface); color: var(--sport-text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
 .agenda-stack {
   margin-top: 16px;
   display: grid;
@@ -1532,7 +1546,6 @@ body {
 .session-detail-close:focus-visible,
 .session-detail-primary:focus-visible,
 .participant-placeholder-action:focus-visible,
-.discovery-filters select:focus-visible,
 .discovery-filters input:focus-visible {
   outline: 3px solid color-mix(in oklab, var(--sport-accent) 28%, transparent);
   outline-offset: -3px;

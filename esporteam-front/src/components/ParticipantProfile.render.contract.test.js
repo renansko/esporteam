@@ -34,6 +34,8 @@ try {
   assert.match(html, /nao ao User de autenticacao/)
   assert.match(html, /Participante agora · Anfitriao em breve/)
   assert.match(html, /Salvar Perfil Esportivo/)
+  assert.match(html, /class="profile-weekday-trigger"/)
+  assert.doesNotMatch(html, /<select/)
 } finally {
   await server.close()
 }

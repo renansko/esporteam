@@ -14,6 +14,7 @@ import {
 } from '../features/participant/discoveryFilters'
 import { PARTICIPANT_TABS, resolveParticipantTab } from '../features/participant/shell'
 import Icon from './Icon.vue'
+import BottomSheet from './BottomSheet.vue'
 import { createParticipantMatchView } from '../features/participant/matches'
 import { firstValidationError } from '../services/validation'
 
@@ -73,7 +74,8 @@ const emit = defineEmits([
 ])
 
 const store = useAppStore()
-const filtersOpen = ref(false)
+const discoveryFiltersOpen = ref(false)
+const availabilityDayPickerIndex = ref(null)
 const draftFilters = reactive(createDefaultDiscoverySessionFilters())
 const nearbySurface = ref(props.nearbySurfaceMode || 'map')
 const selectedNearbySessionId = ref(props.nearbySelectedSessionId || null)
@@ -123,9 +125,6 @@ const historyMatches = computed(() => participantMatchViews.value
 const filteredHistoryMatches = computed(() => props.participantMatchFilter === 'all'
   ? historyMatches.value
   : historyMatches.value.filter(match => match.statusId === props.participantMatchFilter))
-const matchFilterLabel = computed(() => (
-  props.participantMatchFilters.find(filter => filter.id === props.participantMatchFilter)?.label || 'Todos'
-))
 const isMapTab = computed(() => activeTab.value.id === 'map')
 const primaryDiscoveryCard = computed(() => (
   props.discoveryCards?.[0]
@@ -194,10 +193,22 @@ const activeFilterSummary = computed(() => {
 })
 function applyFilters() {
   emit('applyDiscoveryFilters', { ...draftFilters })
+  discoveryFiltersOpen.value = false
 }
 
 function clearFilters() {
   emit('applyDiscoveryFilters', createDefaultDiscoverySessionFilters())
+  discoveryFiltersOpen.value = false
+}
+
+function openAvailabilityDayPicker(index) {
+  availabilityDayPickerIndex.value = index
+}
+
+function selectAvailabilityDay(day) {
+  const window = props.sportProfileDraft?.availability?.[availabilityDayPickerIndex.value]
+  if (window) window.weekday = day
+  availabilityDayPickerIndex.value = null
 }
 
 function selectNearbySession(sessionId) {
@@ -248,10 +259,10 @@ function updateGoals(practice, event) {
           <button
             v-if="isDiscoverTab"
             type="button"
-            :class="['discovery-filter-toggle', { active: filtersOpen || hasDiscoveryFilters }]"
-            :aria-expanded="filtersOpen"
+            :class="['discovery-filter-toggle', { active: discoveryFiltersOpen || hasDiscoveryFilters }]"
+            :aria-expanded="discoveryFiltersOpen"
             aria-controls="discovery-filters"
-            @click="filtersOpen = !filtersOpen"
+            @click="discoveryFiltersOpen = true"
           >
             <Icon name="filter" :size="16" />
             <span>Filtros</span>
@@ -261,84 +272,6 @@ function updateGoals(practice, event) {
         <p v-if="isDiscoverTab && activeFilterSummary" class="discovery-filter-summary">
           {{ activeFilterSummary }}
         </p>
-
-        <form
-          v-if="isDiscoverTab && filtersOpen"
-          id="discovery-filters"
-          class="discovery-filters"
-          aria-label="Filtros da Descoberta"
-          @submit.prevent="applyFilters"
-        >
-          <label>
-            <span>Modalidade</span>
-            <select v-model="draftFilters.sportSlug">
-              <option v-for="option in DISCOVERY_SPORT_OPTIONS" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
-
-          <label>
-            <span>Distancia</span>
-            <select v-model.number="draftFilters.distanceKm">
-              <option :value="5">5 km</option>
-              <option :value="10">10 km</option>
-              <option :value="20">20 km</option>
-              <option :value="50">50 km</option>
-            </select>
-          </label>
-
-          <label>
-            <span>Nivel Esportivo</span>
-            <select v-model="draftFilters.level">
-              <option v-for="option in DISCOVERY_LEVEL_OPTIONS" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
-
-          <label>
-            <span>Objetivo Esportivo</span>
-            <select v-model="draftFilters.goal">
-              <option v-for="option in DISCOVERY_GOAL_OPTIONS" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
-
-          <label>
-            <span>Disponibilidade</span>
-            <select v-model="draftFilters.weekday">
-              <option v-for="option in DISCOVERY_WEEKDAY_OPTIONS" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
-
-          <div class="filter-time-range" aria-label="Janela de Disponibilidade">
-            <label>
-              <span>Inicio</span>
-              <input v-model="draftFilters.startsAt" type="time">
-            </label>
-            <label>
-              <span>Fim</span>
-              <input v-model="draftFilters.endsAt" type="time">
-            </label>
-          </div>
-
-          <fieldset>
-            <legend>Tipo</legend>
-            <label v-for="option in DISCOVERY_PARTICIPATION_TYPE_OPTIONS" :key="option.value">
-              <input v-model="draftFilters.participationType" type="radio" :value="option.value">
-              <span>{{ option.label }}</span>
-            </label>
-          </fieldset>
-
-          <div class="discovery-filter-actions">
-            <button type="button" @click="clearFilters">Limpar</button>
-            <button type="submit">Aplicar</button>
-          </div>
-        </form>
 
         <div v-if="isDiscoverTab && discoveryLoading" class="discovery-deck discovery-deck-loading" aria-label="Descoberta carregando">
           <div class="session-card session-card-skeleton" aria-hidden="true">
@@ -586,19 +519,9 @@ function updateGoals(practice, event) {
         <section v-else-if="isMatchesTab" class="participant-matches" aria-label="Agenda do Perfil Esportivo">
           <div class="agenda-toolbar">
             <p>{{ upcomingConfirmedMatches.length }} confirmados futuros</p>
-            <button
-              type="button"
-              :class="['match-filter-button', { active: filtersOpen || participantMatchFilter !== 'all' }]"
-              :aria-expanded="filtersOpen"
-              aria-controls="match-filters"
-              @click="filtersOpen = !filtersOpen"
-            >
-              <Icon name="filter" :size="15" />
-              <span>{{ matchFilterLabel }}</span>
-            </button>
           </div>
 
-          <div v-if="filtersOpen" id="match-filters" class="match-filter-sheet" role="group" aria-label="Filtrar historico de participacao">
+          <div class="match-filter-chips" role="group" aria-label="Filtrar historico de participacao">
             <button
               v-for="filter in participantMatchFilters"
               :key="filter.id"
@@ -692,7 +615,7 @@ function updateGoals(practice, event) {
 
             <fieldset :class="['profile-practices', { 'is-invalid': sportProfileSaveErrors.windows }]" :aria-invalid="sportProfileSaveErrors.windows ? 'true' : undefined"><legend>Disponibilidade</legend>
               <div v-for="(window, index) in sportProfileDraft.availability" :key="index" class="profile-availability">
-                <select v-model.number="window.weekday" aria-label="Dia da semana"><option v-for="(label, day) in weekdayLabels" :key="day" :value="day">{{ label }}</option></select>
+                <button type="button" class="profile-weekday-trigger" :aria-label="`Dia da semana: ${weekdayLabels[window.weekday]}`" @click="openAvailabilityDayPicker(index)">{{ weekdayLabels[window.weekday] }}</button>
                 <input v-model="window.starts_at" type="time" aria-label="Inicio"><input v-model="window.ends_at" type="time" aria-label="Fim">
                 <button type="button" class="profile-remove-button" aria-label="Remover disponibilidade" @click="removeAvailability(index)"><Icon name="x" :size="15" /></button>
               </div>
@@ -916,6 +839,54 @@ function updateGoals(practice, event) {
           </button>
         </footer>
       </section>
+
+      <BottomSheet
+        :open="discoveryFiltersOpen"
+        title="Filtrar Descoberta"
+        @close="discoveryFiltersOpen = false"
+      >
+        <form id="discovery-filters" class="discovery-filters" aria-label="Filtros da Descoberta" @submit.prevent="applyFilters">
+          <fieldset>
+            <legend>Modalidade</legend>
+            <button v-for="option in DISCOVERY_SPORT_OPTIONS" :key="option.value" type="button" :class="['filter-choice', { active: draftFilters.sportSlug === option.value }]" :aria-pressed="draftFilters.sportSlug === option.value" @click="draftFilters.sportSlug = option.value">{{ option.label }}</button>
+          </fieldset>
+          <fieldset>
+            <legend>Distancia</legend>
+            <button v-for="distance in [5, 10, 20, 50]" :key="distance" type="button" :class="['filter-choice', { active: draftFilters.distanceKm === distance }]" :aria-pressed="draftFilters.distanceKm === distance" @click="draftFilters.distanceKm = distance">{{ distance }} km</button>
+          </fieldset>
+          <fieldset>
+            <legend>Nivel Esportivo</legend>
+            <button v-for="option in DISCOVERY_LEVEL_OPTIONS" :key="option.value" type="button" :class="['filter-choice', { active: draftFilters.level === option.value }]" :aria-pressed="draftFilters.level === option.value" @click="draftFilters.level = option.value">{{ option.label }}</button>
+          </fieldset>
+          <fieldset>
+            <legend>Objetivo Esportivo</legend>
+            <button v-for="option in DISCOVERY_GOAL_OPTIONS" :key="option.value" type="button" :class="['filter-choice', { active: draftFilters.goal === option.value }]" :aria-pressed="draftFilters.goal === option.value" @click="draftFilters.goal = option.value">{{ option.label }}</button>
+          </fieldset>
+          <fieldset>
+            <legend>Disponibilidade</legend>
+            <button v-for="option in DISCOVERY_WEEKDAY_OPTIONS" :key="option.value" type="button" :class="['filter-choice', { active: draftFilters.weekday === option.value }]" :aria-pressed="draftFilters.weekday === option.value" @click="draftFilters.weekday = option.value">{{ option.label }}</button>
+          </fieldset>
+          <div class="filter-time-range" aria-label="Janela de Disponibilidade">
+            <label><span>Inicio</span><input v-model="draftFilters.startsAt" type="time"></label>
+            <label><span>Fim</span><input v-model="draftFilters.endsAt" type="time"></label>
+          </div>
+          <fieldset>
+            <legend>Tipo</legend>
+            <button v-for="option in DISCOVERY_PARTICIPATION_TYPE_OPTIONS" :key="option.value" type="button" :class="['filter-choice', { active: draftFilters.participationType === option.value }]" :aria-pressed="draftFilters.participationType === option.value" @click="draftFilters.participationType = option.value">{{ option.label }}</button>
+          </fieldset>
+          <div class="discovery-filter-actions"><button type="button" @click="clearFilters">Limpar</button><button type="submit">Aplicar filtros</button></div>
+        </form>
+      </BottomSheet>
+
+      <BottomSheet
+        :open="availabilityDayPickerIndex !== null"
+        title="Escolher dia"
+        @close="availabilityDayPickerIndex = null"
+      >
+        <div class="weekday-picker" role="group" aria-label="Dia da Disponibilidade">
+          <button v-for="(label, day) in weekdayLabels" :key="day" type="button" :class="['weekday-picker-option', { active: sportProfileDraft?.availability?.[availabilityDayPickerIndex]?.weekday === day }]" @click="selectAvailabilityDay(day)">{{ label }}</button>
+        </div>
+      </BottomSheet>
 
       <nav class="participant-nav" aria-label="Navegacao do Modo Participante">
         <button
