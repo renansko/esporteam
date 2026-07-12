@@ -7,6 +7,7 @@ use App\Services\Llm\Contracts\EmbeddingClient;
 use App\Services\Llm\Contracts\EmbeddingRequest;
 use App\Services\Llm\Contracts\EmbeddingResponse;
 use App\Services\Llm\Drivers\FakeEmbeddingClient;
+use App\Services\ProfileBioEmbeddingGenerationService;
 use App\Services\ProfileBioEmbeddingService;
 use Illuminate\Support\Facades\Bus;
 
@@ -72,7 +73,7 @@ it('cannot commit a result after the bio changes while the provider is running',
     });
     app()->instance(EmbeddingClient::class, $embedding);
 
-    (new GenerateProfileBioEmbedding($profile->id, $oldHash))->handle($embedding);
+    (new GenerateProfileBioEmbedding($profile->id, $oldHash))->handle(app(ProfileBioEmbeddingGenerationService::class));
 
     $record = ProfileBioEmbedding::query()->sole();
     expect($record->source_hash)->toBe(hash('sha256', 'Bio nova.'))

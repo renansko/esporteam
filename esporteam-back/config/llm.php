@@ -2,6 +2,7 @@
 
 return [
     'default'           => env('LLM_DRIVER', 'anthropic'),
+    'default_for_embeddings' => env('LLM_EMBEDDING_DRIVER', 'openai'),
     'clustering_prompt' => env('LLM_CLUSTERING_PROMPT', 'clustering_v1'),
     'clustering_model'  => env('LLM_CLUSTERING_MODEL', 'claude-haiku-4-5-20251001'),
 

@@ -16,3 +16,4 @@ Mantém somente o hash da fonte, nunca texto adicional ou contexto privado.
 - O provider recebe exclusivamente `sport_profiles.bio` quando seu hash coincide
   com `source_hash`.
 - Reexecuções para um vetor `completed` não criam outro registro.
+- Sucesso, falha e retry são rastreados por `AiOperationalAudit` sem incluir a bio.

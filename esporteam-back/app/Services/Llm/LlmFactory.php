@@ -35,7 +35,7 @@ class LlmFactory
 
     public function embedding(?string $driver = null): EmbeddingClient
     {
-        $name = $driver ?? 'openai';
+        $name = $driver ?? config('llm.default_for_embeddings', 'openai');
         return $this->embeddingResolved[$name] ??= $this->makeEmbedding($name);
     }
 

@@ -18,14 +18,6 @@ class BioSuggestionResource extends JsonResource
             'bio' => $this->generated_bio,
             'key_points' => $this->structured_output['key_points'] ?? [],
             'status' => $this->status?->value,
-            'failure_code' => $this->failure_code,
-            'prompt_version' => $this->prompt_version,
-            'provider' => $this->provider,
-            'model' => $this->model,
-            'usage' => [
-                'tokens_input' => $this->tokens_input,
-                'tokens_output' => $this->tokens_output,
-            ],
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

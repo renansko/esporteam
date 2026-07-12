@@ -22,6 +22,7 @@
 - [`entities/ClusteringDecision.md`](entities/ClusteringDecision.md) — auditoria atômica do trace LLM
 - [`entities/BioSuggestion.md`](entities/BioSuggestion.md) — rascunho privado de bio assistida
 - [`entities/ProfileBioEmbedding.md`](entities/ProfileBioEmbedding.md) — vetor da bio aceita do Perfil Esportivo
+- [`entities/AiAuditEvent.md`](entities/AiAuditEvent.md) — rastro operacional interno de Bio Assistida
 
 ## Services
 
@@ -32,6 +33,8 @@
 - [`services/ClusteringService.md`](services/ClusteringService.md) — orquestrador da run (LLM + fallback)
 - [`services/LlmFactory.md`](services/LlmFactory.md) — hub multi-provider de LLM/Embedding
 - [`services/BioSuggestionService.md`](services/BioSuggestionService.md) — geração, aceite e isolamento de rascunhos de bio
+- [`services/AiOperationalAudit.md`](services/AiOperationalAudit.md) — auditoria segura e idempotente de IA
+- [`services/ProfileBioEmbeddingGenerationService.md`](services/ProfileBioEmbeddingGenerationService.md) — execução assíncrona do embedding
 
 ## Functions
 
@@ -41,6 +44,8 @@
 - [`functions/IdeaIngestionService.md`](functions/IdeaIngestionService.md) — contratos das funções públicas
 - [`functions/ClusteringService.md`](functions/ClusteringService.md) — `executeRun` e side effects
 - [`functions/BioSuggestionService.md`](functions/BioSuggestionService.md) — criação, listagem e aceite de sugestões privadas
+- [`functions/AiOperationalAudit.md`](functions/AiOperationalAudit.md) — contrato do rastro operacional
+- [`functions/ProfileBioEmbeddingGenerationService.md`](functions/ProfileBioEmbeddingGenerationService.md) — geração auditada de vetor
 
 ## Resources
 

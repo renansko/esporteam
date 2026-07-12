@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\AiOperationalAudit;
 use Closure;
 use Illuminate\Cache\RateLimiter;
 use Illuminate\Http\Request;
@@ -9,7 +10,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ThrottleBioSuggestion
 {
-    public function __construct(private readonly RateLimiter $limiter) {}
+    public function __construct(
+        private readonly RateLimiter $limiter,
+        private readonly AiOperationalAudit $audit,
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -21,6 +25,13 @@ class ThrottleBioSuggestion
         $key = "bio-suggestion:user:{$userId}";
 
         if ($this->limiter->tooManyAttempts($key, $maxAttempts)) {
+            $this->audit->recordBioGenerationRateLimit(
+                $userId,
+                $maxAttempts,
+                $decaySeconds,
+                $this->limiter->availableIn($key),
+            );
+
             return response()->json([
                 'success' => false,
                 'message' => 'Muitas sugestões em pouco tempo. Aguarde e tente novamente.',

@@ -8,6 +8,7 @@ Módulo de Bio Assistida. Monta o contexto esportivo permitido, chama o
 - `BioAssistant` — agente estruturado, sem tools ou acesso a banco.
 - `SportProfile` e relações de práticas/disponibilidade.
 - `BioSuggestion` — histórico privado e metadados sanitizados.
+- `AiOperationalAudit` — custo, duração, resultado e falhas sem conteúdo privado.
 
 Também aceita explicitamente um rascunho do dono, atualiza a bio pública em
 transação e agenda seu embedding depois do commit.

@@ -2,6 +2,7 @@
 
 use App\Ai\Agents\BioAssistant;
 use App\Enums\BioSuggestionStatus;
+use App\Models\AiAuditEvent;
 use App\Models\BioSuggestion;
 use App\Models\Sport;
 use App\Models\SportProfile;
@@ -45,11 +46,20 @@ it('creates a private structured bio suggestion from safe sport context', functi
         ->assertCreated()
         ->assertJsonPath('data.status', 'generated')
         ->assertJsonPath('data.bio', 'Pratico tênis em nível intermediário e busco jogar em duplas e conhecer novas pessoas.')
-        ->assertJsonPath('data.prompt_version', 'bio_v1');
+        ->assertJsonMissingPath('data.provider')
+        ->assertJsonMissingPath('data.model')
+        ->assertJsonMissingPath('data.usage');
 
     expect($response->json('data'))->not->toHaveKey('context_fingerprint')
         ->and($profile->fresh()->bio)->toBe('Bio original não deve ser alterada.')
         ->and(BioSuggestion::query()->where('sport_profile_id', $profile->id)->count())->toBe(1);
+
+    expect(AiAuditEvent::query()->sole()->metadata)->toMatchArray([
+        'provider' => 'openai',
+        'model' => 'gpt-4o-mini',
+        'prompt_version' => 'bio_v1',
+        'fallback_used' => false,
+    ]);
 
     BioAssistant::assertPrompted(function ($prompt) {
         return $prompt->contains('Tênis')
@@ -118,7 +128,8 @@ it('rejects unsafe structured output and records a private failure', function ()
         ->assertJsonPath('success', false);
 
     expect(BioSuggestion::query()->first()->status)->toBe(BioSuggestionStatus::Failed)
-        ->and(BioSuggestion::query()->first()->failure_code)->toBe('unsafe_output');
+        ->and(BioSuggestion::query()->first()->failure_code)->toBe('unsafe_output')
+        ->and(AiAuditEvent::query()->sole()->metadata)->toMatchArray(['failure_category' => 'unsafe_output']);
 });
 
 it('rejects private data in the instruction before calling the provider', function () {
@@ -184,4 +195,11 @@ it('enforces per-user generation rate limits', function () {
 
     actingAsWorkspace(1, ['id' => $userId])->postJson('/api/profile/bio-suggestions')->assertCreated();
     actingAsWorkspace(1, ['id' => $userId])->postJson('/api/profile/bio-suggestions')->assertTooManyRequests();
+    actingAsWorkspace(1, ['id' => $userId])->postJson('/api/profile/bio-suggestions')->assertTooManyRequests();
+
+    expect(AiAuditEvent::query()->where('outcome', 'rate_limited')->count())->toBe(1)
+        ->and(AiAuditEvent::query()->where('outcome', 'rate_limited')->sole()->metadata)->toMatchArray([
+            'rate_limit_max_attempts' => 1,
+            'rate_limit_decay_seconds' => 3600,
+        ]);
 });

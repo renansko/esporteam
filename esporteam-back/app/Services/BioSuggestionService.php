@@ -23,6 +23,7 @@ class BioSuggestionService
     public function __construct(
         private readonly BioAssistant $assistant,
         private readonly ProfileBioEmbeddingService $bioEmbeddings,
+        private readonly AiOperationalAudit $audit,
     ) {}
 
     /**
@@ -49,6 +50,9 @@ class BioSuggestionService
             'prompt_version' => (string) config('bio_assisted.prompt_version', 'bio_v1'),
             'context_fingerprint' => hash('sha256', json_encode($context, JSON_THROW_ON_ERROR)),
         ]);
+        $startedAt = hrtime(true);
+
+        $response = null;
 
         try {
             $response = $this->assistant->prompt(
@@ -76,6 +80,16 @@ class BioSuggestionService
                 ],
             ])->save();
 
+            $this->audit->record('bio_generation', 'succeeded', $profile->id, "bio-suggestion:{$suggestion->id}:succeeded", [
+                'provider' => $response->meta->provider,
+                'model' => $response->meta->model,
+                'prompt_version' => $suggestion->prompt_version,
+                'tokens_input' => $response->usage->promptTokens,
+                'tokens_output' => $response->usage->completionTokens,
+                'duration_ms' => $this->durationMs($startedAt),
+                'fallback_used' => false,
+            ]);
+
             return $suggestion->fresh();
         } catch (UnsafeBioSuggestion $e) {
             $suggestion->forceFill([
@@ -83,6 +97,17 @@ class BioSuggestionService
                 'failure_code' => 'unsafe_output',
                 'metadata' => ['outcome' => 'rejected'],
             ])->save();
+
+            $this->audit->record('bio_generation', 'failed', $profile->id, "bio-suggestion:{$suggestion->id}:unsafe-output", [
+                'provider' => $response?->meta->provider ?? config('bio_assisted.provider', 'openai'),
+                'model' => $response?->meta->model ?? config('bio_assisted.model', 'gpt-4o-mini'),
+                'prompt_version' => $suggestion->prompt_version,
+                'tokens_input' => $response?->usage->promptTokens,
+                'tokens_output' => $response?->usage->completionTokens,
+                'duration_ms' => $this->durationMs($startedAt),
+                'failure_category' => 'unsafe_output',
+                'fallback_used' => false,
+            ]);
 
             throw $e;
         } catch (Throwable $e) {
@@ -95,6 +120,15 @@ class BioSuggestionService
             Log::warning('bio_suggestion.failed', [
                 'suggestion_id' => $suggestion->id,
                 'exception' => $e::class,
+            ]);
+
+            $this->audit->record('bio_generation', 'failed', $profile->id, "bio-suggestion:{$suggestion->id}:provider-failure", [
+                'provider' => config('bio_assisted.provider', 'openai'),
+                'model' => config('bio_assisted.model', 'gpt-4o-mini'),
+                'prompt_version' => $suggestion->prompt_version,
+                'duration_ms' => $this->durationMs($startedAt),
+                'failure_category' => 'provider_unavailable',
+                'fallback_used' => false,
             ]);
 
             throw new BioSuggestionGenerationFailed;
@@ -282,5 +316,10 @@ class BioSuggestionService
         $instruction = trim((string) $instruction);
 
         return $instruction === '' ? null : $instruction;
+    }
+
+    private function durationMs(int $startedAt): int
+    {
+        return (int) floor((hrtime(true) - $startedAt) / 1_000_000);
     }
 }

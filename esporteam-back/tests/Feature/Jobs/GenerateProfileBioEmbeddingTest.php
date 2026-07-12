@@ -1,12 +1,14 @@
 <?php
 
 use App\Jobs\GenerateProfileBioEmbedding;
+use App\Models\AiAuditEvent;
 use App\Models\ProfileBioEmbedding;
 use App\Models\SportProfile;
 use App\Services\Llm\Contracts\EmbeddingClient;
 use App\Services\Llm\Contracts\EmbeddingRequest;
 use App\Services\Llm\Contracts\EmbeddingResponse;
 use App\Services\Llm\Drivers\FakeEmbeddingClient;
+use App\Services\ProfileBioEmbeddingGenerationService;
 
 it('stores a 1536-dimensional embedding derived only from the current bio', function () {
     $profile = SportProfile::query()->create(['user_id' => 811, 'display_name' => 'Embedding']);
@@ -14,7 +16,7 @@ it('stores a 1536-dimensional embedding derived only from the current bio', func
     $embedding = new FakeEmbeddingClient;
     app()->instance(EmbeddingClient::class, $embedding);
 
-    (new GenerateProfileBioEmbedding($profile->id, hash('sha256', $profile->bio)))->handle(app(EmbeddingClient::class));
+    (new GenerateProfileBioEmbedding($profile->id, hash('sha256', $profile->bio)))->handle(app(ProfileBioEmbeddingGenerationService::class));
 
     $record = ProfileBioEmbedding::query()->sole();
     expect($record->status)->toBe('completed')
@@ -24,6 +26,11 @@ it('stores a 1536-dimensional embedding derived only from the current bio', func
         ->and($record->embedding)->toHaveCount(1536)
         ->and($embedding->calls())->toHaveCount(1)
         ->and($embedding->calls()[0]->inputs)->toBe([$profile->bio]);
+    expect(AiAuditEvent::query()->sole()->metadata)->toMatchArray([
+        'model' => 'fake-embedding',
+        'tokens_total' => 1,
+        'retry_attempt' => 1,
+    ]);
 });
 
 it('records a sanitized embedding failure without changing the accepted bio', function () {
@@ -33,7 +40,7 @@ it('records a sanitized embedding failure without changing the accepted bio', fu
     app()->instance(EmbeddingClient::class, $embedding);
 
     try {
-        (new GenerateProfileBioEmbedding($profile->id, hash('sha256', $profile->bio)))->handle(app(EmbeddingClient::class));
+        (new GenerateProfileBioEmbedding($profile->id, hash('sha256', $profile->bio)))->handle(app(ProfileBioEmbeddingGenerationService::class));
     } catch (RuntimeException) {
         // Queue workers rethrow provider errors so Laravel can retry them.
     }
@@ -43,6 +50,7 @@ it('records a sanitized embedding failure without changing the accepted bio', fu
         ->and($record->status)->toBe('failed')
         ->and($record->failure_code)->toBe('provider_unavailable')
         ->and($record->metadata)->not->toHaveKey('raw_error');
+    expect(AiAuditEvent::query()->sole()->metadata)->not->toHaveKey('raw_error');
 });
 
 it('rejects vectors with a dimension other than 1536', function () {
@@ -51,7 +59,7 @@ it('rejects vectors with a dimension other than 1536', function () {
     $embedding->intercept(fn (EmbeddingRequest $request) => new EmbeddingResponse([[0.1, 0.2]], 'bad-model', 1));
     app()->instance(EmbeddingClient::class, $embedding);
 
-    (new GenerateProfileBioEmbedding($profile->id, hash('sha256', $profile->bio)))->handle(app(EmbeddingClient::class));
+    (new GenerateProfileBioEmbedding($profile->id, hash('sha256', $profile->bio)))->handle(app(ProfileBioEmbeddingGenerationService::class));
 
     expect(ProfileBioEmbedding::query()->sole()->status)->toBe('failed')
         ->and(ProfileBioEmbedding::query()->sole()->failure_code)->toBe('invalid_vector');
@@ -63,10 +71,11 @@ it('is safe to retry after completing an embedding', function () {
     app()->instance(EmbeddingClient::class, $embedding);
     $job = new GenerateProfileBioEmbedding($profile->id, hash('sha256', $profile->bio));
 
-    $job->handle(app(EmbeddingClient::class));
-    $job->handle(app(EmbeddingClient::class));
+    $job->handle(app(ProfileBioEmbeddingGenerationService::class));
+    $job->handle(app(ProfileBioEmbeddingGenerationService::class));
 
     expect(ProfileBioEmbedding::query()->count())->toBe(1)
         ->and(ProfileBioEmbedding::query()->sole()->status)->toBe('completed')
-        ->and($embedding->calls())->toHaveCount(1);
+        ->and($embedding->calls())->toHaveCount(1)
+        ->and(AiAuditEvent::query()->count())->toBe(1);
 });
