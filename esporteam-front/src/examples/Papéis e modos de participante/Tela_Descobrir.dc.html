@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;}</style>
+</helmet>
+<div style="display:flex; justify-content:center; font-family:'IBM Plex Sans',sans-serif;">
+  <div style="width:340px; border:0.5px solid #D6D1C6; border-radius:28px; background:#FFFFFF; overflow:hidden; box-shadow:0 10px 34px rgba(40,36,30,0.12);">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 20px 6px; font-size:12px; color:#9B958B;">
+      <span style="font-weight:500;">9:41</span>
+      <span style="display:flex; gap:6px; align-items:center;"><i class="ti ti-wifi" aria-hidden="true"></i><i class="ti ti-battery-3" aria-hidden="true"></i></span>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 16px 12px;">
+      <span style="font-size:18px; font-weight:600; color:#201E1A;">Descobrir</span>
+      <button aria-label="Filtros" style="width:40px;height:40px;border-radius:10px;border:0.5px solid #E6E2D9;background:transparent;color:#6C675E;display:flex;align-items:center;justify-content:center;"><i class="ti ti-adjustments-horizontal" style="font-size:20px;" aria-hidden="true"></i></button>
+    </div>
+    <div style="margin:0 16px; border:0.5px solid #E6E2D9; border-radius:12px; overflow:hidden;">
+      <div style="position:relative; height:170px; background:#E9EFFB; display:flex; align-items:center; justify-content:center;">
+        <i class="ti ti-ball-volleyball" style="font-size:64px; color:#2F63C7;" aria-hidden="true"></i>
+        <span style="position:absolute; top:12px; left:12px; display:inline-flex; align-items:center; gap:5px; background:#F7EBD4; color:#916412; font-size:12px; padding:5px 10px; border-radius:10px;"><i class="ti ti-lock" style="font-size:14px;" aria-hidden="true"></i>Curadoria · precisa aprovação</span>
+        <span style="position:absolute; top:12px; right:12px; display:inline-flex; align-items:center; gap:4px; background:#FFFFFF; color:#6C675E; font-size:12px; padding:5px 9px; border-radius:10px; border:0.5px solid #E6E2D9;"><i class="ti ti-map-pin" style="font-size:14px;" aria-hidden="true"></i>1,2 km</span>
+      </div>
+      <div style="padding:12px 14px 14px;">
+        <div style="font-size:16px; font-weight:600; color:#201E1A;">Vôlei de praia</div>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+          <span style="width:22px;height:22px;border-radius:50%;background:#E9EFFB;color:#2F63C7;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;">M</span>
+          <span style="font-size:13px; color:#6C675E;">com Prof. Marina</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px 14px; margin-top:12px; font-size:13px; color:#6C675E;">
+          <span style="display:inline-flex; align-items:center; gap:5px;"><i class="ti ti-calendar" style="font-size:15px;" aria-hidden="true"></i>Sáb, 6 jul · 9h</span>
+          <span style="display:inline-flex; align-items:center; gap:5px;"><i class="ti ti-stairs" style="font-size:15px;" aria-hidden="true"></i>Iniciante</span>
+          <span style="display:inline-flex; align-items:center; gap:5px;"><i class="ti ti-users" style="font-size:15px;" aria-hidden="true"></i>3 de 8 vagas</span>
+        </div>
+        <p style="margin:12px 0 0; font-size:13px; line-height:1.6; color:#6C675E;">Treino leve na Praia Mole, foco em fundamentos. Levo as bolas, é só chegar com disposição.</p>
+      </div>
+    </div>
+    <div style="display:flex; align-items:flex-start; justify-content:center; gap:20px; padding:16px 0 12px;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+        <button aria-label="Pular este evento" style="width:56px;height:56px;border-radius:50%;border:0.5px solid #D6D1C6;background:#FFFFFF;color:#6C675E;display:flex;align-items:center;justify-content:center;"><i class="ti ti-x" style="font-size:24px;" aria-hidden="true"></i></button>
+        <span style="font-size:12px; color:#9B958B;">Pular</span>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding-top:8px;">
+        <button aria-label="Voltar ao card anterior" style="width:44px;height:44px;border-radius:50%;border:0.5px solid #E6E2D9;background:#FFFFFF;color:#6C675E;display:flex;align-items:center;justify-content:center;"><i class="ti ti-arrow-back-up" style="font-size:20px;" aria-hidden="true"></i></button>
+        <span style="font-size:12px; color:#9B958B;">Voltar</span>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+        <button aria-label="Tenho interesse neste evento" style="width:56px;height:56px;border-radius:50%;border:0.5px solid #C2D2F1;background:#E9EFFB;color:#2F63C7;display:flex;align-items:center;justify-content:center;"><i class="ti ti-heart" style="font-size:24px;" aria-hidden="true"></i></button>
+        <span style="font-size:12px; color:#2F63C7;">Tenho interesse</span>
+      </div>
+    </div>
+    <div style="display:flex; border-top:0.5px solid #E6E2D9;">
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; color:#2F63C7;"><i class="ti ti-cards" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Descobrir</span></div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; color:#9B958B;"><i class="ti ti-map-2" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Mapa</span></div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; color:#9B958B;"><i class="ti ti-calendar-check" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Partidas</span></div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; color:#9B958B;"><i class="ti ti-user" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Perfil</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:380,&quot;height&quot;:720}}"></script>
+</body>
+</html>

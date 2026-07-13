@@ -23,7 +23,8 @@ Route::middleware('auth.service')->group(function () {
     Route::get('/me', MeController::class);
 
     Route::get('/sports', [SportController::class, 'index']);
-    Route::get('/discovery', [DiscoveryController::class, 'index']);
+    Route::get('/discovery', [DiscoveryController::class, 'index'])
+        ->middleware('throttle.user:discovery');
     Route::get('/profile', [SportProfileController::class, 'show']);
     Route::put('/profile', [SportProfileController::class, 'upsert']);
     Route::put('/profile/sports', [SportProfileController::class, 'sports']);
@@ -50,15 +51,22 @@ Route::middleware('auth.service')->group(function () {
     Route::post('/groups/{group}/members', [SportGroupController::class, 'addMember']);
     Route::delete('/groups/{group}/members/{profile}', [SportGroupController::class, 'removeMember']);
 
-    Route::get('/sessions', [SportSessionController::class, 'index']);
+    Route::get('/sessions', [SportSessionController::class, 'index'])
+        ->middleware('throttle.user:map');
     Route::post('/sessions', [SportSessionController::class, 'store']);
     Route::get('/profile/sessions', [SportSessionController::class, 'participantSessions']);
-    Route::get('/sessions/{session}', [SportSessionController::class, 'show']);
-    Route::get('/sessions/{session}/recommendations', [SportSessionController::class, 'recommendations']);
-    Route::post('/sessions/{session}/invites', [SportSessionController::class, 'invite']);
-    Route::patch('/sessions/{session}/invite', [SportSessionController::class, 'respondToInvite']);
-    Route::patch('/sessions/{session}/participants/{profile}', [SportSessionController::class, 'updateParticipant']);
-    Route::post('/sessions/{session}/join', [SportSessionController::class, 'join']);
+    Route::get('/sessions/{session}', [SportSessionController::class, 'show'])
+        ->whereNumber('session');
+    Route::get('/sessions/{session}/recommendations', [SportSessionController::class, 'recommendations'])
+        ->whereNumber('session');
+    Route::post('/sessions/{session}/invites', [SportSessionController::class, 'invite'])
+        ->whereNumber('session');
+    Route::patch('/sessions/{session}/invite', [SportSessionController::class, 'respondToInvite'])
+        ->whereNumber('session');
+    Route::patch('/sessions/{session}/participants/{profile}', [SportSessionController::class, 'updateParticipant'])
+        ->whereNumber('session');
+    Route::post('/sessions/{session}/join', [SportSessionController::class, 'join'])
+        ->whereNumber('session');
     Route::get('/post-match-actions', [PostMatchSportActionController::class, 'index']);
     Route::post('/post-match-actions/session', [PostMatchSportActionController::class, 'saveSession']);
 

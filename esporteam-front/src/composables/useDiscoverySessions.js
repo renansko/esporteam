@@ -4,11 +4,14 @@ import {
   DEFAULT_DISCOVERY_SESSION_FILTERS,
   createDefaultDiscoverySessionFilters,
 } from '../features/participant/discoveryFilters.js'
+import { apiErrorMessage } from '../services/validation.js'
 
 function createDiscoveryError(err) {
   const status = err?.response?.status
   const offline = typeof navigator !== 'undefined' && navigator.onLine === false
-  const validationMessage = err?.response?.data?.message
+  const validationMessage = apiErrorMessage(err, status === 422
+    ? 'Nao foi possivel usar os dados do seu Perfil Esportivo na Descoberta.'
+    : 'A Descoberta nao conseguiu atualizar as Sessoes Esportivas compativeis.')
 
   if (offline || !err?.response) {
     return {
@@ -20,15 +23,15 @@ function createDiscoveryError(err) {
 
   if (status === 422) {
     return {
-      title: 'Filtros nao aplicados',
-      description: validationMessage || 'Revise os filtros da Descoberta e tente novamente.',
+      title: 'Perfil Esportivo nao aplicado',
+      description: validationMessage,
       retryLabel: 'Tentar novamente',
     }
   }
 
   return {
     title: 'Descoberta indisponivel',
-    description: validationMessage || 'A Descoberta nao conseguiu atualizar as Sessoes Esportivas compativeis.',
+    description: validationMessage,
     retryLabel: 'Tentar novamente',
   }
 }
@@ -120,7 +123,7 @@ export function useDiscoverySessions({ initialCards = [], joinSession = joinSpor
       discoveryActionFeedback.value = updatedDetail.participationState?.label || 'Interesse registrado.'
       return true
     } catch (err) {
-      discoveryActionError.value = err?.response?.data?.message || err?.message || 'Nao foi possivel registrar seu interesse.'
+      discoveryActionError.value = apiErrorMessage(err, 'Nao foi possivel registrar seu interesse.')
       return false
     } finally {
       discoveryActionLoading.value = false
@@ -151,7 +154,6 @@ export function useDiscoverySessions({ initialCards = [], joinSession = joinSpor
 
   async function loadCompatibleSportSessions(activeSportProfile, nextFilters = discoverySessionFilters) {
     discoverySessionsLoading.value = true
-    discoverySessionsError.value = null
 
     try {
       const params = { ...nextFilters }
@@ -160,6 +162,7 @@ export function useDiscoverySessions({ initialCards = [], joinSession = joinSpor
       const cards = await listCompatibleSportSessions(params, {
         useMockFallback: !activeSportProfile?.id,
       })
+      discoverySessionsError.value = null
       replaceDiscoverySessionCards(cards)
     } catch (err) {
       discoverySessionsError.value = createDiscoveryError(err)

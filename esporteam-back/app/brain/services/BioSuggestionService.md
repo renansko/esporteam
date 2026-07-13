@@ -10,8 +10,9 @@ Módulo de Bio Assistida. Monta o contexto esportivo permitido, chama o
 - `BioSuggestion` — histórico privado e metadados sanitizados.
 - `AiOperationalAudit` — custo, duração, resultado e falhas sem conteúdo privado.
 
-Também aceita explicitamente um rascunho do dono, atualiza a bio pública em
-transação e agenda seu embedding depois do commit.
+Também pagina o histórico privado, atende criação idempotente por chave e aceita
+explicitamente um rascunho do dono. O aceite atualiza a bio pública, conclui o
+onboarding persistente e agenda seu embedding depois do commit.
 
 ## Contratos
 

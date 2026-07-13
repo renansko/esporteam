@@ -39,13 +39,33 @@ it('creates and returns the authenticated users sport profile', function () {
         ->assertJsonPath('data.user_id', 77)
         ->assertJsonPath('data.display_name', 'Renan')
         ->assertJsonPath('data.location.latitude_approx', -23.551)
-        ->assertJsonPath('data.location.longitude_approx', -46.633);
+        ->assertJsonPath('data.location.longitude_approx', -46.633)
+        ->assertJsonPath('data.bio_assistant_onboarding.eligible', false)
+        ->assertJsonPath('data.bio_assistant_onboarding.blocking_fields', []);
 
     $profile = SportProfile::query()->where('user_id', 77)->first();
 
     expect($profile)->not->toBeNull()
         ->and($profile->latitude_approx)->toBe(-23.551)
         ->and($profile->longitude_approx)->toBe(-46.633);
+});
+
+it('returns persistent assisted-bio onboarding eligibility and missing sport context', function () {
+    actingAsWorkspace(1, ['id' => 91])
+        ->putJson('/api/profile', ['display_name' => 'Perfil sem bio'])
+        ->assertOk()
+        ->assertJsonPath('data.bio_assistant_onboarding.eligible', true)
+        ->assertJsonPath('data.bio_assistant_onboarding.completed_at', null)
+        ->assertJsonPath('data.bio_assistant_onboarding.blocking_fields.0', 'sports');
+
+    actingAsWorkspace(1, ['id' => 91])
+        ->putJson('/api/profile', ['display_name' => 'Perfil com bio', 'bio' => 'Quero jogar tênis.'])
+        ->assertOk()
+        ->assertJsonPath('data.bio_assistant_onboarding.eligible', false)
+        ->assertJsonPath('data.bio_assistant_onboarding.blocking_fields', [])
+        ->assertJsonStructure(['data' => ['bio_assistant_onboarding' => ['completed_at']]]);
+
+    expect(SportProfile::query()->where('user_id', 91)->value('bio_assistant_onboarding_completed_at'))->not->toBeNull();
 });
 
 it('updates the authenticated users existing sport profile', function () {
@@ -151,6 +171,17 @@ it('replaces sport preferences for the authenticated profile', function () {
         ->assertJsonPath('data.sports.0.goals.0', 'jogar')
         ->assertJsonPath('data.sports.0.goals.1', 'fazer-amigos')
         ->assertJsonPath('data.sports.0.is_primary', true);
+});
+
+it('allows saving an empty set of sport preferences', function () {
+    actingAsWorkspace(1, ['id' => 77])
+        ->putJson('/api/profile', ['display_name' => 'Renan'])
+        ->assertOk();
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->putJson('/api/profile/sports', ['sports' => []])
+        ->assertOk()
+        ->assertJsonCount(0, 'data.sports');
 });
 
 it('rejects sport preferences with inactive sports invalid levels or invalid goals', function () {

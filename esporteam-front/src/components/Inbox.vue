@@ -5,6 +5,8 @@ import { STR, pickLang, fmtSource } from '../mock/i18n'
 import Icon from './Icon.vue'
 import SourcePill from './SourcePill.vue'
 import CreateIdeaModal from './CreateIdeaModal.vue'
+import Skeleton from './Skeleton.vue'
+import { useDelayedLoading } from '../composables/useDelayedLoading'
 
 const store = useAppStore()
 const lang = computed(() => store.lang)
@@ -36,6 +38,7 @@ const visibleList = computed(() => {
 const total       = computed(() => store.inboxIdeas.length)
 const clustered   = computed(() => store.inboxIdeas.filter(i => i.clustered).length)
 const unclustered = computed(() => total.value - clustered.value)
+const inboxSkeletonVisible = useDelayedLoading(() => store.inboxLoading)
 
 function runAI() {
   if (store.clusteringState === 'running') return
@@ -77,7 +80,7 @@ onMounted(() => {
         @click="runAI"
       >
         <template v-if="store.clusteringState === 'running'">
-          <span class="spinner" :style="{ width: '12px', height: '12px', border: '1.6px solid rgba(255,255,255,0.5)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }"></span>
+          <span aria-hidden="true">···</span>
           {{ t('inbox_analyzing') }}
         </template>
         <template v-else>
@@ -117,9 +120,6 @@ onMounted(() => {
     <b>{{ total }}</b> {{ t('inbox_count') }} ·
     <b>{{ clustered }}</b> {{ lang === 'pt' ? 'no roadmap' : 'on roadmap' }} ·
     <b>{{ unclustered }}</b> {{ lang === 'pt' ? 'pendentes' : 'pending' }}
-    <span v-if="store.inboxLoading" style="margin-left: 10px; color: var(--ink-3)">
-      · {{ lang === 'pt' ? 'carregando…' : 'loading…' }}
-    </span>
     <span v-if="store.inboxError" style="margin-left: 10px; color: var(--danger, #c0392b)">
       · {{ store.inboxError }}
     </span>
@@ -134,7 +134,14 @@ onMounted(() => {
         <div class="h-eyebrow" style="text-align: right">{{ lang === 'pt' ? 'Status' : 'Status' }}</div>
       </div>
 
-      <div v-for="idea in visibleList" :key="idea.id" class="list-row inbox-row no-hover">
+      <div v-if="inboxSkeletonVisible && !store.inboxIdeas.length" v-for="item in 6" :key="`skeleton-${item}`" class="list-row inbox-row no-hover inbox-row-skeleton skeleton-surface" aria-hidden="true">
+        <Skeleton variant="badge" width="68px" height="24px" />
+        <div><Skeleton variant="title" width="58%" height="16px" /><Skeleton variant="text" :lines="2" height="12px" /></div>
+        <div><Skeleton variant="text" width="84%" height="12px" /><Skeleton variant="text" width="46%" height="10px" /></div>
+        <Skeleton variant="badge" width="64px" height="24px" />
+      </div>
+
+      <div v-else v-for="idea in visibleList" :key="idea.id" class="list-row inbox-row no-hover">
         <SourcePill :source="idea.source" :lang="lang" />
         <div>
           <div v-if="idea.title" style="font-weight: 540; font-size: 13px; margin-bottom: 2px">

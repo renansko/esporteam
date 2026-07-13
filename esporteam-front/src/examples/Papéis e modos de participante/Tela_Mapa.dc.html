@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;}</style>
+</helmet>
+<div style="display:flex; justify-content:center; font-family:'IBM Plex Sans',sans-serif;">
+  <div style="width:340px; border:0.5px solid #D6D1C6; border-radius:28px; background:#FFFFFF; overflow:hidden; box-shadow:0 10px 34px rgba(40,36,30,0.12);">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 20px 6px; font-size:12px; color:#9B958B;">
+      <span style="font-weight:500;">9:41</span>
+      <span style="display:flex; gap:6px; align-items:center;"><i class="ti ti-wifi" aria-hidden="true"></i><i class="ti ti-battery-3" aria-hidden="true"></i></span>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; padding:6px 16px 12px;">
+      <div style="flex:1; display:flex; background:#EEEBE4; border:0.5px solid #E6E2D9; border-radius:10px; padding:3px;">
+        <button style="flex:1; padding:7px 0; border:none; border-radius:7px; background:#FFFFFF; color:#201E1A; font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:5px; box-shadow:0 1px 2px rgba(40,36,30,0.08);"><i class="ti ti-map-2" style="font-size:16px;" aria-hidden="true"></i>Mapa</button>
+        <button style="flex:1; padding:7px 0; border:none; border-radius:7px; background:transparent; color:#6C675E; font-size:13px; display:flex; align-items:center; justify-content:center; gap:5px;"><i class="ti ti-list" style="font-size:16px;" aria-hidden="true"></i>Lista</button>
+      </div>
+      <button aria-label="Filtros" style="width:38px;height:38px;border-radius:10px;border:0.5px solid #E6E2D9;background:transparent;color:#6C675E;display:flex;align-items:center;justify-content:center;"><i class="ti ti-adjustments-horizontal" style="font-size:20px;" aria-hidden="true"></i></button>
+    </div>
+    <div style="position:relative; height:250px; background:#EEEBE4; overflow:hidden;" aria-hidden="true">
+      <div style="position:absolute; top:60px; left:0; right:0; border-top:8px solid #FBFAF7;"></div>
+      <div style="position:absolute; top:155px; left:0; right:0; border-top:14px solid #FBFAF7;"></div>
+      <div style="position:absolute; top:0; bottom:0; left:90px; border-left:10px solid #FBFAF7;"></div>
+      <div style="position:absolute; top:0; bottom:0; left:235px; border-left:8px solid #FBFAF7;"></div>
+      <span style="position:absolute; top:28px; left:36px; display:inline-flex; align-items:center; gap:4px; background:#FFFFFF; border:0.5px solid #D6D1C6; color:#6C675E; font-size:12px; padding:4px 9px; border-radius:20px;"><i class="ti ti-ball-volleyball" style="font-size:14px;" aria-hidden="true"></i>9h</span>
+      <span style="position:absolute; top:92px; left:150px; display:inline-flex; align-items:center; gap:4px; background:#2F63C7; border:0.5px solid #2F63C7; color:#FFFFFF; font-size:12px; font-weight:600; padding:5px 10px; border-radius:20px; box-shadow:0 3px 10px rgba(47,99,199,0.35);"><i class="ti ti-run" style="font-size:14px;" aria-hidden="true"></i>Hoje 18h</span>
+      <span style="position:absolute; top:175px; left:52px; display:inline-flex; align-items:center; gap:4px; background:#FFFFFF; border:0.5px solid #D6D1C6; color:#6C675E; font-size:12px; padding:4px 9px; border-radius:20px;"><i class="ti ti-ball-basketball" style="font-size:14px;" aria-hidden="true"></i>20h</span>
+      <span style="position:absolute; top:190px; left:210px; display:inline-flex; align-items:center; gap:4px; background:#FFFFFF; border:0.5px solid #D6D1C6; color:#6C675E; font-size:12px; padding:4px 9px; border-radius:20px;"><i class="ti ti-bike" style="font-size:14px;" aria-hidden="true"></i>amanhã</span>
+    </div>
+    <div style="border-top:0.5px solid #E6E2D9; padding:10px 16px 16px; background:#FFFFFF;">
+      <div style="width:36px; height:4px; border-radius:2px; background:#D6D1C6; margin:0 auto 12px;"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <span style="font-size:16px; font-weight:600; color:#201E1A;">Corrida no Parcão</span>
+        <span style="display:inline-flex; align-items:center; gap:5px; background:#E3F2E8; color:#2C7A4C; font-size:12px; padding:5px 10px; border-radius:10px;"><i class="ti ti-lock-open" style="font-size:14px;" aria-hidden="true"></i>Aberto · entre direto</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+        <span style="width:22px;height:22px;border-radius:50%;background:#E9EFFB;color:#2F63C7;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;">R</span>
+        <span style="font-size:13px; color:#6C675E;">com Rafa · grupo de corrida</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:10px 14px; margin-top:10px; font-size:13px; color:#6C675E;">
+        <span style="display:inline-flex; align-items:center; gap:5px;"><i class="ti ti-calendar" style="font-size:15px;" aria-hidden="true"></i>Hoje · 18h</span>
+        <span style="display:inline-flex; align-items:center; gap:5px;"><i class="ti ti-map-pin" style="font-size:15px;" aria-hidden="true"></i>2,4 km</span>
+        <span style="display:inline-flex; align-items:center; gap:5px;"><i class="ti ti-stairs" style="font-size:15px;" aria-hidden="true"></i>Todos os níveis</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:14px;">
+        <div style="display:flex;">
+          <span style="width:28px;height:28px;border-radius:50%;background:#E9EFFB;color:#2F63C7;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:2px solid #FFFFFF;">AL</span>
+          <span style="width:28px;height:28px;border-radius:50%;background:#F7EBD4;color:#916412;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:2px solid #FFFFFF;margin-left:-8px;">JP</span>
+          <span style="width:28px;height:28px;border-radius:50%;background:#E3F2E8;color:#2C7A4C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:2px solid #FFFFFF;margin-left:-8px;">Me</span>
+          <span style="width:28px;height:28px;border-radius:50%;background:#EEEBE4;color:#6C675E;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:2px solid #FFFFFF;margin-left:-8px;">+9</span>
+        </div>
+        <span style="font-size:13px; color:#6C675E;">12 confirmados</span>
+      </div>
+      <button style="width:100%; margin-top:16px; padding:12px; border:none; border-radius:10px; background:#2F63C7; color:#FFFFFF; font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px;"><i class="ti ti-check" style="font-size:18px;" aria-hidden="true"></i>Vou participar</button>
+      <button style="width:100%; margin-top:8px; padding:8px; border:none; background:transparent; color:#2F63C7; font-size:13px;">Ver detalhes e regras</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:380,&quot;height&quot;:760}}"></script>
+</body>
+</html>

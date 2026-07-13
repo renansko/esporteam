@@ -13,7 +13,8 @@ class UpdateProfileSportsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'sports' => ['required', 'array', 'max:20'],
+            // A profile can be saved before any modality is selected.
+            'sports' => ['present', 'array', 'max:20'],
             'sports.*.sport_id' => ['required', 'integer', Rule::exists('sports', 'id')->where('is_active', true), 'distinct'],
             'sports.*.level' => ['required', Rule::in(SportLevel::values())],
             'sports.*.goals' => ['nullable', 'array', 'max:8'],

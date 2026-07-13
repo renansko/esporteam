@@ -14,6 +14,7 @@ class SportProfile extends Model
         'user_id',
         'display_name',
         'bio',
+        'bio_assistant_onboarding_completed_at',
         'city',
         'region',
         'latitude_approx',
@@ -26,6 +27,7 @@ class SportProfile extends Model
         'latitude_approx' => 'float',
         'longitude_approx' => 'float',
         'visibility' => ProfileVisibility::class,
+        'bio_assistant_onboarding_completed_at' => 'datetime',
     ];
 
     public function sports(): HasMany

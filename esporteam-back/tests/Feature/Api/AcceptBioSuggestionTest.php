@@ -5,8 +5,8 @@ use App\Jobs\GenerateProfileBioEmbedding;
 use App\Models\BioSuggestion;
 use App\Models\SportProfile;
 use App\Services\BioSuggestionService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 
 function acceptanceSportProfile(int $userId, string $name = 'Perfil Bio'): SportProfile
 {
@@ -40,6 +40,7 @@ it('accepts an owned suggestion and dispatches its embedding after the bio is sa
         ->assertJsonPath('data.bio', 'Pratico tênis e busco novas partidas.');
 
     expect($profile->fresh()->bio)->toBe('Pratico tênis e busco novas partidas.')
+        ->and($profile->fresh()->bio_assistant_onboarding_completed_at)->not->toBeNull()
         ->and($suggestion->fresh()->status)->toBe(BioSuggestionStatus::Accepted);
 
     Bus::assertDispatched(GenerateProfileBioEmbedding::class, function (GenerateProfileBioEmbedding $job) use ($profile) {

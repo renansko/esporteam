@@ -89,6 +89,20 @@ function reloadParticipantSessions() {
   loadNearbySportSessions(store.activeSportProfile, discoverySessionFilters)
 }
 
+function reloadDiscoverySessions() {
+  loadCompatibleSportSessions(store.activeSportProfile)
+}
+
+function applyDiscoveryFilters(filters) {
+  setDiscoverySessionFilters(filters)
+  loadCompatibleSportSessions(store.activeSportProfile, filters)
+  loadNearbySportSessions(store.activeSportProfile, filters)
+}
+
+function reloadNearbySessions() {
+  loadNearbySportSessions(store.activeSportProfile, discoverySessionFilters)
+}
+
 onMounted(() => {
   reloadParticipantSessions()
   loadParticipantMatches()
@@ -99,14 +113,19 @@ watch(() => store.activeSportProfile?.id, () => {
   loadParticipantMatches()
 })
 
-function applyDiscoveryFilters(filters) {
-  setDiscoverySessionFilters(filters)
-  loadCompatibleSportSessions(store.activeSportProfile, filters)
-  loadNearbySportSessions(store.activeSportProfile, filters)
-}
-
 function saveProfile() {
   saveSportProfileDraft()
+}
+
+function applyBioSuggestion(suggestion) {
+  if (suggestion?.bio) sportProfileDraft.profile.bio = suggestion.bio
+}
+
+function acceptBioSuggestion(suggestion) {
+  if (!suggestion?.bio) return
+  // Exact acceptance has already persisted only the accepted bio on the API.
+  // Updating this field keeps unrelated unsaved editor values intact.
+  sportProfileDraft.profile.bio = suggestion.bio
 }
 </script>
 
@@ -145,8 +164,8 @@ function saveProfile() {
     :sport-profile-save-errors="sportProfileSaveErrors"
     :sport-profile-save-success="sportProfileSaveSuccess"
     @apply-discovery-filters="applyDiscoveryFilters"
-    @retry-discovery="reloadParticipantSessions"
-    @retry-nearby-sessions="reloadParticipantSessions"
+    @retry-discovery="reloadDiscoverySessions"
+    @retry-nearby-sessions="reloadNearbySessions"
     @select-discovery-card="openSportSessionDetail"
     @skip-discovery-session="skipCurrentSession"
     @undo-discovery-action="undoDiscoveryAction"
@@ -160,5 +179,7 @@ function saveProfile() {
     @select-participant-match="openSportSessionDetail"
     @retry-participant-matches="loadParticipantMatches"
     @save-sport-profile="saveProfile"
+    @apply-bio-suggestion="applyBioSuggestion"
+    @accept-bio-suggestion="acceptBioSuggestion"
   />
 </template>

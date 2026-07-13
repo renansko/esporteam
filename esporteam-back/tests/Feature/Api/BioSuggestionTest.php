@@ -112,6 +112,55 @@ it('lists only suggestions owned by the current sport profile', function () {
         ->assertJsonMissing(['bio' => 'Sugestão alheia']);
 });
 
+it('paginates the private suggestion history with the standard API contract', function () {
+    $profile = bioSportProfile(706);
+
+    foreach (range(1, 3) as $number) {
+        BioSuggestion::query()->create([
+            'sport_profile_id' => $profile->id,
+            'status' => BioSuggestionStatus::Generated,
+            'generated_bio' => "Sugestão {$number}",
+            'structured_output' => ['bio' => "Sugestão {$number}", 'key_points' => []],
+            'prompt_version' => 'bio_v1',
+        ]);
+    }
+
+    actingAsWorkspace(1, ['id' => 706])
+        ->getJson('/api/profile/bio-suggestions?per_page=2&page=1')
+        ->assertOk()
+        ->assertJsonCount(2, 'data')
+        ->assertJsonPath('meta.current_page', 1)
+        ->assertJsonPath('meta.last_page', 2)
+        ->assertJsonPath('data.0.bio', 'Sugestão 3');
+});
+
+it('replays a suggestion creation with the same idempotency key without prompting twice', function () {
+    config()->set('bio_assisted.rate_limit.max_attempts', 1);
+    app(RateLimiter::class)->clear('bio-suggestion:user:707');
+    $profile = bioSportProfile(707);
+    $sport = Sport::query()->create(['name' => 'Yoga', 'slug' => 'yoga']);
+    $profile->sports()->create(['sport_id' => $sport->id, 'level' => 'beginner', 'goals' => ['aprender']]);
+
+    BioAssistant::fake([[
+        'bio' => 'Pratico yoga e quero aprender com tranquilidade.',
+        'key_points' => ['Yoga'],
+    ]])->preventStrayPrompts();
+
+    $headers = ['Idempotency-Key' => 'bio-707-same-request'];
+    $first = actingAsWorkspace(1, ['id' => 707])
+        ->withHeaders($headers)
+        ->postJson('/api/profile/bio-suggestions')
+        ->assertCreated();
+    $second = actingAsWorkspace(1, ['id' => 707])
+        ->withHeaders($headers)
+        ->postJson('/api/profile/bio-suggestions')
+        ->assertOk()
+        ->assertHeader('Idempotent-Replayed', 'true');
+
+    expect($second->json('data.id'))->toBe($first->json('data.id'))
+        ->and(BioSuggestion::query()->where('sport_profile_id', $profile->id)->count())->toBe(1);
+});
+
 it('rejects unsafe structured output and records a private failure', function () {
     $profile = bioSportProfile(705);
     $sport = Sport::query()->create(['name' => 'Corrida', 'slug' => 'corrida']);
@@ -140,7 +189,8 @@ it('rejects private data in the instruction before calling the provider', functi
         ->postJson('/api/profile/bio-suggestions', [
             'instruction' => 'Inclua meu email pessoa@example.com e coordenadas -23.5505,-46.6333.',
         ])
-        ->assertUnprocessable();
+        ->assertUnprocessable()
+        ->assertJsonPath('code', 'unsafe_instruction');
 
     expect(BioSuggestion::query()->count())->toBe(0);
     BioAssistant::assertNeverPrompted();
@@ -194,7 +244,11 @@ it('enforces per-user generation rate limits', function () {
     ]]);
 
     actingAsWorkspace(1, ['id' => $userId])->postJson('/api/profile/bio-suggestions')->assertCreated();
-    actingAsWorkspace(1, ['id' => $userId])->postJson('/api/profile/bio-suggestions')->assertTooManyRequests();
+    actingAsWorkspace(1, ['id' => $userId])->postJson('/api/profile/bio-suggestions')
+        ->assertTooManyRequests()
+        ->assertJsonPath('code', 'rate_limited')
+        ->assertJsonPath('retry_after_seconds', 3600)
+        ->assertHeader('Retry-After', '3600');
     actingAsWorkspace(1, ['id' => $userId])->postJson('/api/profile/bio-suggestions')->assertTooManyRequests();
 
     expect(AiAuditEvent::query()->where('outcome', 'rate_limited')->count())->toBe(1)

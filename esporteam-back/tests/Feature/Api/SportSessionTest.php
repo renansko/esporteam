@@ -7,6 +7,16 @@ use App\Models\SportSession;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
+it('returns not found instead of querying a textual session identifier as a bigint', function () {
+    actingAsWorkspace(1, ['id' => 77])
+        ->getJson('/api/sessions/sport-session-corrida-parque')
+        ->assertNotFound();
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->postJson('/api/sessions/sport-session-corrida-parque/join')
+        ->assertNotFound();
+});
+
 function createSessionSportProfileForUser(int $userId, string $name): SportProfile
 {
     return SportProfile::query()->create([

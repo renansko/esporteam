@@ -4,11 +4,10 @@ import {
   joinSportSession,
 } from '../services/sportDiscovery.js'
 import { createSportSessionDetailView } from '../features/participant/sessionDetail.js'
+import { apiErrorMessage } from '../services/validation.js'
 
 function detailError(err) {
-  return err?.response?.data?.message
-    || err?.message
-    || 'Nao foi possivel carregar esta Sessao Esportiva.'
+  return apiErrorMessage(err, 'Nao foi possivel carregar esta Sessao Esportiva.')
 }
 
 function sessionIdFromCard(card = {}) {

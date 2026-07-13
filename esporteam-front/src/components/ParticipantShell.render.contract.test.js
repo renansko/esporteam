@@ -79,7 +79,7 @@ try {
   assert.match(html, /Ver detalhes/)
   assert.match(html, /Voltar/)
   assert.match(html, /Pular/)
-  assert.match(html, /Tenho interesse/)
+  assert.match(html, /Pedir para participar/)
   assert.doesNotMatch(html, /capacity|capacidade|vaga|slot|remaining/i)
 
   const detailHtml = await renderShell({
@@ -268,12 +268,14 @@ try {
   }, { participantTab: 'map' })
 
   assert.match(nearbyMapHtml, /Alternar entre Mapa e Lista/)
-  assert.match(nearbyMapHtml, /class="nearby-map"/)
+  assert.match(nearbyMapHtml, /class="[^"]*\bnearby-map\b[^"]*"/)
   assert.match(nearbyMapHtml, /Corrida/)
   assert.match(nearbyMapHtml, /08:00/)
   assert.match(nearbyMapHtml, /Resumo da Sessao Esportiva/)
   assert.match(nearbyMapHtml, /Vou participar/)
   assert.match(nearbyMapHtml, /Ver detalhes/)
+  assert.doesNotMatch(nearbyMapHtml, /Modalidade a definir/)
+  assert.doesNotMatch(nearbyMapHtml, /Disponibilidade a definir/)
 
   const nearbyListHtml = await renderShell({
     discoveryCards: [],
@@ -332,33 +334,30 @@ try {
     discoveryLoading: true,
   })
 
-  assert.match(loadingHtml, /aria-label="Descoberta carregando"/)
-  assert.match(loadingHtml, /session-card-skeleton/)
-
-  const emptyHtml = await renderShell({
-    discoveryCards: [],
-    hasDiscoveryFilters: true,
-    discoveryFilters: {
-      sportSlug: 'corrida',
-      level: 'iniciante',
-      goal: 'treino',
-      distanceKm: 20,
-      weekday: 'sabado',
-      startsAt: '08:00',
-      endsAt: '10:00',
-      participationType: 'open',
-    },
-  })
-
-  assert.match(emptyHtml, /Filtros ativos: Corrida · 20 km · Iniciante · Treino · Sabado · 08:00-10:00 · Aberta/)
-  assert.match(emptyHtml, /Nenhuma Sessao Esportiva por perto/)
-  assert.match(emptyHtml, /Amplie a distancia/)
+  assert.match(loadingHtml, /aria-busy="true"/)
+  assert.match(loadingHtml, /loading-grace|session-card-skeleton/)
 
   const defaultEmptyHtml = await renderShell({
     discoveryCards: [],
   })
 
-  assert.match(defaultEmptyHtml, /Amplie a distancia/)
+  assert.match(defaultEmptyHtml, /Não encontramos nenhuma Sessão Esportiva ainda/)
+  assert.doesNotMatch(defaultEmptyHtml, /Explorar outros locais/)
+  assert.doesNotMatch(defaultEmptyHtml, /Abra o mapa/)
+  assert.doesNotMatch(defaultEmptyHtml, /segunda chance/i)
+  assert.match(defaultEmptyHtml, /filtros/i)
+
+  const emptyNearbyMapHtml = await renderShell({
+    discoveryCards: [],
+    nearbySessions: [],
+  }, { participantTab: 'map' })
+
+  assert.match(emptyNearbyMapHtml, /Mapa real de Sessões Esportivas próximas/)
+  assert.match(emptyNearbyMapHtml, /Nenhuma Sessão Esportiva próxima/)
+  assert.match(emptyNearbyMapHtml, /Nenhuma Sessão Esportiva por aqui ainda/)
+  assert.match(emptyNearbyMapHtml, /Quando um Organizador publicar/)
+  assert.doesNotMatch(emptyNearbyMapHtml, /Atualizar mapa/)
+  assert.doesNotMatch(emptyNearbyMapHtml, /discovery-empty-map/)
 
   const errorHtml = await renderShell({
     discoveryCards: [],

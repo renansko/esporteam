@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/profile/bio-suggestions
+  url: {{baseUrl}}/profile/bio-suggestions?per_page=10&page=1
   body: none
   auth: bearer
 }
@@ -17,5 +17,6 @@ auth:bearer {
 docs {
   GET /api/profile/bio-suggestions
 
-  Lista somente os rascunhos privados do Perfil Esportivo autenticado.
+  Lista somente os rascunhos privados do Perfil Esportivo autenticado, com
+  paginação padrão em data, links e meta.
 }

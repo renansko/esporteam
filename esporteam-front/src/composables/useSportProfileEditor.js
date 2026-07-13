@@ -1,5 +1,5 @@
 import { reactive, ref, watch } from 'vue'
-import { normalizeValidationErrors } from '../services/validation.js'
+import { apiErrorMessage, normalizeValidationErrors } from '../services/validation.js'
 
 export function createSportProfileDraft(profile = {}) {
   const raw = profile.raw || profile
@@ -68,7 +68,7 @@ export function useSportProfileEditor(profile, { save = null, onSaved = () => {}
       return result
     } catch (err) {
       validationErrors.value = normalizeValidationErrors(err)
-      error.value = err?.response?.data?.message || err?.message || 'Nao foi possivel salvar o Perfil Esportivo.'
+      error.value = apiErrorMessage(err, 'Nao foi possivel salvar o Perfil Esportivo.')
       return null
     } finally {
       loading.value = false

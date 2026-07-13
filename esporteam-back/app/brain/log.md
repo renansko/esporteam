@@ -14,6 +14,8 @@
 | 2026-07-07 | #10   | Sessoes hospedadas com recomendacoes para anfitriao, convites, aceite/recusa, pedidos com aprovacao e estados de participante para match em grupo. |
 | 2026-07-07 | #12   | PostMatchSportActionService: proximas acoes apos match aceito, sugestoes de disponibilidade/local e criacao/vinculo de Sessao Esportiva gratuita. |
 | 2026-07-11 | #15   | Validacao de historico de participacao: limite, estados persistidos, `left`, vazio e autenticacao |
+| 2026-07-11 | —     | Descoberta: cache Redis versionado, rate limit por usuário para feed/mapa e retry isolado no front |
 | 2026-07-12 | #17   | Bio Assistida: agente estruturado, rascunhos privados e API |
 | 2026-07-12 | #18 | Aceite idempotente de BioSuggestion e embedding assíncrono da bio aceita |
 | 2026-07-12 | #20 | Auditoria operacional segura e idempotente de Bio Assistida e embeddings |
+| 2026-07-12 | #21 | Front do fluxo de Bio Assistida e contrato persistente de onboarding, histórico paginado, erros estruturados e criação idempotente. |

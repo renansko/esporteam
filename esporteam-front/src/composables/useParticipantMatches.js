@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue'
+import { apiErrorMessage } from '../services/validation.js'
 import { listParticipantSportSessions } from '../services/sportDiscovery.js'
 
 const MATCH_FILTERS = [
@@ -8,7 +9,10 @@ const MATCH_FILTERS = [
   { id: 'refused', label: 'Recusado' },
 ]
 
-export function useParticipantMatches({ listSessions = listParticipantSportSessions } = {}) {
+export function useParticipantMatches({
+  listSessions = listParticipantSportSessions,
+  useMockFallback = false,
+} = {}) {
   const matches = ref([])
   const activeFilter = ref('all')
   const loading = ref(false)
@@ -19,11 +23,13 @@ export function useParticipantMatches({ listSessions = listParticipantSportSessi
 
   async function loadParticipantMatches() {
     loading.value = true
-    error.value = null
     try {
-      matches.value = await listSessions({ useMockFallback: true })
+      // Mock session ids are strings, while the API contract uses numeric ids.
+      // Do not expose fallback cards that cannot be opened or joined by the API.
+      matches.value = await listSessions({ useMockFallback })
+      error.value = null
     } catch (err) {
-      error.value = err?.response?.data?.message || err?.message || 'Nao foi possivel carregar suas Partidas.'
+      error.value = apiErrorMessage(err, 'Nao foi possivel carregar suas Partidas.')
       matches.value = []
     } finally {
       loading.value = false

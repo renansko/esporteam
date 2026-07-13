@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import Icon from './Icon.vue'
 
 const props = defineProps({
@@ -7,6 +7,7 @@ const props = defineProps({
   title: { type: String, required: true },
 })
 const emit = defineEmits(['close'])
+const dialog = ref(null)
 
 function close() {
   emit('close')
@@ -24,6 +25,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown))
 
 watch(() => props.open, (open) => {
   document.body.classList.toggle('bottom-sheet-open', open)
+  if (open) nextTick(() => dialog.value?.focus())
 })
 
 onBeforeUnmount(() => document.body.classList.remove('bottom-sheet-open'))
@@ -32,7 +34,7 @@ onBeforeUnmount(() => document.body.classList.remove('bottom-sheet-open'))
 <template>
   <div v-if="open" class="bottom-sheet-layer">
     <button class="bottom-sheet-backdrop" type="button" aria-label="Fechar" @click="close" />
-    <section class="bottom-sheet" role="dialog" aria-modal="true" :aria-label="title">
+    <section ref="dialog" class="bottom-sheet" role="dialog" aria-modal="true" :aria-label="title" tabindex="-1">
       <div class="bottom-sheet-handle" aria-hidden="true"></div>
       <header class="bottom-sheet-header">
         <h2>{{ title }}</h2>

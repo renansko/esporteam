@@ -11,6 +11,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class BioSuggestion extends Model
 {
+    /** True only when a request is served from its previous idempotent result. */
+    public bool $wasReplayed = false;
+
     protected $fillable = [
         'sport_profile_id',
         'status',
@@ -23,6 +26,7 @@ class BioSuggestion extends Model
         'tokens_output',
         'failure_code',
         'context_fingerprint',
+        'idempotency_key',
         'metadata',
     ];
 

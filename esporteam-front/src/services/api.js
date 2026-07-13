@@ -92,6 +92,28 @@ export async function updateSportProfileAvailability(windows = []) {
   return data?.data ?? data
 }
 
+export async function listBioSuggestions({ page = 1 } = {}) {
+  const { data } = await esporteamApi.get('/profile/bio-suggestions', { params: { page } })
+  return {
+    items: data?.data ?? [],
+    meta: data?.meta ?? null,
+  }
+}
+
+export async function createBioSuggestion({ instruction, idempotencyKey } = {}) {
+  const payload = {}
+  if (instruction?.trim()) payload.instruction = instruction.trim()
+
+  const headers = idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined
+  const { data } = await esporteamApi.post('/profile/bio-suggestions', payload, { timeout: 45000, headers })
+  return data?.data ?? data
+}
+
+export async function acceptBioSuggestion(suggestionId) {
+  const { data } = await esporteamApi.post(`/profile/bio-suggestions/${suggestionId}/accept`)
+  return data?.data ?? data
+}
+
 export async function logoutOnAuth() {
   try {
     await authApi.post('/logout')

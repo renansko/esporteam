@@ -8,7 +8,7 @@ import {
 import { STR } from '../mock/i18n'
 import { MOCK_ACTIVE_SPORT_PROFILE } from '../mock/sportDiscovery'
 import { DEFAULT_PARTICIPANT_TAB, isParticipantTab } from '../features/participant/shell'
-import { normalizeValidationErrors } from '../services/validation'
+import { apiErrorMessage, normalizeValidationErrors } from '../services/validation'
 import {
   loadToken,
   saveToken,
@@ -164,7 +164,7 @@ export const useAppStore = defineStore('app', {
       } catch (err) {
         const apiErrors = normalizeValidationErrors(err)
         this.loginErrors = Object.keys(apiErrors).length ? apiErrors : null
-        this.loginError = err?.response?.data?.message || err?.message || 'login_failed'
+        this.loginError = apiErrorMessage(err, 'login_failed')
         saveToken(null)
         this.token = null
         this.auth = false
@@ -189,7 +189,7 @@ export const useAppStore = defineStore('app', {
       } catch (err) {
         const apiErrors = normalizeValidationErrors(err)
         this.registerErrors = Object.keys(apiErrors).length ? apiErrors : null
-        this.registerError = err?.response?.data?.message || err?.message || 'register_failed'
+        this.registerError = apiErrorMessage(err, 'register_failed')
         saveToken(null)
         this.token = null
         this.auth = false
@@ -248,7 +248,7 @@ export const useAppStore = defineStore('app', {
       } catch (err) {
         const apiErrors = normalizeValidationErrors(err)
         this.workspaceSetupErrors = Object.keys(apiErrors).length ? apiErrors : null
-        this.workspaceSetupError = err?.response?.data?.message || err?.message || 'workspace_list_failed'
+        this.workspaceSetupError = apiErrorMessage(err, 'workspace_list_failed')
       } finally {
         this.workspaceSetupLoading = false
       }
@@ -265,7 +265,7 @@ export const useAppStore = defineStore('app', {
       } catch (err) {
         const apiErrors = normalizeValidationErrors(err)
         this.workspaceSetupErrors = Object.keys(apiErrors).length ? apiErrors : null
-        this.workspaceSetupError = err?.response?.data?.message || err?.message || 'workspace_create_failed'
+        this.workspaceSetupError = apiErrorMessage(err, 'workspace_create_failed')
       } finally {
         this.workspaceSetupLoading = false
       }
@@ -277,7 +277,7 @@ export const useAppStore = defineStore('app', {
       try {
         await this.selectAndLoadWorkspace(workspace)
       } catch (err) {
-        this.workspaceSetupError = err?.response?.data?.message || err?.message || 'workspace_select_failed'
+        this.workspaceSetupError = apiErrorMessage(err, 'workspace_select_failed')
       } finally {
         this.workspaceSetupLoading = false
       }
@@ -297,7 +297,6 @@ export const useAppStore = defineStore('app', {
 
     async loadInboxIdeas() {
       this.inboxLoading = true
-      this.inboxError = null
       try {
         const { source, clustered } = this.inboxFilters
         const params = { perPage: 200 }
@@ -309,8 +308,9 @@ export const useAppStore = defineStore('app', {
         } else {
           this.inboxIdeas = items
         }
+        this.inboxError = null
       } catch (err) {
-        this.inboxError = err?.response?.data?.message || err?.message || 'load_failed'
+        this.inboxError = apiErrorMessage(err, 'load_failed')
         this.inboxIdeas = []
       } finally {
         this.inboxLoading = false

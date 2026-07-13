@@ -122,6 +122,8 @@ export function createSportSessionCardView(card = {}) {
     participantCountLabel,
     recommendationReason,
     entryBadge,
+    primaryActionLabel: entryBadge.kind === 'open' ? 'Vou participar' : 'Pedir para participar',
+    primaryActionIcon: entryBadge.kind === 'open' ? 'check' : 'lock',
     canShowInterest: !['convite', 'indisponivel'].includes(card.entryMode)
       && !['convite', 'indisponivel'].includes(card.nextAction),
     accessibilityLabel: accessibilityParts.join('. '),

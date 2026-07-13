@@ -6,13 +6,14 @@
   "scripts": {
     "dev": "vite",
     "test": "npm run test:contracts",
-    "test:contracts": "node src/services/sportDiscovery.contract.test.js && node src/services/validation.test.js && node src/features/participant/sportIcons.test.js && node src/features/participant/discoveryCard.test.js && node src/composables/useDiscoverySessions.test.js && node src/composables/useNearbySportSessions.test.js && node src/composables/useSportSessionDetail.test.js && node src/composables/useParticipantMatches.test.js && node src/composables/useSportProfileEditor.test.js && node src/components/ParticipantShell.render.contract.test.js && node src/components/ParticipantProfile.render.contract.test.js && node src/components/ParticipantShell.scroll.contract.test.js",
+    "test:contracts": "node src/services/sportDiscovery.contract.test.js && node src/services/validation.test.js && node src/features/participant/sportIcons.test.js && node src/features/participant/discoveryCard.test.js && node src/composables/useDiscoverySessions.test.js && node src/composables/useNearbySportSessions.test.js && node src/composables/useSportSessionDetail.test.js && node src/composables/useParticipantMatches.test.js && node src/composables/useSportProfileEditor.test.js && node src/composables/useBioSuggestionWizard.test.js && node src/composables/useBioAssistantOnboarding.test.js && node src/composables/useBioAssistantFlow.test.js && node src/components/ParticipantShell.render.contract.test.js && node src/components/ParticipantProfile.render.contract.test.js && node src/components/ParticipantShell.scroll.contract.test.js",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
     "axios": "^1.16.0",
+    "leaflet": "^1.9.4",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.3.0",
     "vue": "^3.5.34"

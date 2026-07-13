@@ -12,6 +12,7 @@ use App\Http\Resources\SessionRecommendationResource;
 use App\Http\Resources\SportSessionResource;
 use App\Models\SportProfile;
 use App\Models\SportSession;
+use App\Services\DiscoveryCache;
 use App\Services\SportSessionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,18 +20,24 @@ use Illuminate\Http\Request;
 class SportSessionController extends Controller
 {
     public function __construct(
+        private readonly DiscoveryCache $cache,
         private readonly SportSessionService $sessions,
     ) {}
 
     public function index(IndexSportSessionRequest $request): JsonResponse
     {
-        return $this->successResponse(
-            SportSessionResource::collection($this->sessions->openSessions(
-                (int) $request->user()->id,
-                $request->validated(),
-            )),
-            'Sessions listed.',
+        $userId = (int) $request->user()->id;
+        $filters = $request->validated();
+        $sessions = $this->cache->remember(
+            'map',
+            $userId,
+            $filters,
+            fn (): array => SportSessionResource::collection(
+                $this->sessions->openSessions($userId, $filters),
+            )->resolve(),
         );
+
+        return $this->successResponse($sessions, 'Sessions listed.');
     }
 
     public function store(StoreSportSessionRequest $request): JsonResponse

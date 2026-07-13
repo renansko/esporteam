@@ -78,6 +78,14 @@ try {
   assert.equal(deck.discoverySessionCards.value[0].session.title, 'Corrida filtrada')
   assert.equal(deck.discoverySessionsError.value.title, 'Descoberta sem atualizacao')
   assert.match(deck.discoverySessionsError.value.description, /tente novamente/)
+
+  let resolveRetry
+  esporteamApi.get = () => new Promise(resolve => { resolveRetry = resolve })
+  const retry = deck.loadCompatibleSportSessions({ id: 'sport-profile-1' })
+  assert.equal(deck.discoverySessionsError.value.title, 'Descoberta sem atualizacao')
+  resolveRetry({ data: { data: [] } })
+  await retry
+  assert.equal(deck.discoverySessionsError.value, null)
 } finally {
   esporteamApi.get = originalGet
 }

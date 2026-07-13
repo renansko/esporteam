@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;}</style>
+</helmet>
+<div style="display:flex; justify-content:center; font-family:'IBM Plex Sans',sans-serif;">
+  <div style="width:340px; border:0.5px solid #D6D1C6; border-radius:28px; background:#FFFFFF; overflow:hidden; box-shadow:0 10px 34px rgba(40,36,30,0.12);">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 20px 6px; font-size:12px; color:#9B958B;">
+      <span style="font-weight:500;">9:41</span>
+      <span style="display:flex; gap:6px; align-items:center;"><i class="ti ti-wifi" aria-hidden="true"></i><i class="ti ti-battery-3" aria-hidden="true"></i></span>
+    </div>
+    <div style="padding:6px 16px 10px;">
+      <span style="font-size:18px; font-weight:600; color:#201E1A;">Partidas</span>
+    </div>
+    <div style="display:flex; gap:8px; padding:0 16px 12px; overflow-x:hidden;">
+      <span style="font-size:12px; font-weight:600; padding:6px 12px; border-radius:20px; background:#201E1A; color:#FFFFFF;">Todas</span>
+      <span style="font-size:12px; padding:6px 12px; border-radius:20px; background:#EEEBE4; color:#6C675E;">Confirmado</span>
+      <span style="font-size:12px; padding:6px 12px; border-radius:20px; background:#EEEBE4; color:#6C675E;">Aguardando</span>
+      <span style="font-size:12px; padding:6px 12px; border-radius:20px; background:#EEEBE4; color:#6C675E;">Recusado</span>
+    </div>
+    <div style="padding:0 16px 8px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; gap:12px; padding:12px; border:0.5px solid #E6E2D9; border-radius:14px;">
+        <div style="width:46px;height:46px;border-radius:10px;background:#E3F2E8;color:#2C7A4C;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-run" style="font-size:24px;" aria-hidden="true"></i></div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:14px; font-weight:600; color:#201E1A;">Corrida no Parcão</div>
+          <div style="font-size:12px; color:#9B958B; margin-top:2px;">com Rafa · Hoje 18h</div>
+          <span style="display:inline-flex; align-items:center; gap:4px; margin-top:8px; font-size:11px; font-weight:500; padding:4px 9px; border-radius:8px; background:#E3F2E8; color:#2C7A4C;"><i class="ti ti-circle-check" style="font-size:13px;" aria-hidden="true"></i>Confirmado</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; padding:12px; border:0.5px solid #E6E2D9; border-radius:14px;">
+        <div style="width:46px;height:46px;border-radius:10px;background:#F7EBD4;color:#916412;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-ball-volleyball" style="font-size:24px;" aria-hidden="true"></i></div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:14px; font-weight:600; color:#201E1A;">Vôlei de praia</div>
+          <div style="font-size:12px; color:#9B958B; margin-top:2px;">com Prof. Marina · Sáb 9h</div>
+          <span style="display:inline-flex; align-items:center; gap:4px; margin-top:8px; font-size:11px; font-weight:500; padding:4px 9px; border-radius:8px; background:#F7EBD4; color:#916412;"><i class="ti ti-clock-hour-4" style="font-size:13px;" aria-hidden="true"></i>Aguardando aprovação</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; padding:12px; border:0.5px solid #E6E2D9; border-radius:14px;">
+        <div style="width:46px;height:46px;border-radius:10px;background:#E9EFFB;color:#2F63C7;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-ball-basketball" style="font-size:24px;" aria-hidden="true"></i></div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:14px; font-weight:600; color:#201E1A;">Basquete 3x3</div>
+          <div style="font-size:12px; color:#9B958B; margin-top:2px;">com Léo · Qui 20h</div>
+          <span style="display:inline-flex; align-items:center; gap:4px; margin-top:8px; font-size:11px; font-weight:500; padding:4px 9px; border-radius:8px; background:#F5E7E4; color:#9E4B3B;"><i class="ti ti-circle-x" style="font-size:13px;" aria-hidden="true"></i>Recusado</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; padding:12px; border:0.5px solid #E6E2D9; border-radius:14px;">
+        <div style="width:46px;height:46px;border-radius:10px;background:#E3F2E8;color:#2C7A4C;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-bike" style="font-size:24px;" aria-hidden="true"></i></div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:14px; font-weight:600; color:#201E1A;">Pedal na orla</div>
+          <div style="font-size:12px; color:#9B958B; margin-top:2px;">com Grupo Pedala · Dom 7h</div>
+          <span style="display:inline-flex; align-items:center; gap:4px; margin-top:8px; font-size:11px; font-weight:500; padding:4px 9px; border-radius:8px; background:#E3F2E8; color:#2C7A4C;"><i class="ti ti-circle-check" style="font-size:13px;" aria-hidden="true"></i>Confirmado</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; border-top:0.5px solid #E6E2D9; margin-top:6px;">
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; color:#9B958B;"><i class="ti ti-cards" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Descobrir</span></div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; color:#9B958B;"><i class="ti ti-map-2" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Mapa</span></div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; color:#2F63C7;"><i class="ti ti-calendar-check" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Partidas</span></div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; color:#9B958B;"><i class="ti ti-user" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Perfil</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:380,&quot;height&quot;:720}}"></script>
+</body>
+</html>

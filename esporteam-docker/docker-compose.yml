@@ -18,6 +18,19 @@ services:
       timeout: 3s
       retries: 10
 
+  esporteam-redis:
+    image: redis:7-alpine
+    container_name: esporteam-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - esporteam-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   esporteam-auth:
     build:
       context: ../esporteam-auth
@@ -122,7 +135,9 @@ services:
       DB_DATABASE: esporteam_back
       DB_USERNAME: esporteam
       DB_PASSWORD: secret
-      CACHE_STORE: file
+      CACHE_STORE: redis
+      REDIS_HOST: esporteam-redis
+      REDIS_CLIENT: phpredis
       SESSION_DRIVER: file
       QUEUE_CONNECTION: sync
       BROADCAST_CONNECTION: log
@@ -154,6 +169,8 @@ services:
     depends_on:
       esporteam-postgres:
         condition: service_healthy
+      esporteam-redis:
+        condition: service_healthy
 
   esporteam-front:
     build:
@@ -177,6 +194,7 @@ services:
 
 volumes:
   esporteam-pgdata:
+  esporteam-redisdata:
   esporteam-auth-vendor:
   esporteam-workspace-vendor:
   esporteam-back-vendor:

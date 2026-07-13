@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.service' => \App\Http\Middleware\AuthenticateViaAuthService::class,
             'require.profile' => \App\Http\Middleware\RequireProfile::class,
+            'throttle.user' => \App\Http\Middleware\ThrottleAuthenticatedUser::class,
             'throttle.bio-suggestion' => \App\Http\Middleware\ThrottleBioSuggestion::class,
         ]);
     })
@@ -64,5 +65,4 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => 'Resource not found.',
             ], 404);
         });
-
     })->create();

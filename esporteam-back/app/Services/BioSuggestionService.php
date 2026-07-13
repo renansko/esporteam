@@ -10,6 +10,8 @@ use App\Exceptions\UnsafeBioSuggestion;
 use App\Models\BioSuggestion;
 use App\Models\Sport;
 use App\Models\SportProfile;
+use Illuminate\Database\QueryException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -29,13 +31,22 @@ class BioSuggestionService
     /**
      * @wiki app/brain/functions/BioSuggestionService.md#createForUser
      */
-    public function createForUser(int $userId, ?string $instruction = null): BioSuggestion
+    public function createForUser(int $userId, ?string $instruction = null, ?string $idempotencyKey = null): BioSuggestion
     {
         $profile = $this->profileForUser($userId);
+        $idempotencyKey = $this->normalizeIdempotencyKey($idempotencyKey);
+
+        if ($idempotencyKey !== null) {
+            $existing = $profile->bioSuggestions()->where('idempotency_key', $idempotencyKey)->first();
+            if ($existing) {
+                return $this->replayed($existing);
+            }
+        }
+
         $instruction = $this->normalizeInstruction($instruction);
 
         if ($instruction !== null && $this->containsSensitiveData($instruction)) {
-            throw new UnsafeBioSuggestion;
+            throw new UnsafeBioSuggestion('unsafe_instruction');
         }
 
         $context = $this->safeContext($profile, $instruction);
@@ -44,12 +55,24 @@ class BioSuggestionService
             throw new InsufficientBioContext;
         }
 
-        $suggestion = BioSuggestion::query()->create([
-            'sport_profile_id' => $profile->id,
-            'status' => BioSuggestionStatus::Generating,
-            'prompt_version' => (string) config('bio_assisted.prompt_version', 'bio_v1'),
-            'context_fingerprint' => hash('sha256', json_encode($context, JSON_THROW_ON_ERROR)),
-        ]);
+        try {
+            $suggestion = BioSuggestion::query()->create([
+                'sport_profile_id' => $profile->id,
+                'status' => BioSuggestionStatus::Generating,
+                'prompt_version' => (string) config('bio_assisted.prompt_version', 'bio_v1'),
+                'context_fingerprint' => hash('sha256', json_encode($context, JSON_THROW_ON_ERROR)),
+                'idempotency_key' => $idempotencyKey,
+            ]);
+        } catch (QueryException $e) {
+            if ($idempotencyKey !== null) {
+                $existing = $profile->bioSuggestions()->where('idempotency_key', $idempotencyKey)->first();
+                if ($existing) {
+                    return $this->replayed($existing);
+                }
+            }
+
+            throw $e;
+        }
         $startedAt = hrtime(true);
 
         $response = null;
@@ -138,13 +161,13 @@ class BioSuggestionService
     /**
      * @wiki app/brain/functions/BioSuggestionService.md#listForUser
      */
-    public function listForUser(int $userId)
+    public function listForUser(int $userId, int $perPage = 10): LengthAwarePaginator
     {
         $profile = $this->profileForUser($userId);
 
         return $profile->bioSuggestions()
             ->latest('id')
-            ->get();
+            ->paginate($perPage);
     }
 
     /**
@@ -168,7 +191,10 @@ class BioSuggestionService
                 throw ValidationException::withMessages(['suggestion' => 'A sugestão não pode ser aceita.']);
             }
 
-            $profile->forceFill(['bio' => $bio])->save();
+            $profile->forceFill([
+                'bio' => $bio,
+                'bio_assistant_onboarding_completed_at' => $profile->bio_assistant_onboarding_completed_at ?? now(),
+            ])->save();
             $suggestion->forceFill(['status' => BioSuggestionStatus::Accepted])->save();
 
             $this->bioEmbeddings->synchronize($profile);
@@ -316,6 +342,20 @@ class BioSuggestionService
         $instruction = trim((string) $instruction);
 
         return $instruction === '' ? null : $instruction;
+    }
+
+    private function normalizeIdempotencyKey(?string $idempotencyKey): ?string
+    {
+        $idempotencyKey = trim((string) $idempotencyKey);
+
+        return $idempotencyKey === '' ? null : $idempotencyKey;
+    }
+
+    private function replayed(BioSuggestion $suggestion): BioSuggestion
+    {
+        $suggestion->wasReplayed = true;
+
+        return $suggestion;
     }
 
     private function durationMs(int $startedAt): int

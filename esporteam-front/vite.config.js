@@ -14,6 +14,12 @@ export default defineConfig(({ mode }) => {
       host: true,
       port: 5173,
       strictPort: true,
+      // The frontend runs in Docker while the source is bind-mounted from WSL.
+      // Native filesystem events are unreliable across that boundary.
+      watch: {
+        usePolling: true,
+        interval: 100,
+      },
       proxy: {
         '/api': { target: apiTarget, changeOrigin: true },
         '/auth': {

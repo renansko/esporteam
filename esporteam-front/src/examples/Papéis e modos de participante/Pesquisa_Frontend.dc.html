@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body{margin:0; background:#EDEAE3;}
+  ::selection{background:#C2D2F1;}
+</style>
+</helmet>
+<div style="background:#EDEAE3; min-height:100vh; font-family:'IBM Plex Sans',sans-serif; color:#201E1A; padding:0 0 96px;">
+
+  <!-- ===== HEADER ===== -->
+  <header style="max-width:1080px; margin:0 auto; padding:72px 32px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#9B958B;">Pesquisa de front-end · MVP mobile</div>
+    <h1 style="font-family:'Newsreader',serif; font-weight:500; font-size:clamp(38px,6vw,68px); line-height:1.02; letter-spacing:-0.01em; margin:18px 0 0; max-width:16ch;">Tinder de esportes</h1>
+    <p style="font-size:19px; line-height:1.6; color:#423E37; max-width:60ch; margin:22px 0 0;">Um app que ajuda entusiastas a começar a praticar esportes: um professor ou organizador fala de um treino e as pessoas curtem para participar. Dois lados, uma conta — e acessibilidade no iOS como requisito de base, não camada final.</p>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:28px;">
+      <span style="display:inline-flex; align-items:center; gap:7px; font-size:13px; padding:8px 14px; border-radius:100px; background:#FFFFFF; border:0.5px solid #E6E2D9; color:#423E37;"><i class="ti ti-brand-apple" style="font-size:16px;" aria-hidden="true"></i>Foco iOS</span>
+      <span style="display:inline-flex; align-items:center; gap:7px; font-size:13px; padding:8px 14px; border-radius:100px; background:#FFFFFF; border:0.5px solid #E6E2D9; color:#423E37;"><i class="ti ti-accessible" style="font-size:16px;" aria-hidden="true"></i>WCAG AA</span>
+      <span style="display:inline-flex; align-items:center; gap:7px; font-size:13px; padding:8px 14px; border-radius:100px; background:#FFFFFF; border:0.5px solid #E6E2D9; color:#423E37;"><i class="ti ti-users-group" style="font-size:16px;" aria-hidden="true"></i>Conta única · 2 modos</span>
+    </div>
+  </header>
+
+  <div style="max-width:1080px; margin:0 auto; height:1px; background:#DBD6CC; margin-top:56px;"></div>
+
+  <!-- ===== 01 PAPÉIS E MODOS ===== -->
+  <section style="max-width:1080px; margin:0 auto; padding:64px 32px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#9B958B;">01 — Papéis e modos</div>
+    <h2 style="font-family:'Newsreader',serif; font-weight:500; font-size:34px; line-height:1.1; margin:14px 0 0; max-width:22ch;">Uma conta que alterna entre participar e organizar</h2>
+    <p style="font-size:16px; line-height:1.7; color:#423E37; max-width:62ch; margin:18px 0 0;">A premissa assumida é uma conta única com um seletor de modo no perfil — em vez de dois apps — já que o mesmo entusiasta pode tanto entrar quanto criar eventos. Cada modo mantém a tela inicial simples.</p>
+    <div style="display:flex; flex-wrap:wrap; gap:20px; margin-top:32px;">
+      <div style="flex:1; min-width:280px; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:16px; padding:26px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:#E9EFFB;color:#2F63C7;display:flex;align-items:center;justify-content:center;"><i class="ti ti-flame" style="font-size:24px;" aria-hidden="true"></i></div>
+          <div>
+            <div style="font-size:17px; font-weight:600;">Participante</div>
+            <div style="font-size:13px; color:#9B958B;">o entusiasta</div>
+          </div>
+        </div>
+        <p style="font-size:14px; line-height:1.65; color:#423E37; margin:16px 0 0;">A experiência leve, estilo Tinder: monta perfil, descobre eventos por swipe ou mapa, curte, entra direto ou pede para entrar.</p>
+      </div>
+      <div style="flex:1; min-width:280px; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:16px; padding:26px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:#F7EBD4;color:#916412;display:flex;align-items:center;justify-content:center;"><i class="ti ti-whistle" style="font-size:24px;" aria-hidden="true"></i></div>
+          <div>
+            <div style="font-size:17px; font-weight:600;">Anfitrião</div>
+            <div style="font-size:13px; color:#9B958B;">professor / organizador</div>
+          </div>
+        </div>
+        <p style="font-size:14px; line-height:1.65; color:#423E37; margin:16px 0 0;">Cria eventos com configurações próprias, define se são abertos ou por curadoria e aprova ou recusa quem pediu para participar.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 02 NAVEGAÇÃO ===== -->
+  <section style="max-width:1080px; margin:0 auto; padding:64px 32px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#9B958B;">02 — Mapa de navegação</div>
+    <h2 style="font-family:'Newsreader',serif; font-weight:500; font-size:34px; line-height:1.1; margin:14px 0 0; max-width:24ch;">Abas no polegar, ícone <em style="font-style:italic;">e</em> rótulo — nunca só ícone</h2>
+    <p style="font-size:16px; line-height:1.7; color:#423E37; max-width:62ch; margin:18px 0 0;">No máximo 4–5 abas por modo, todas alcançáveis com o polegar. A barra troca conforme o modo ativo.</p>
+    <div style="display:flex; flex-wrap:wrap; gap:20px; margin-top:32px;">
+      <div style="flex:1; min-width:300px;">
+        <div style="font-size:13px; font-weight:600; color:#2F63C7; margin-bottom:12px; display:flex; align-items:center; gap:7px;"><i class="ti ti-flame" style="font-size:16px;" aria-hidden="true"></i>Modo Participante</div>
+        <div style="display:flex; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:14px; padding:6px;">
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0; color:#2F63C7;"><i class="ti ti-cards" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Descobrir</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0; color:#9B958B;"><i class="ti ti-map-2" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Mapa</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0; color:#9B958B;"><i class="ti ti-calendar-check" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Partidas</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0; color:#9B958B;"><i class="ti ti-user" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Perfil</span></div>
+        </div>
+      </div>
+      <div style="flex:1; min-width:300px;">
+        <div style="font-size:13px; font-weight:600; color:#916412; margin-bottom:12px; display:flex; align-items:center; gap:7px;"><i class="ti ti-whistle" style="font-size:16px;" aria-hidden="true"></i>Modo Anfitrião</div>
+        <div style="display:flex; align-items:center; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:14px; padding:6px;">
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0; color:#916412;"><i class="ti ti-calendar-event" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Meus eventos</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0; color:#916412;"><span style="width:42px;height:42px;border-radius:50%;background:#916412;color:#FFFFFF;display:flex;align-items:center;justify-content:center;"><i class="ti ti-plus" style="font-size:24px;" aria-hidden="true"></i></span><span style="font-size:11px;">Criar</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0; color:#9B958B;"><i class="ti ti-inbox" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Solicitações</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0; color:#9B958B;"><i class="ti ti-user" style="font-size:22px;" aria-hidden="true"></i><span style="font-size:11px;">Perfil</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 03 FLUXO DO PARTICIPANTE ===== -->
+  <section style="max-width:1080px; margin:0 auto; padding:72px 32px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#9B958B;">03 — Fluxo do participante</div>
+    <h2 style="font-family:'Newsreader',serif; font-weight:500; font-size:34px; line-height:1.1; margin:14px 0 0; max-width:24ch;">Descobrir é o coração da experiência</h2>
+
+    <!-- Descobrir -->
+    <div style="display:flex; flex-wrap:wrap; gap:48px; align-items:flex-start; margin-top:36px;">
+      <div style="flex:1; min-width:300px; padding-top:12px;">
+        <div style="font-size:20px; font-weight:600;">Descobrir · pilha de cards</div>
+        <p style="font-size:15px; line-height:1.7; color:#423E37; margin:14px 0 0;">Cada card traz esporte, foto, anfitrião, o selo do tipo de match, distância, data/hora, nível e vagas. O ponto crítico de acessibilidade: <strong style="font-weight:600;">swipe nunca é a única saída</strong>. Curtir e pular têm botões grandes com rótulo visível — gesto de arrastar é inacessível para leitores de tela e difícil para parte das habilidades motoras.</p>
+        <ul style="margin:16px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px;">
+          <li style="display:flex; gap:10px; font-size:14px; color:#423E37;"><i class="ti ti-hand-finger-off" style="font-size:18px; color:#2F63C7; flex-shrink:0;" aria-hidden="true"></i>Botões equivalentes ao swipe: Pular · Voltar · Tenho interesse</li>
+          <li style="display:flex; gap:10px; font-size:14px; color:#423E37;"><i class="ti ti-lock" style="font-size:18px; color:#916412; flex-shrink:0;" aria-hidden="true"></i>O selo de curadoria/aberto aparece antes de qualquer ação</li>
+        </ul>
+      </div>
+      <div style="flex-shrink:0; margin:0 auto;">
+        <dc-import name="Tela_Descobrir" hint-size="340px,700px"></dc-import>
+      </div>
+    </div>
+
+    <!-- Mapa -->
+    <div style="display:flex; flex-wrap:wrap-reverse; gap:48px; align-items:flex-start; margin-top:64px;">
+      <div style="flex-shrink:0; margin:0 auto;">
+        <dc-import name="Tela_Mapa" hint-size="340px,740px"></dc-import>
+      </div>
+      <div style="flex:1; min-width:300px; padding-top:12px;">
+        <div style="font-size:20px; font-weight:600;">Mapa · eventos próximos com horário</div>
+        <p style="font-size:15px; line-height:1.7; color:#423E37; margin:14px 0 0;">Cobre três requisitos de uma vez: eventos próximos, horário visível no próprio pino (“9h”, “Hoje 18h”, “amanhã”) e detalhe ao tocar, que abre a ficha inferior com pessoas confirmadas.</p>
+        <div style="display:flex; align-items:flex-start; gap:10px; margin-top:16px; padding:14px; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:12px;">
+          <i class="ti ti-list" style="font-size:20px; color:#2F63C7; flex-shrink:0; margin-top:1px;" aria-hidden="true"></i>
+          <div style="font-size:14px; line-height:1.6; color:#423E37;"><strong style="font-weight:600;">Alternador Mapa / Lista no topo.</strong> Mapas são notoriamente difíceis para leitores de tela — a mesma seleção precisa existir como lista rolável e rotulada, que também serve quem simplesmente prefere lista.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detalhe -->
+    <div style="margin-top:64px;">
+      <div style="font-size:20px; font-weight:600;">Detalhe do evento · a ação principal muda com o tipo</div>
+      <p style="font-size:15px; line-height:1.7; color:#423E37; max-width:64ch; margin:14px 0 0;">A ficha expandida em tela cheia traz descrição, ponto de encontro, regras, equipamento e a lista de pessoas. É aqui que a distinção entre aberto e curadoria vira botão.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:32px; margin-top:28px; justify-content:center;">
+        <figure style="margin:0; text-align:center;">
+          <dc-import name="Tela_Detalhe_Aberto" hint-size="340px,860px"></dc-import>
+          <figcaption style="font-size:13px; color:#2C7A4C; margin-top:14px; display:inline-flex; align-items:center; gap:6px;"><i class="ti ti-lock-open" style="font-size:15px;" aria-hidden="true"></i>Aberto → “Vou participar”, entra direto</figcaption>
+        </figure>
+        <figure style="margin:0; text-align:center;">
+          <dc-import name="Tela_Detalhe_Curadoria" hint-size="340px,860px"></dc-import>
+          <figcaption style="font-size:13px; color:#916412; margin-top:14px; display:inline-flex; align-items:center; gap:6px;"><i class="ti ti-lock" style="font-size:15px;" aria-hidden="true"></i>Curadoria → “Pedir para participar”, aguarda aprovação</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <!-- Partidas -->
+    <div style="display:flex; flex-wrap:wrap-reverse; gap:48px; align-items:flex-start; margin-top:64px;">
+      <div style="flex-shrink:0; margin:0 auto;">
+        <dc-import name="Tela_Partidas" hint-size="340px,700px"></dc-import>
+      </div>
+      <div style="flex:1; min-width:300px; padding-top:12px;">
+        <div style="font-size:20px; font-weight:600;">Partidas · fecha o ciclo</div>
+        <p style="font-size:15px; line-height:1.7; color:#423E37; margin:14px 0 0;">Lista tudo que o participante curtiu, com chips de estado sempre acompanhados de ícone e texto — nunca só cor:</p>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;">
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:500; padding:5px 11px; border-radius:8px; background:#E3F2E8; color:#2C7A4C;"><i class="ti ti-circle-check" style="font-size:14px;" aria-hidden="true"></i>Confirmado</span>
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:500; padding:5px 11px; border-radius:8px; background:#F7EBD4; color:#916412;"><i class="ti ti-clock-hour-4" style="font-size:14px;" aria-hidden="true"></i>Aguardando aprovação</span>
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:500; padding:5px 11px; border-radius:8px; background:#F5E7E4; color:#9E4B3B;"><i class="ti ti-circle-x" style="font-size:14px;" aria-hidden="true"></i>Recusado</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 04 PÚBLICO VS CURADORIA ===== -->
+  <section style="max-width:1080px; margin:0 auto; padding:72px 32px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#9B958B;">04 — Público vs. curadoria</div>
+    <h2 style="font-family:'Newsreader',serif; font-weight:500; font-size:34px; line-height:1.1; margin:14px 0 0; max-width:24ch;">A diferença precisa ser visível — e nunca só por cor</h2>
+    <p style="font-size:16px; line-height:1.7; color:#423E37; max-width:62ch; margin:18px 0 0;">Regra de ouro: cada tipo carrega <strong style="font-weight:600;">ícone + texto + cor</strong>, idênticos em todo lugar — card, pino, ficha, chip. Por baixo, são duas máquinas de estado.</p>
+    <div style="display:flex; flex-wrap:wrap; gap:20px; margin-top:32px;">
+      <div style="flex:1; min-width:300px; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:16px; padding:26px;">
+        <span style="display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:500; padding:6px 12px; border-radius:10px; background:#E3F2E8; color:#2C7A4C;"><i class="ti ti-lock-open" style="font-size:15px;" aria-hidden="true"></i>Aberto · entre direto</span>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:22px; flex-wrap:wrap;">
+          <span style="font-size:13px; padding:7px 13px; border-radius:100px; background:#EEEBE4; color:#423E37;">Interesse</span>
+          <i class="ti ti-arrow-right" style="font-size:18px; color:#9B958B;" aria-hidden="true"></i>
+          <span style="font-size:13px; font-weight:600; padding:7px 13px; border-radius:100px; background:#E3F2E8; color:#2C7A4C;">Confirmado</span>
+        </div>
+      </div>
+      <div style="flex:1; min-width:300px; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:16px; padding:26px;">
+        <span style="display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:500; padding:6px 12px; border-radius:10px; background:#F7EBD4; color:#916412;"><i class="ti ti-lock" style="font-size:15px;" aria-hidden="true"></i>Curadoria · precisa aprovação</span>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:22px; flex-wrap:wrap;">
+          <span style="font-size:13px; padding:7px 13px; border-radius:100px; background:#EEEBE4; color:#423E37;">Interesse</span>
+          <i class="ti ti-arrow-right" style="font-size:18px; color:#9B958B;" aria-hidden="true"></i>
+          <span style="font-size:13px; font-weight:600; padding:7px 13px; border-radius:100px; background:#F7EBD4; color:#916412;">Pendente</span>
+          <i class="ti ti-arrow-right" style="font-size:18px; color:#9B958B;" aria-hidden="true"></i>
+          <span style="display:inline-flex; flex-direction:column; gap:6px;">
+            <span style="font-size:13px; font-weight:600; padding:6px 13px; border-radius:100px; background:#E3F2E8; color:#2C7A4C;">Aprovado</span>
+            <span style="font-size:13px; font-weight:600; padding:6px 13px; border-radius:100px; background:#F5E7E4; color:#9E4B3B;">Recusado</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 05 GALERIA ===== -->
+  <section style="padding:72px 0 0;">
+    <div style="max-width:1080px; margin:0 auto; padding:0 32px;">
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#9B958B;">05 — Galeria de telas</div>
+      <h2 style="font-family:'Newsreader',serif; font-weight:500; font-size:34px; line-height:1.1; margin:14px 0 0;">As cinco telas do MVP do participante</h2>
+      <p style="font-size:15px; line-height:1.7; color:#423E37; max-width:62ch; margin:16px 0 0;">Role para o lado para ver todas lado a lado.</p>
+    </div>
+    <div style="display:flex; gap:28px; overflow-x:auto; padding:32px 32px 24px; scroll-snap-type:x proximity;">
+      <figure style="margin:0; flex-shrink:0; scroll-snap-align:start; text-align:center;"><dc-import name="Tela_Descobrir" hint-size="340px,700px"></dc-import><figcaption style="font-size:12px; color:#9B958B; margin-top:12px; font-family:'IBM Plex Mono',monospace;">Descobrir</figcaption></figure>
+      <figure style="margin:0; flex-shrink:0; scroll-snap-align:start; text-align:center;"><dc-import name="Tela_Mapa" hint-size="340px,740px"></dc-import><figcaption style="font-size:12px; color:#9B958B; margin-top:12px; font-family:'IBM Plex Mono',monospace;">Mapa + ficha</figcaption></figure>
+      <figure style="margin:0; flex-shrink:0; scroll-snap-align:start; text-align:center;"><dc-import name="Tela_Detalhe_Aberto" hint-size="340px,860px"></dc-import><figcaption style="font-size:12px; color:#9B958B; margin-top:12px; font-family:'IBM Plex Mono',monospace;">Detalhe · aberto</figcaption></figure>
+      <figure style="margin:0; flex-shrink:0; scroll-snap-align:start; text-align:center;"><dc-import name="Tela_Detalhe_Curadoria" hint-size="340px,860px"></dc-import><figcaption style="font-size:12px; color:#9B958B; margin-top:12px; font-family:'IBM Plex Mono',monospace;">Detalhe · curadoria</figcaption></figure>
+      <figure style="margin:0; flex-shrink:0; scroll-snap-align:start; text-align:center;"><dc-import name="Tela_Partidas" hint-size="340px,700px"></dc-import><figcaption style="font-size:12px; color:#9B958B; margin-top:12px; font-family:'IBM Plex Mono',monospace;">Partidas</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- ===== 06 ACESSIBILIDADE ===== -->
+  <section style="max-width:1080px; margin:0 auto; padding:64px 32px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#9B958B;">06 — Diretrizes de acessibilidade · iOS</div>
+    <h2 style="font-family:'Newsreader',serif; font-weight:500; font-size:34px; line-height:1.1; margin:14px 0 0; max-width:26ch;">Swipe e mapa são os dois maiores riscos — as alternativas são requisito de MVP</h2>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin-top:32px;">
+      <div style="background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:14px; padding:20px;"><i class="ti ti-hand-finger-off" style="font-size:22px; color:#2F63C7;" aria-hidden="true"></i><div style="font-size:15px; font-weight:600; margin-top:12px;">Alternativa a gesto</div><p style="font-size:13px; line-height:1.6; color:#6C675E; margin:6px 0 0;">Nada crítico depende só de swipe; curtir/pular têm botões com rótulo visível.</p></div>
+      <div style="background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:14px; padding:20px;"><i class="ti ti-list" style="font-size:22px; color:#2F63C7;" aria-hidden="true"></i><div style="font-size:15px; font-weight:600; margin-top:12px;">Alternativa ao mapa</div><p style="font-size:13px; line-height:1.6; color:#6C675E; margin:6px 0 0;">Visão de lista equivalente e rotulada — o padrão de mapa é o menos acessível.</p></div>
+      <div style="background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:14px; padding:20px;"><i class="ti ti-palette" style="font-size:22px; color:#2F63C7;" aria-hidden="true"></i><div style="font-size:15px; font-weight:600; margin-top:12px;">Cor nunca sozinha</div><p style="font-size:13px; line-height:1.6; color:#6C675E; margin:6px 0 0;">Tipo de match e estado sempre com ícone e texto junto da cor.</p></div>
+      <div style="background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:14px; padding:20px;"><i class="ti ti-hand-click" style="font-size:22px; color:#2F63C7;" aria-hidden="true"></i><div style="font-size:15px; font-weight:600; margin-top:12px;">Alvos de toque</div><p style="font-size:13px; line-height:1.6; color:#6C675E; margin:6px 0 0;">Mínimo 44 pt no iOS, verificado em botões e chips.</p></div>
+      <div style="background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:14px; padding:20px;"><i class="ti ti-contrast" style="font-size:22px; color:#2F63C7;" aria-hidden="true"></i><div style="font-size:15px; font-weight:600; margin-top:12px;">Contraste AA</div><p style="font-size:13px; line-height:1.6; color:#6C675E; margin:6px 0 0;">4.5:1 em texto, checado em modo claro e escuro.</p></div>
+      <div style="background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:14px; padding:20px;"><i class="ti ti-text-increase" style="font-size:22px; color:#2F63C7;" aria-hidden="true"></i><div style="font-size:15px; font-weight:600; margin-top:12px;">Dynamic Type</div><p style="font-size:13px; line-height:1.6; color:#6C675E; margin:6px 0 0;">Cards sem altura fixa: o layout não quebra quando a fonte cresce.</p></div>
+      <div style="background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:14px; padding:20px;"><i class="ti ti-player-pause" style="font-size:22px; color:#2F63C7;" aria-hidden="true"></i><div style="font-size:15px; font-weight:600; margin-top:12px;">Movimento reduzido</div><p style="font-size:13px; line-height:1.6; color:#6C675E; margin:6px 0 0;">Respeita a preferência do sistema; a animação do card vira fade.</p></div>
+      <div style="background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:14px; padding:20px;"><i class="ti ti-device-vibration" style="font-size:22px; color:#2F63C7;" aria-hidden="true"></i><div style="font-size:15px; font-weight:600; margin-top:12px;">Feedback multimodal</div><p style="font-size:13px; line-height:1.6; color:#6C675E; margin:6px 0 0;">Háptico + visual ao curtir, dar match ou ser aprovado.</p></div>
+    </div>
+    <div style="margin-top:24px; padding:22px; background:#0F0E0C; border-radius:16px; color:#EDEAE3;">
+      <div style="display:flex; align-items:center; gap:9px; font-size:13px; font-weight:600; color:#8FB0EC;"><i class="ti ti-brand-apple" style="font-size:18px;" aria-hidden="true"></i>Específico do iOS</div>
+      <p style="font-size:14px; line-height:1.7; color:#C7C2B9; margin:12px 0 0; max-width:70ch;">Rótulos, dicas e traits de VoiceOver por elemento, agrupando o conteúdo de cada card num único foco. Text styles para Dynamic Type incluindo tamanhos de acessibilidade. Checar <code style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#EDEAE3;">isReduceMotionEnabled</code>. Nomes visíveis nos botões para Voice Control. E um rotor customizado para pular de evento em evento.</p>
+    </div>
+  </section>
+
+  <!-- ===== 07 DESIGN SYSTEM ===== -->
+  <section style="max-width:1080px; margin:0 auto; padding:64px 32px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#9B958B;">07 — Design system &amp; componentes</div>
+    <h2 style="font-family:'Newsreader',serif; font-weight:500; font-size:34px; line-height:1.1; margin:14px 0 0;">Tokens e componentes reutilizados entre as telas</h2>
+    <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:28px;">
+      <div style="display:flex; align-items:center; gap:9px; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:100px; padding:6px 14px 6px 6px;"><span style="width:22px;height:22px;border-radius:50%;background:#2F63C7;"></span><span style="font-size:12px; font-family:'IBM Plex Mono',monospace; color:#423E37;">accent · #2F63C7</span></div>
+      <div style="display:flex; align-items:center; gap:9px; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:100px; padding:6px 14px 6px 6px;"><span style="width:22px;height:22px;border-radius:50%;background:#2C7A4C;"></span><span style="font-size:12px; font-family:'IBM Plex Mono',monospace; color:#423E37;">aberto · #2C7A4C</span></div>
+      <div style="display:flex; align-items:center; gap:9px; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:100px; padding:6px 14px 6px 6px;"><span style="width:22px;height:22px;border-radius:50%;background:#916412;"></span><span style="font-size:12px; font-family:'IBM Plex Mono',monospace; color:#423E37;">curadoria · #916412</span></div>
+      <div style="display:flex; align-items:center; gap:9px; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:100px; padding:6px 14px 6px 6px;"><span style="width:22px;height:22px;border-radius:50%;background:#9E4B3B;"></span><span style="font-size:12px; font-family:'IBM Plex Mono',monospace; color:#423E37;">recusado · #9E4B3B</span></div>
+      <div style="display:flex; align-items:center; gap:9px; background:#FFFFFF; border:0.5px solid #E6E2D9; border-radius:100px; padding:6px 14px 6px 6px;"><span style="width:22px;height:22px;border-radius:50%;background:#201E1A;"></span><span style="font-size:12px; font-family:'IBM Plex Mono',monospace; color:#423E37;">texto · #201E1A</span></div>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:20px;">
+      <span style="font-size:13px; padding:8px 14px; border-radius:10px; background:#FFFFFF; border:0.5px solid #E6E2D9; font-family:'IBM Plex Mono',monospace; color:#423E37;">EventCard</span>
+      <span style="font-size:13px; padding:8px 14px; border-radius:10px; background:#FFFFFF; border:0.5px solid #E6E2D9; font-family:'IBM Plex Mono',monospace; color:#423E37;">MatchBadge</span>
+      <span style="font-size:13px; padding:8px 14px; border-radius:10px; background:#FFFFFF; border:0.5px solid #E6E2D9; font-family:'IBM Plex Mono',monospace; color:#423E37;">EventPin</span>
+      <span style="font-size:13px; padding:8px 14px; border-radius:10px; background:#FFFFFF; border:0.5px solid #E6E2D9; font-family:'IBM Plex Mono',monospace; color:#423E37;">PeopleAvatars</span>
+      <span style="font-size:13px; padding:8px 14px; border-radius:10px; background:#FFFFFF; border:0.5px solid #E6E2D9; font-family:'IBM Plex Mono',monospace; color:#423E37;">StatusChip</span>
+      <span style="font-size:13px; padding:8px 14px; border-radius:10px; background:#FFFFFF; border:0.5px solid #E6E2D9; font-family:'IBM Plex Mono',monospace; color:#423E37;">PrimaryCTA</span>
+      <span style="font-size:13px; padding:8px 14px; border-radius:10px; background:#FFFFFF; border:0.5px solid #E6E2D9; font-family:'IBM Plex Mono',monospace; color:#423E37;">BottomSheet</span>
+      <span style="font-size:13px; padding:8px 14px; border-radius:10px; background:#FFFFFF; border:0.5px solid #E6E2D9; font-family:'IBM Plex Mono',monospace; color:#423E37;">MapView + ListView</span>
+    </div>
+    <p style="font-size:14px; line-height:1.7; color:#6C675E; max-width:64ch; margin:20px 0 0;">Cobrir também os estados de vazio (nenhum evento perto → sugerir aumentar o raio ou criar um), carregando (skeletons) e offline. No front-end, React Native ou Flutter entregam iOS + Android com uma base só e boa cobertura de acessibilidade nativa.</p>
+  </section>
+
+  <!-- ===== 08 VALIDAÇÃO ===== -->
+  <section style="max-width:1080px; margin:0 auto; padding:64px 32px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#9B958B;">08 — Validação &amp; próximos passos</div>
+    <h2 style="font-family:'Newsreader',serif; font-weight:500; font-size:34px; line-height:1.1; margin:14px 0 0;">Decisões a definir antes de codar</h2>
+    <div style="display:flex; flex-direction:column; gap:2px; margin-top:28px; border-top:0.5px solid #DBD6CC;">
+      <div style="display:flex; gap:16px; padding:18px 4px; border-bottom:0.5px solid #DBD6CC; align-items:baseline;"><span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#9B958B; flex-shrink:0;">01</span><span style="font-size:15px; color:#423E37;">Conta única com dois modos ou papéis separados? <span style="color:#9B958B;">(assumimos conta única)</span></span></div>
+      <div style="display:flex; gap:16px; padding:18px 4px; border-bottom:0.5px solid #DBD6CC; align-items:baseline;"><span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#9B958B; flex-shrink:0;">02</span><span style="font-size:15px; color:#423E37;">Na curadoria, “match” é só aprovação do anfitrião ou dupla confirmação?</span></div>
+      <div style="display:flex; gap:16px; padding:18px 4px; border-bottom:0.5px solid #DBD6CC; align-items:baseline;"><span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#9B958B; flex-shrink:0;">03</span><span style="font-size:15px; color:#423E37;">Chat entra no MVP ou fica para depois?</span></div>
+      <div style="display:flex; gap:16px; padding:18px 4px; border-bottom:0.5px solid #DBD6CC; align-items:baseline;"><span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#9B958B; flex-shrink:0;">04</span><span style="font-size:15px; color:#423E37;">De onde vêm os locais e esportes no mapa? (ex.: uma API de lugares)</span></div>
+      <div style="display:flex; gap:16px; padding:18px 4px; border-bottom:0.5px solid #DBD6CC; align-items:baseline;"><span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#9B958B; flex-shrink:0;">05</span><span style="font-size:15px; color:#423E37;">Testar com usuários reais o par swipe vs. lista — incluindo quem usa VoiceOver/TalkBack.</span></div>
+    </div>
+  </section>
+
+</div>
+</x-dc>
+</body>
+</html>

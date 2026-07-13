@@ -3,11 +3,14 @@ import {
   joinSportSession,
   listNearbySportSessions,
 } from '../services/sportDiscovery.js'
+import { apiErrorMessage } from '../services/validation.js'
 
 function createNearbyError(err) {
   const status = err?.response?.status
   const offline = typeof navigator !== 'undefined' && navigator.onLine === false
-  const validationMessage = err?.response?.data?.message
+  const validationMessage = apiErrorMessage(err, status === 422
+    ? 'Nao foi possivel usar a localizacao do seu Perfil Esportivo no mapa.'
+    : 'Nao foi possivel carregar as Sessoes Esportivas proximas.')
 
   if (offline || !err?.response) {
     return {
@@ -20,14 +23,14 @@ function createNearbyError(err) {
   if (status === 422) {
     return {
       title: 'Mapa nao atualizado',
-      description: validationMessage || 'Revise os filtros da Descoberta e tente novamente.',
+      description: validationMessage,
       retryLabel: 'Tentar novamente',
     }
   }
 
   return {
     title: 'Sessoes proximas indisponiveis',
-    description: validationMessage || 'Nao foi possivel carregar as Sessoes Esportivas proximas.',
+    description: validationMessage,
     retryLabel: 'Tentar novamente',
   }
 }
@@ -83,7 +86,6 @@ export function useNearbySportSessions({
 
   async function loadNearbySportSessions(activeSportProfile, filters = {}) {
     nearbySessionsLoading.value = true
-    nearbySessionsError.value = null
 
     try {
       const params = { ...filters }
@@ -92,6 +94,7 @@ export function useNearbySportSessions({
       const cards = await listSessions(params, {
         useMockFallback: !activeSportProfile?.id,
       })
+      nearbySessionsError.value = null
       replaceNearbySessionCards(cards)
     } catch (err) {
       nearbySessionsError.value = createNearbyError(err)
@@ -120,9 +123,7 @@ export function useNearbySportSessions({
       onParticipationUpdated(updatedDetail)
       return true
     } catch (err) {
-      nearbySessionParticipationFeedback.value = err?.response?.data?.message
-        || err?.message
-        || 'Nao foi possivel atualizar a participacao nesta Sessao Esportiva.'
+      nearbySessionParticipationFeedback.value = apiErrorMessage(err, 'Nao foi possivel atualizar a participacao nesta Sessao Esportiva.')
       nearbySessionParticipationFeedbackTone.value = 'error'
       return false
     } finally {

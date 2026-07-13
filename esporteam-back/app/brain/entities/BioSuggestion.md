@@ -12,6 +12,8 @@ Rascunho privado de bio gerado para um Perfil Esportivo. Nunca publica ou altera
 - `tokens_input`, `tokens_output`: uso mínimo para observabilidade.
 - `failure_code`, `metadata`: falha sanitizada, sem payload do provider.
 - `context_fingerprint`: hash do contexto permitido, não o contexto bruto.
+- `idempotency_key`: chave opcional e única por Perfil Esportivo para repetir
+  uma criação sem chamar o agente novamente.
 
 ## Segurança
 

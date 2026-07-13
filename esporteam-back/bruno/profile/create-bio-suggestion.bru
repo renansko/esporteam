@@ -10,6 +10,10 @@ post {
   auth: bearer
 }
 
+headers {
+  Idempotency-Key: bio-suggestion-local-001
+}
+
 auth:bearer {
   token: {{jwtToken}}
 }
@@ -25,5 +29,6 @@ docs {
 
   Gera um rascunho privado usando apenas modalidades, níveis, objetivos,
   posições, disponibilidade e a orientação opcional do Perfil Esportivo.
-  O campo público bio nunca é alterado automaticamente.
+  O campo público bio nunca é alterado automaticamente. Repetir a mesma
+  Idempotency-Key devolve o resultado persistido sem gerar outra sugestão.
 }

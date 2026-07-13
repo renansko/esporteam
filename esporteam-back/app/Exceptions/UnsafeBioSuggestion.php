@@ -6,7 +6,7 @@ use RuntimeException;
 
 class UnsafeBioSuggestion extends RuntimeException
 {
-    public function __construct()
+    public function __construct(public readonly string $reason = 'unsafe_output')
     {
         parent::__construct('A sugestão recebida não passou pelas validações de segurança.');
     }
