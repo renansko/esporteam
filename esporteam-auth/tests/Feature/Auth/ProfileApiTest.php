@@ -17,6 +17,21 @@ describe('profiles', function () {
         expect(User::where('email', 'jane@example.com')->first()->profile)->toBe('user');
     });
 
+    it('register creates a teacher profile when the teacher intent is selected', function () {
+        $response = $this->postJson('/api/auth/register', [
+            'name' => 'Marina Doe',
+            'email' => 'marina@example.com',
+            'password' => 'Password1',
+            'password_confirmation' => 'Password1',
+            'registration_intent' => 'teacher',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.user.profile', 'teacher');
+
+        expect(User::where('email', 'marina@example.com')->first()->profile)->toBe('teacher');
+    });
+
     it('require profile middleware allows matching profile and blocks common user', function () {
         $admin = User::factory()->create(['profile' => 'admin']);
         $user = User::factory()->create(['profile' => 'user']);

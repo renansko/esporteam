@@ -15,6 +15,7 @@ class RegisterRequest extends FormRequest
             'password'     => ['required', 'string', Password::min(8)->mixedCase()->numbers(), 'confirmed'],
             'permissions'  => ['nullable', 'integer', 'min:0'],
             'invite_token' => ['nullable', 'string', 'size:64'],
+            'registration_intent' => ['nullable', 'in:participant,teacher'],
         ];
     }
 }

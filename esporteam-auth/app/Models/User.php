@@ -9,6 +9,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Traits\HasProfile;
 
+/**
+ * @wiki app/brain/entities/User.md
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */

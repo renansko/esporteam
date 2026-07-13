@@ -6,10 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
-use App\Enums\UserProfile;
-use App\Models\User;
 use App\Services\JwtService;
 use App\Services\RabbitMqPublisher;
+use App\Services\RegistrationService;
 use App\Services\TwoFactorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,23 +21,14 @@ class AuthController extends Controller
         private JwtService $jwt,
         private RabbitMqPublisher $publisher,
         private TwoFactorService $twoFactor,
+        private RegistrationService $registration,
     ) {}
 
     public function register(RegisterRequest $request): JsonResponse
     {
         $data = $request->validated();
         $inviteToken = $data['invite_token'] ?? null;
-
-        if ($inviteToken) {
-            $data['permissions'] = 0;
-        } else {
-            $data['permissions'] = 1; // can_create_workspace
-        }
-        $data['profile'] = UserProfile::User->value;
-
-        unset($data['invite_token']);
-
-        $user = User::create($data);
+        $user = $this->registration->createUser($data);
         $token = $this->jwt->encode($user->toArray());
 
         if ($inviteToken) {

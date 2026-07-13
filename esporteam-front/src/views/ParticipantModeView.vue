@@ -7,9 +7,12 @@ import { useNearbySportSessions } from '../composables/useNearbySportSessions'
 import { useSportSessionDetail } from '../composables/useSportSessionDetail'
 import { useParticipantMatches } from '../composables/useParticipantMatches'
 import { useSportProfileEditor } from '../composables/useSportProfileEditor'
+import { useTeacherProfileEditor } from '../composables/useTeacherProfileEditor'
 
 const store = useAppStore()
 const activeSportProfile = computed(() => store.activeSportProfile)
+const activeTeacherProfile = computed(() => store.teacherProfile)
+const { draft: teacherProfileDraft, hourlyPrice: teacherHourlyPrice } = useTeacherProfileEditor(activeTeacherProfile)
 const {
   draft: sportProfileDraft,
   loading: sportProfileSaving,
@@ -18,7 +21,7 @@ const {
   success: sportProfileSaveSuccess,
   saveDraft: saveSportProfileDraft,
 } = useSportProfileEditor(activeSportProfile, {
-  save: draft => store.saveActiveSportProfile(draft),
+  save: (draft, context) => store.saveActiveSportProfile({ ...draft, ...context }),
   onSaved: reloadParticipantSessions,
 })
 const {
@@ -114,7 +117,17 @@ watch(() => store.activeSportProfile?.id, () => {
 })
 
 function saveProfile() {
-  saveSportProfileDraft()
+  saveSportProfileDraft({ teacherProfile: store.teacherProfile ? teacherProfileDraft : null })
+}
+
+function updateTeacherProfileField(field, value) {
+  teacherProfileDraft[field] = field === 'service_radius_km'
+    ? (value === '' ? null : Number(value))
+    : value
+}
+
+function updateTeacherHourlyPrice(value) {
+  teacherHourlyPrice.value = value
 }
 
 function applyBioSuggestion(suggestion) {
@@ -163,6 +176,8 @@ function acceptBioSuggestion(suggestion) {
     :sport-profile-save-error="sportProfileSaveError"
     :sport-profile-save-errors="sportProfileSaveErrors"
     :sport-profile-save-success="sportProfileSaveSuccess"
+    :teacher-profile-draft="store.teacherProfile ? teacherProfileDraft : null"
+    :teacher-hourly-price="teacherHourlyPrice"
     @apply-discovery-filters="applyDiscoveryFilters"
     @retry-discovery="reloadDiscoverySessions"
     @retry-nearby-sessions="reloadNearbySessions"
@@ -179,6 +194,9 @@ function acceptBioSuggestion(suggestion) {
     @select-participant-match="openSportSessionDetail"
     @retry-participant-matches="loadParticipantMatches"
     @save-sport-profile="saveProfile"
+    @update-teacher-profile-field="updateTeacherProfileField"
+    @update-teacher-hourly-price="updateTeacherHourlyPrice"
+    @logout="store.logout"
     @apply-bio-suggestion="applyBioSuggestion"
     @accept-bio-suggestion="acceptBioSuggestion"
   />

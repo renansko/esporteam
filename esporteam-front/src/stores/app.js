@@ -23,6 +23,8 @@ import {
   updateSportProfile,
   updateSportProfileSports,
   updateSportProfileAvailability,
+  fetchTeacherProfile,
+  updateTeacherProfile,
   logoutOnAuth,
   listIdeas as apiListIdeas,
   createIdea as apiCreateIdea,
@@ -46,14 +48,14 @@ function seedIdeas() {
 
 let toastTimer = null
 
-function sportProfileFromApi(profile, user = null) {
+function sportProfileFromApi(profile, user = null, teacherProfile = null) {
   if (!profile) {
     const displayName = user?.name || user?.email || 'Perfil Esportivo'
     return {
       ...MOCK_ACTIVE_SPORT_PROFILE,
       id: 'sport-profile-pending',
       displayName,
-      role: 'Entusiasta',
+      role: teacherProfile ? 'Professor' : 'Entusiasta',
       locationLabel: 'Localizacao a definir',
       primaryModality: 'Modalidade a definir',
       modalities: [],
@@ -78,7 +80,7 @@ function sportProfileFromApi(profile, user = null) {
     region: profile.region || '',
     visibility: profile.visibility || 'public',
     avatarUrl: profile.avatar_url || '',
-    role: 'Entusiasta',
+    role: teacherProfile ? 'Professor' : 'Entusiasta',
     locationLabel,
     primaryModality: modalities[0]?.name || 'Modalidade a definir',
     modalities,
@@ -110,6 +112,7 @@ export const useAppStore = defineStore('app', {
     page: 'inbox',                  // inbox | ideas | competitors | roadmap
     participantTab: DEFAULT_PARTICIPANT_TAB, // discover | map | matches | profile
     activeSportProfile: MOCK_ACTIVE_SPORT_PROFILE,
+    teacherProfile: null,
     participantSportSessions: [],
     publicMode: false,
     lang: 'pt',
@@ -173,17 +176,18 @@ export const useAppStore = defineStore('app', {
       }
     },
 
-    async register({ name, email, password, passwordConfirmation, city, region }) {
+    async register({ name, email, password, passwordConfirmation, city, region, intent = 'participant' }) {
       this.registerError = null
       this.registerErrors = null
       this.registerLoading = true
       try {
-        const { token } = await apiRegister({ name, email, password, passwordConfirmation })
+        const { token } = await apiRegister({ name, email, password, passwordConfirmation, registrationIntent: intent })
         if (!token) throw new Error('register_no_token')
         saveToken(token)
         this.token = token
 
         await saveSportProfile({ displayName: name, city, region })
+        if (intent === 'teacher') await updateTeacherProfile()
         await this.loadParticipantSession()
         this.authView = 'login'
       } catch (err) {
@@ -218,7 +222,8 @@ export const useAppStore = defineStore('app', {
       this.workspaceOptions = []
 
       const sportProfile = await fetchSportProfile()
-      this.activeSportProfile = sportProfileFromApi(sportProfile, this.currentUser)
+      this.teacherProfile = await fetchTeacherProfile()
+      this.activeSportProfile = sportProfileFromApi(sportProfile, this.currentUser, this.teacherProfile)
       this.auth = true
       this.participantTab = DEFAULT_PARTICIPANT_TAB
     },
@@ -292,6 +297,7 @@ export const useAppStore = defineStore('app', {
       this.workspaceSetupRequired = false
       this.workspaceOptions = []
       this.inboxIdeas = []
+      this.teacherProfile = null
       this.auth = false
     },
 
@@ -335,8 +341,13 @@ export const useAppStore = defineStore('app', {
       await updateSportProfile(payload.profile)
       await updateSportProfileSports(payload.sports)
       await updateSportProfileAvailability(payload.availability)
-      const refreshed = await fetchSportProfile()
-      this.activeSportProfile = sportProfileFromApi(refreshed, this.currentUser)
+      if (payload.teacherProfile) await updateTeacherProfile(payload.teacherProfile)
+      const [refreshed, teacherProfile] = await Promise.all([
+        fetchSportProfile(),
+        fetchTeacherProfile(),
+      ])
+      this.teacherProfile = teacherProfile
+      this.activeSportProfile = sportProfileFromApi(refreshed, this.currentUser, teacherProfile)
       return this.activeSportProfile
     },
     upsertParticipantSportSession(sessionDetail) {

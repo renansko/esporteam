@@ -45,12 +45,46 @@ try {
   assert.doesNotMatch(html, /class="profile-weekday-trigger"/)
   assert.doesNotMatch(html, /<select/)
 
+  const teacherProfileApp = createSSRApp({
+    render: () => h(ParticipantShell, {
+      sportProfileDraft: {
+        profile: { display_name: 'Marina Perfil', bio: '', city: 'Florianopolis', region: 'SC' },
+        sports: [],
+        availability: [],
+      },
+      teacherProfileDraft: {
+        headline: 'Treinadora de corrida para iniciantes',
+        credentials: 'CREF ativo',
+        hourly_price_cents: 12000,
+        service_radius_km: 15,
+      },
+      participantMatchFilters: [],
+    }),
+  })
+  const teacherProfilePinia = createPinia()
+  teacherProfileApp.use(teacherProfilePinia)
+  useAppStore(teacherProfilePinia).participantTab = 'profile'
+  const teacherProfileHtml = await renderToString(teacherProfileApp)
+  assert.match(teacherProfileHtml, /Sair da conta/)
+  assert.match(teacherProfileHtml, /Configurações de Professor/)
+  assert.match(teacherProfileHtml, /Treinadora de corrida para iniciantes/)
+  assert.match(teacherProfileHtml, /CREF ativo/)
+  assert.match(teacherProfileHtml, /R\$\u00a0120,00/)
+  assert.match(teacherProfileHtml, /15 km de atendimento/)
+  assert.match(teacherProfileHtml, /Professor ativo/)
+
   const blankProfileApp = createSSRApp({
     render: () => h(ParticipantShell, {
       sportProfileDraft: {
         profile: { display_name: '', bio: '', city: '', region: '' },
         sports: [],
         availability: [],
+      },
+      teacherProfileDraft: {
+        headline: '',
+        credentials: '',
+        hourly_price_cents: null,
+        service_radius_km: null,
       },
       participantMatchFilters: [],
     }),
@@ -62,6 +96,8 @@ try {
   assert.match(blankProfileHtml, /Nome do Perfil Esportivo/)
   assert.match(blankProfileHtml, /Definir local/)
   assert.match(blankProfileHtml, /Salvar alteracoes/)
+  assert.match(blankProfileHtml, /Especialidade/)
+  assert.match(blankProfileHtml, /Valor por hora/)
 } finally {
   await server.close()
 }

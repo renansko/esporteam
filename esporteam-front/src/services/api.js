@@ -30,13 +30,16 @@ export async function login(email, password) {
   return data?.data ?? data
 }
 
-export async function register({ name, email, password, passwordConfirmation }) {
-  const { data } = await authApi.post('/register', {
+export async function register({ name, email, password, passwordConfirmation, registrationIntent = 'participant' }) {
+  const payload = {
     name,
     email,
     password,
     password_confirmation: passwordConfirmation,
-  })
+  }
+  if (registrationIntent === 'teacher') payload.registration_intent = registrationIntent
+
+  const { data } = await authApi.post('/register', payload)
   return data?.data ?? data
 }
 
@@ -89,6 +92,16 @@ export async function updateSportProfileSports(sports = []) {
 
 export async function updateSportProfileAvailability(windows = []) {
   const { data } = await esporteamApi.put('/profile/availability', { windows })
+  return data?.data ?? data
+}
+
+export async function fetchTeacherProfile() {
+  const { data } = await esporteamApi.get('/teacher-profile')
+  return data?.data ?? null
+}
+
+export async function updateTeacherProfile(payload = {}) {
+  const { data } = await esporteamApi.put('/teacher-profile', payload)
   return data?.data ?? data
 }
 

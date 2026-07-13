@@ -56,13 +56,13 @@ export function useSportProfileEditor(profile, { save = null, onSaved = () => {}
 
   watch(profile, next => Object.assign(draft, createSportProfileDraft(next)), { deep: true })
 
-  async function saveDraft() {
+  async function saveDraft(profileUpdate = {}) {
     loading.value = true
     error.value = null
     validationErrors.value = {}
     success.value = false
     try {
-      const result = await save(draft)
+      const result = await save(draft, profileUpdate)
       onSaved(result)
       success.value = true
       return result

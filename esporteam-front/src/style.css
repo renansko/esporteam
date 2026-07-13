@@ -257,6 +257,9 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.participant-logout { width: 38px; height: 38px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid var(--sport-line); border-radius: 10px; background: var(--sport-surface-elevated); color: var(--sport-muted); cursor: pointer; }
+.participant-logout:hover { color: var(--sport-text); border-color: var(--sport-muted); }
+.participant-logout:focus-visible { outline: 3px solid color-mix(in oklab, var(--sport-accent) 28%, transparent); outline-offset: 2px; }
 .profile-bio-assistant-trigger {
   min-height: 38px;
   border: 1px solid var(--sport-line);
@@ -1319,6 +1322,8 @@ body {
 .profile-save-button { display: inline-flex; justify-content: center; align-items: center; gap: 7px; border-color: var(--sport-accent); background: var(--sport-accent); color: white; font-weight: 700; }
 .profile-save-button:disabled { opacity: .65; cursor: wait; }
 .profile-mode-affordance { display: flex; align-items: center; gap: 7px; padding: 11px 12px; border: 1px dashed var(--sport-line); border-radius: 8px; color: var(--sport-muted); font-size: 12px; }
+.teacher-settings-summary { display: flex; flex-wrap: wrap; gap: 8px 14px; color: var(--sport-muted); font-size: 12px; }
+.profile-teacher-badge { border-radius: 999px; padding: 3px 7px; background: #e9effb; color: var(--sport-accent); font-size: 10px; font-weight: 700; }
 .sport-profile-summary {
   margin: 18px 0 0;
   display: grid;
@@ -2392,6 +2397,17 @@ body {
 .auth-switch .link:hover {
   color: #2757b1;
 }
+.auth-wizard-progress { margin: 0 0 8px; color: var(--sport-accent); font-family: var(--font-mono); font-size: 10px; letter-spacing: .09em; text-transform: uppercase; }
+.auth-wizard-back { display: inline-flex; align-items: center; gap: 5px; margin: -4px 0 16px; border: 0; padding: 0; background: transparent; color: var(--sport-accent); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.auth-choice-card { align-self: center; }
+.auth-intent-options { display: grid; gap: 10px; }
+.auth-intent-option { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 11px; border: 1px solid var(--sport-line); border-radius: 12px; padding: 13px; background: #fbfaf7; color: var(--sport-text); font: inherit; text-align: left; cursor: pointer; }
+.auth-intent-option:hover { border-color: var(--sport-accent); background: #f4f7fd; }
+.auth-intent-option:focus-visible { outline: 3px solid color-mix(in oklab, var(--sport-accent) 28%, transparent); outline-offset: 2px; }
+.auth-intent-option > span:nth-child(2) { min-width: 0; display: grid; gap: 4px; }
+.auth-intent-option strong { font-size: 14px; }
+.auth-intent-option small { color: var(--sport-muted); font-size: 12px; line-height: 1.4; }
+.auth-intent-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: #e9effb; color: var(--sport-accent); }
 .auth-error {
   margin-top: 12px;
 }

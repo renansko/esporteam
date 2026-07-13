@@ -57,6 +57,8 @@ const props = defineProps({
   sportProfileSaveError: { type: String, default: null },
   sportProfileSaveErrors: { type: Object, default: () => ({}) },
   sportProfileSaveSuccess: { type: Boolean, default: false },
+  teacherProfileDraft: { type: Object, default: null },
+  teacherHourlyPrice: { type: [Number, String], default: '' },
 })
 const emit = defineEmits([
   'applyDiscoveryFilters',
@@ -75,6 +77,9 @@ const emit = defineEmits([
   'selectParticipantMatch',
   'retryParticipantMatches',
   'saveSportProfile',
+  'updateTeacherProfileField',
+  'updateTeacherHourlyPrice',
+  'logout',
   'applyBioSuggestion',
   'acceptBioSuggestion',
 ])
@@ -132,6 +137,7 @@ const activeTab = computed(() => resolveParticipantTab(store.participantTab))
 const isDiscoverTab = computed(() => activeTab.value.id === 'discover')
 const isMatchesTab = computed(() => activeTab.value.id === 'matches')
 const isProfileTab = computed(() => activeTab.value.id === 'profile')
+const isTeacher = computed(() => Boolean(props.teacherProfileDraft))
 const participantMatchViews = computed(() => props.participantMatches.map(createParticipantMatchView))
 const now = new Date('2026-07-11T00:00:00-03:00')
 const upcomingConfirmedMatches = computed(() => participantMatchViews.value
@@ -291,6 +297,12 @@ function saveProfile() {
   emit('saveSportProfile')
 }
 
+function formatTeacherPrice(cents) {
+  if (cents === null || cents === undefined) return 'Valor a combinar'
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100)
+}
+
+
 watch(() => props.sportProfileSaveSuccess, (saved) => {
   if (saved) {
     isEditing.value = false
@@ -318,6 +330,9 @@ async function highlightBioContext() {
             <small>{{ sportProfile.role }} · {{ sportProfile.primaryModality }}</small>
           </span>
         </div>
+        <button class="participant-logout" type="button" aria-label="Sair da conta" title="Sair" @click="emit('logout')">
+          <Icon name="logout" :size="18" />
+        </button>
 
       </header>
 
@@ -712,6 +727,13 @@ async function highlightBioContext() {
               <ul v-if="sportProfileDraft?.availability?.length" class="profile-availability-summary"><li v-for="(window, index) in sportProfileDraft.availability" :key="index">{{ availabilityLabel(window) }}</li></ul>
               <button v-else type="button" class="profile-add-button" @click="startEditing('availability')"><Icon name="plus" :size="15" /> Adicionar horario</button>
             </section>
+
+            <section v-if="isTeacher" class="profile-details-card" aria-label="Configurações de Professor">
+              <div class="profile-section-heading"><h3>Configurações de Professor</h3><button type="button" class="profile-section-action" @click="startEditing()"><Icon name="edit" :size="14" /> Editar</button></div>
+              <strong>{{ teacherProfileDraft.headline || 'Apresente a sua especialidade' }}</strong>
+              <p v-if="teacherProfileDraft.credentials" class="profile-bio-copy">{{ teacherProfileDraft.credentials }}</p>
+              <div class="teacher-settings-summary"><span>{{ formatTeacherPrice(teacherProfileDraft.hourly_price_cents) }}</span><span>{{ teacherProfileDraft.service_radius_km ? `${teacherProfileDraft.service_radius_km} km de atendimento` : 'Raio de atendimento a definir' }}</span></div>
+            </section>
           </template>
 
           <template v-else>
@@ -760,13 +782,21 @@ async function highlightBioContext() {
                 <p v-if="firstValidationError(sportProfileSaveErrors, 'windows')" class="field-error">{{ firstValidationError(sportProfileSaveErrors, 'windows') }}</p>
               </section>
 
+              <section v-if="isTeacher" class="profile-edit-card" aria-label="Configurações de Professor">
+                <div class="profile-section-heading"><h3>Configurações de Professor</h3><span class="profile-teacher-badge">Professor</span></div>
+                <p class="profile-form-note">Essas informações aparecem quando Entusiastas encontram o seu Perfil Esportivo.</p>
+                <label><span>Especialidade</span><input :value="teacherProfileDraft.headline" maxlength="160" placeholder="Ex.: Professora de corrida para iniciantes" @input="emit('updateTeacherProfileField', 'headline', $event.target.value)"></label>
+                <label><span>Credenciais e experiência</span><textarea :value="teacherProfileDraft.credentials" maxlength="2000" rows="3" placeholder="Ex.: CREF ativo, formação e experiência" @input="emit('updateTeacherProfileField', 'credentials', $event.target.value)"></textarea></label>
+                <div class="profile-form-grid"><label><span>Valor por hora (R$)</span><input :value="teacherHourlyPrice" type="number" min="0" step="0.01" inputmode="decimal" placeholder="120,00" @input="emit('updateTeacherHourlyPrice', $event.target.value)"></label><label><span>Raio de atendimento (km)</span><input :value="teacherProfileDraft.service_radius_km ?? ''" type="number" min="0" max="1000" step="1" placeholder="15" @input="emit('updateTeacherProfileField', 'service_radius_km', $event.target.value)"></label></div>
+              </section>
+
               <p class="profile-discovery-note"><Icon name="sparkles" :size="15" /> Atualizar o Perfil Esportivo atualiza os criterios usados pela Descoberta.</p>
               <p v-if="sportProfileSaveError" class="profile-feedback profile-feedback-error" role="alert">{{ sportProfileSaveError }}</p>
               <p v-if="sportProfileSaveSuccess" class="profile-feedback profile-feedback-success" role="status">Perfil Esportivo salvo. A Descoberta foi atualizada.</p>
               <button class="profile-save-button" type="submit" :disabled="sportProfileSaving"><Icon name="check" :size="17" /> {{ sportProfileSaving ? 'Salvando' : 'Salvar alteracoes' }}</button>
             </form>
           </template>
-          <div class="profile-mode-affordance"><Icon name="sparkles" :size="17" /><span>Participante agora · Anfitriao em breve</span></div>
+          <div class="profile-mode-affordance"><Icon name="sparkles" :size="17" /><span>{{ isTeacher ? 'Professor ativo · Suas configurações estão prontas para completar' : 'Participante agora · Anfitriao em breve' }}</span></div>
         </section>
 
         <div v-else class="participant-placeholder">
