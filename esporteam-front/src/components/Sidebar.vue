@@ -55,9 +55,9 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
 <template>
   <aside class="sidebar">
     <div class="sb-hd">
-      <div class="sb-logo">P</div>
+      <div class="sb-logo">C</div>
       <div style="min-width: 0">
-        <div class="sb-wsname">Esporteam</div>
+        <div class="sb-wsname">Cola Aí</div>
         <div class="sb-wstag truncate">
           {{ workspaceName }} · {{ workspaceTagline }}
         </div>

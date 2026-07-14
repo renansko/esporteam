@@ -1,4 +1,4 @@
-# Esporteam
+# Cola Aí
 
 Before changing code in this workspace, read:
 
@@ -8,6 +8,12 @@ Before changing code in this workspace, read:
 4. The relevant `app/brain/` page before editing models, services, or public functions.
 
 The product language is centered on sport discovery and participation. In discovery code, use Perfil Esportivo / `SportProfile` as the social identity; `User` belongs to authentication.
+
+## Brand
+
+The public product brand is **Cola Aí**. Use this exact spelling in user-facing UI, product copy, AI assistant prompts, public docs, and examples.
+
+Treat `esporteam-*`, `is_esporteam_admin`, middleware names, route names, local storage keys, database names, repository folders, and service identifiers as legacy technical names until an explicit technical rename/migration is requested. Do not introduce `COLA AI`, `Cola AI`, or `ColaAI` as the product name.
 
 Keep controllers thin, put use-case behaviour behind service interfaces, use FormRequests for HTTP validation, and keep Resources limited to response shape.
 

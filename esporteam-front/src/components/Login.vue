@@ -90,9 +90,9 @@ function clearError(key) {
 
       <form class="auth-card" @submit.prevent="submit">
         <div class="auth-brand">
-          <div class="auth-mark">E</div>
+          <div class="auth-mark">C</div>
           <div>
-            <div class="auth-name">Esporteam</div>
+            <div class="auth-name">Cola Aí</div>
             <div class="auth-tagline">Descoberta esportiva local</div>
           </div>
         </div>

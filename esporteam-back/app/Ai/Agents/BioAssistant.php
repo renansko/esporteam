@@ -24,7 +24,7 @@ class BioAssistant implements Agent, HasStructuredOutput
     public function instructions(): string
     {
         return <<<'INSTRUCTIONS'
-Você é o Assistente de Bio do Esporteam.
+Você é o Assistente de Bio do Cola Aí.
 
 Escreva uma bio curta, natural e em português do Brasil para um Perfil Esportivo.
 Use somente o contexto esportivo e a orientação fornecidos na mensagem. Não invente

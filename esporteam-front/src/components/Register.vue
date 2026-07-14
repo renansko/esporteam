@@ -79,12 +79,12 @@ function submit() {
       </div>
 
       <section v-if="step === 'intent'" class="auth-card auth-choice-card" aria-labelledby="register-title">
-        <div class="auth-brand"><div class="auth-mark">E</div><div><div class="auth-name">Esporteam</div><div class="auth-tagline">Descoberta esportiva local</div></div></div>
+        <div class="auth-brand"><div class="auth-mark">C</div><div><div class="auth-name">Cola Aí</div><div class="auth-tagline">Descoberta esportiva local</div></div></div>
         <p class="auth-wizard-progress">Etapa 1 de 2</p>
         <p class="auth-eyebrow">Antes de começar</p>
         <h1 id="register-title">Você quer marcar um esporte ou participar?</h1>
         <p class="auth-lede">Isso define a experiência inicial. Você poderá complementar o seu Perfil Esportivo depois.</p>
-        <div class="auth-intent-options" role="group" aria-label="Objetivo no Esporteam">
+        <div class="auth-intent-options" role="group" aria-label="Objetivo no Cola Aí">
           <button type="button" class="auth-intent-option" @click="selectIntent('teacher')">
             <span class="auth-intent-icon"><Icon name="calendarCheck" :size="22" /></span>
             <span><strong>Quero marcar um esporte</strong><small>Você cria práticas e começa como Professor.</small></span>
@@ -101,7 +101,7 @@ function submit() {
 
       <form v-else class="auth-card" @submit.prevent="submit">
         <button class="auth-wizard-back" type="button" @click="step = 'intent'"><Icon name="back" :size="16" /> Voltar</button>
-        <div class="auth-brand"><div class="auth-mark">E</div><div><div class="auth-name">Esporteam</div><div class="auth-tagline">Conta + Perfil Esportivo</div></div></div>
+        <div class="auth-brand"><div class="auth-mark">C</div><div><div class="auth-name">Cola Aí</div><div class="auth-tagline">Conta + Perfil Esportivo</div></div></div>
         <p class="auth-wizard-progress">Etapa 2 de 2</p>
         <p class="auth-eyebrow">{{ intent === 'teacher' ? 'Perfil de Professor' : 'Criar conta' }}</p>
         <h1 id="register-title">{{ intent === 'teacher' ? 'Prepare seu Perfil de Professor' : 'Comece pelo seu Perfil Esportivo' }}</h1>

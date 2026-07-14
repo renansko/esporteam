@@ -1,4 +1,4 @@
-# SOUL - Esporteam
+# SOUL - Cola Aí
 
 > Este arquivo e a fonte curta e obrigatoria do "por que" do projeto. Todo agente deve ler isto antes de alterar produto, dominio, API, banco, UX, IA ou documentacao.
 
@@ -8,7 +8,7 @@
 
 ## Ideia Central
 
-O Esporteam existe para reduzir o atrito de encontrar pessoas, professores, aulas e sessoes esportivas perto de voce.
+O Cola Aí existe para reduzir o atrito de encontrar pessoas, professores, aulas e sessoes esportivas perto de voce.
 
 O produto nao e um sistema B2B de workspace, nem um marketplace de checkout no MVP. E um app mobile local-first para praticantes, professores e organizadores combinarem esporte com menos dependencia de WhatsApp, indicacoes soltas e busca manual.
 

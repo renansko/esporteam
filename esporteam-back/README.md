@@ -1,6 +1,6 @@
-# Esporteam
+# Cola Aí
 
-Backend do app mobile Esporteam: descoberta local de pessoas, professores, aulas e sessoes esportivas proximas.
+Backend do app mobile Cola Aí: descoberta local de pessoas, professores, aulas e sessoes esportivas proximas.
 
 MVP em construção — ver [PRD.md](PRD.md) e [issues/](issues/).
 

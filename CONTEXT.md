@@ -1,6 +1,6 @@
-# Esporteam
+# Cola Aí
 
-Esporteam helps people find other people, teachers, groups, and opportunities around sports they want to practice. This context defines the product language for sport discovery and participation.
+Cola Aí helps people find other people, teachers, groups, and opportunities around sports they want to practice. This context defines the product language for sport discovery and participation.
 
 ## Language
 
@@ -33,7 +33,7 @@ A sport profile that has an explicit learning relationship with a teacher. A spo
 _Avoid_: Cliente, estudante, aprendiz
 
 **Assinatura da Plataforma**:
-The commercial relationship that may unlock organizer or enthusiast capabilities in Esporteam. A subscription is account/platform billing and must not be modeled as a participant fee for a sport session.
+The commercial relationship that may unlock organizer or enthusiast capabilities in Cola Aí. A subscription is account/platform billing and must not be modeled as a participant fee for a sport session.
 _Avoid_: Taxa da sessao, ingresso, pagamento do evento
 
 **Modalidade**:

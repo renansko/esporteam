@@ -1,4 +1,4 @@
-// Seed data for the Esporteam demo workspace: "Mesa" — SaaS for small Brazilian restaurants.
+// Seed data for the Cola Aí demo workspace: "Mesa" — SaaS for small Brazilian restaurants.
 // Bilingual: each user-facing string is { pt, en }.
 
 const t = (pt, en) => ({ pt, en })
@@ -340,6 +340,6 @@ export const SEED_WORKSPACE = {
   tagline: t('SaaS de gestão para restaurantes independentes', 'Management SaaS for independent restaurants'),
   pmName: 'Eduardo Bassan',
   pmEmail: 'eduardo@mesa.app',
-  publicRoadmapUrl: 'esporteam.app/r/mesa',
+  publicRoadmapUrl: 'colaai.app/r/mesa',
   feedbackCount: 50,
 }

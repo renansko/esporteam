@@ -33,9 +33,9 @@ function clearError() {
   <div class="login-page">
     <section class="login-card workspace-setup">
       <div class="login-logo">
-        <div class="mark">P</div>
+        <div class="mark">C</div>
         <div>
-          <div class="nm">Esporteam</div>
+          <div class="nm">Cola Aí</div>
           <div class="profile-pill">{{ profileLabel }}</div>
         </div>
       </div>

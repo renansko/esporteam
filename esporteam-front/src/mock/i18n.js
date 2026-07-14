@@ -1,4 +1,4 @@
-// Bilingual strings for the Esporteam UI chrome.
+// Bilingual strings for the Cola Aí UI chrome.
 // Usage: pickLang(STR.foo, lang)
 
 export const pickLang = (obj, lang) => {
@@ -9,8 +9,8 @@ export const pickLang = (obj, lang) => {
 
 export const STR = {
   // App chrome
-  appName:           { pt: 'Esporteam',                       en: 'Esporteam' },
-  workspaceTagline:  { pt: 'Gestão de Roadmap com IA',      en: 'AI-powered Roadmap Management' },
+  appName:           { pt: 'Cola Aí',                       en: 'Cola Aí' },
+  workspaceTagline:  { pt: 'Descoberta esportiva local',      en: 'Local sport discovery' },
   // Sidebar
   nav_inbox:         { pt: 'Ideias',                        en: 'Ideas' },
   nav_ideas:         { pt: 'Roadmap interno',               en: 'Internal Roadmap' },
@@ -18,8 +18,8 @@ export const STR = {
   nav_roadmap:       { pt: 'Roadmap público',               en: 'Public Roadmap' },
   nav_settings:      { pt: 'Ajustes',                       en: 'Settings' },
   // Onboarding / Login
-  login_title:       { pt: 'Entrar no Esporteam',             en: 'Sign in to Esporteam' },
-  login_subtitle:    { pt: 'Gestão de roadmap orientada por ideias reais.', en: 'Roadmap management driven by real ideas.' },
+  login_title:       { pt: 'Entrar no Cola Aí',             en: 'Sign in to Cola Aí' },
+  login_subtitle:    { pt: 'Descubra pessoas, aulas e sessoes esportivas perto de voce.', en: 'Discover people, classes, and sport sessions near you.' },
   login_email:       { pt: 'Email de trabalho',             en: 'Work email' },
   login_password:    { pt: 'Senha',                         en: 'Password' },
   login_submit:      { pt: 'Continuar',                     en: 'Continue' },
@@ -28,7 +28,7 @@ export const STR = {
   login_no_account:  { pt: 'Não tem conta?',                en: "Don't have an account?" },
   login_to_register: { pt: 'Criar conta',                   en: 'Create account' },
   register_title:    { pt: 'Criar conta',                   en: 'Create account' },
-  register_subtitle: { pt: 'Comece um workspace novinho do Esporteam.', en: 'Start a fresh Esporteam workspace.' },
+  register_subtitle: { pt: 'Crie sua conta e comece pelo seu Perfil Esportivo.', en: 'Create your account and start with your sport profile.' },
   register_name:     { pt: 'Seu nome',                      en: 'Your name' },
   register_email:    { pt: 'Email',                         en: 'Email' },
   register_password: { pt: 'Senha (mín. 8, com maiúsculas, minúsculas e números)', en: 'Password (min 8, mixed case + numbers)' },

@@ -1,6 +1,6 @@
 # Codebase Design
 
-This file defines how Esporteam code should be shaped. It complements `CONTEXT.md`: the context file names the product concepts; this file decides where behaviour should live and what interfaces should stay small.
+This file defines how Cola Aí code should be shaped. It complements `CONTEXT.md`: the context file names the product concepts; this file decides where behaviour should live and what interfaces should stay small.
 
 ## Design Goal
 
@@ -19,7 +19,7 @@ When changing code, read these in order:
 
 ## System Shape
 
-Esporteam is organized as owned Laravel services:
+Cola Aí is organized as owned Laravel services:
 
 **esporteam-auth** owns authentication identity, user records, global permissions, JWT issuance, two-factor authentication, impersonation, and audit logging.
 

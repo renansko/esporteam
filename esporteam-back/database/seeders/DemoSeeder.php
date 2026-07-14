@@ -262,7 +262,7 @@ class DemoSeeder extends Seeder
                 'teacher_profile_id' => $teachers[$index % count($teachers)]->id,
                 'sport_id' => $sports[$spec['sport']]->id,
                 'title' => $spec['title'],
-                'description' => 'Aula demo do Esporteam com foco em progressao segura e combinacao local.',
+                'description' => 'Aula demo do Cola Aí com foco em progressao segura e combinacao local.',
                 'price_cents' => 7000 + (($index % 6) * 1500),
                 'starts_at' => CarbonImmutable::now()->addDays($index + 2)->setTime(7 + (($index % 5) * 2), 0),
                 'recurrence' => $index % 2 === 0 ? 'weekly' : 'single',
@@ -502,7 +502,7 @@ class DemoSeeder extends Seeder
             );
         }
 
-        return "{$name} usa o Esporteam para encontrar companhia local em {$primarySportSlug}, combinar treinos e descobrir sessoes abertas.";
+        return "{$name} usa o Cola Aí para encontrar companhia local em {$primarySportSlug}, combinar treinos e descobrir sessoes abertas.";
     }
 
     private function positionFor(string $sportSlug, int $index): ?string
