@@ -1,0 +1,22 @@
+meta {
+  name: Complete adult eligibility
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{authServiceUrl}}/api/adult-eligibility
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "birth_date": "2000-01-01",
+    "adult_attestation": true
+  }
+}
+
+docs {
+  Declares adult eligibility in esporteam-auth. The returned replacement token contains only `is_adult`; birth date is never propagated to sport services.
+}

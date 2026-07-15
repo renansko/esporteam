@@ -5,6 +5,7 @@ import Login from './components/Login.vue'
 import Register from './components/Register.vue'
 import ParticipantModeView from './views/ParticipantModeView.vue'
 import Toast from './components/Toast.vue'
+import AdultEligibilityPrompt from './components/AdultEligibilityPrompt.vue'
 
 const store = useAppStore()
 
@@ -22,5 +23,6 @@ watch(() => store.theme, (theme) => {
     <Login v-else />
   </template>
   <ParticipantModeView v-else />
+  <AdultEligibilityPrompt v-if="store.auth && !store.currentUser?.is_adult" />
   <Toast />
 </template>

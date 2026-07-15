@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminAuditController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\AdultEligibilityController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Auth\WorkspaceTokenController;
@@ -39,6 +40,7 @@ Route::middleware(['auth.jwt', 'throttle:600,1'])->group(function () {
     Route::patch('/me', [UserController::class, 'updateMe']);
     Route::delete('/me', [UserController::class, 'deleteMe']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::post('/adult-eligibility', [AdultEligibilityController::class, 'store']);
     Route::post('/workspace/select', [WorkspaceTokenController::class, 'select']);
     Route::put('/users/{id}/permissions', [UserController::class, 'updatePermissions']);
 

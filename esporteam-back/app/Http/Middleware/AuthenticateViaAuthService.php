@@ -38,6 +38,7 @@ class AuthenticateViaAuthService
             'is_esporteam_owner' => $payload->is_esporteam_owner ?? false,
             'profile' => $payload->profile ?? ($payload->user->profile ?? 'user'),
             'permissions' => $payload->permissions ?? 0,
+            'is_adult' => $payload->is_adult ?? false,
         ]);
         if (!empty($payload->workspace_id)) {
             $user = (object) array_merge((array) $user, [
@@ -68,6 +69,7 @@ class AuthenticateViaAuthService
             'workspace_id' => $workspaceId,
             'is_esporteam_admin' => ($permissions & 2) === 2,
             'is_esporteam_owner' => ($permissions & 4) === 4,
+            'is_adult' => filter_var($request->header('X-Test-Is-Adult', true), FILTER_VALIDATE_BOOLEAN),
             'is_workspace_owner' => filter_var($request->header('X-Test-Workspace-Owner', false), FILTER_VALIDATE_BOOLEAN),
         ];
 

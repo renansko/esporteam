@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.service' => \App\Http\Middleware\AuthenticateViaAuthService::class,
             'require.profile' => \App\Http\Middleware\RequireProfile::class,
+            'adult.eligible' => \App\Http\Middleware\RequireAdultEligibility::class,
             'throttle.user' => \App\Http\Middleware\ThrottleAuthenticatedUser::class,
             'throttle.bio-suggestion' => \App\Http\Middleware\ThrottleBioSuggestion::class,
         ]);
@@ -53,6 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage() ?: 'This action is unauthorized.',
+                'code' => $e->getMessage() === 'adult_eligibility_required' ? 'adult_eligibility_required' : null,
             ], 403);
         });
 

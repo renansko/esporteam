@@ -33,6 +33,7 @@ class MeController extends Controller
                     'name'  => $user->name  ?? null,
                     'profile' => $user->profile ?? 'user',
                     'permissions' => $user->permissions ?? 0,
+                    'is_adult' => $user->is_adult ?? false,
                 ],
                 'workspace' => $workspace,
             ],

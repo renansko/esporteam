@@ -53,22 +53,22 @@ Route::middleware('auth.service')->group(function () {
 
     Route::get('/sessions', [SportSessionController::class, 'index'])
         ->middleware('throttle.user:map');
-    Route::post('/sessions', [SportSessionController::class, 'store']);
+    Route::post('/sessions', [SportSessionController::class, 'store'])->middleware('adult.eligible');
     Route::get('/profile/sessions', [SportSessionController::class, 'participantSessions']);
     Route::get('/sessions/{session}', [SportSessionController::class, 'show'])
         ->whereNumber('session');
     Route::get('/sessions/{session}/recommendations', [SportSessionController::class, 'recommendations'])
         ->whereNumber('session');
-    Route::post('/sessions/{session}/invites', [SportSessionController::class, 'invite'])
+    Route::post('/sessions/{session}/invites', [SportSessionController::class, 'invite'])->middleware('adult.eligible')
         ->whereNumber('session');
-    Route::patch('/sessions/{session}/invite', [SportSessionController::class, 'respondToInvite'])
+    Route::patch('/sessions/{session}/invite', [SportSessionController::class, 'respondToInvite'])->middleware('adult.eligible')
         ->whereNumber('session');
-    Route::patch('/sessions/{session}/participants/{profile}', [SportSessionController::class, 'updateParticipant'])
+    Route::patch('/sessions/{session}/participants/{profile}', [SportSessionController::class, 'updateParticipant'])->middleware('adult.eligible')
         ->whereNumber('session');
-    Route::post('/sessions/{session}/join', [SportSessionController::class, 'join'])
+    Route::post('/sessions/{session}/join', [SportSessionController::class, 'join'])->middleware('adult.eligible')
         ->whereNumber('session');
     Route::get('/post-match-actions', [PostMatchSportActionController::class, 'index']);
-    Route::post('/post-match-actions/session', [PostMatchSportActionController::class, 'saveSession']);
+    Route::post('/post-match-actions/session', [PostMatchSportActionController::class, 'saveSession'])->middleware('adult.eligible');
 
     Route::post('/connections', [ConnectionController::class, 'store']);
     Route::patch('/connections/{connection}', [ConnectionController::class, 'update']);

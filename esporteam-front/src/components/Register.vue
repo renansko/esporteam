@@ -13,6 +13,8 @@ const password = ref('')
 const passwordConfirmation = ref('')
 const city = ref('')
 const region = ref('')
+const birthDate = ref('')
+const adultAttestation = ref(false)
 const submitted = ref(false)
 const touched = ref({})
 
@@ -44,8 +46,8 @@ function clearError(key) {
 
 function submit() {
   submitted.value = true
-  ;['name', 'email', 'password', 'password_confirmation'].forEach(touch)
-  if (!isValidField(name.value, { required: true }) || !isValidField(email.value, { type: 'email', required: true }) || !isValidField(password.value, { required: true }) || !isValidField(passwordConfirmation.value, { required: true })) return
+  ;['name', 'email', 'password', 'password_confirmation', 'birth_date', 'adult_attestation'].forEach(touch)
+  if (!isValidField(name.value, { required: true }) || !isValidField(email.value, { type: 'email', required: true }) || !isValidField(password.value, { required: true }) || !isValidField(passwordConfirmation.value, { required: true }) || !birthDate.value || !adultAttestation.value) return
 
   store.register({
     name: name.value.trim(),
@@ -55,6 +57,8 @@ function submit() {
     city: city.value.trim(),
     region: region.value.trim(),
     intent: intent.value,
+    birthDate: birthDate.value,
+    adultAttestation: adultAttestation.value,
   })
 }
 </script>
@@ -126,6 +130,11 @@ function submit() {
 
         <div class="auth-grid"><div><label for="register-city">Cidade</label><input id="register-city" class="input" type="text" v-model="city" autocomplete="address-level2" /></div><div><label for="register-region">UF/região</label><input id="register-region" class="input" type="text" v-model="region" autocomplete="address-level1" /></div></div>
         <div class="field-hint">Localização aproximada; não usamos endereço residencial preciso.</div>
+        <label for="register-birth-date">Data de nascimento</label>
+        <input id="register-birth-date" :class="['input', fieldClass('birth_date', birthDate, { required: true })]" type="date" v-model="birthDate" required @blur="touch('birth_date')" @input="clearError('birth_date')" />
+        <div v-if="fieldMessage('birth_date', birthDate, { required: true }, 'Informe sua data de nascimento.')" class="field-error">{{ fieldMessage('birth_date', birthDate, { required: true }, 'Informe sua data de nascimento.') }}</div>
+        <label class="auth-attestation"><input type="checkbox" v-model="adultAttestation" required @change="touch('adult_attestation'); clearError('adult_attestation')" /> Confirmo que tenho 18 anos ou mais.</label>
+        <div v-if="fieldError('adult_attestation') || (submitted && !adultAttestation)" class="field-error">{{ fieldError('adult_attestation') || 'Confirme sua maioridade para continuar.' }}</div>
         <div v-if="store.registerError && !store.registerErrors" class="field-error auth-error">{{ store.registerError }}</div>
         <button class="btn btn-primary auth-submit" type="submit" :disabled="store.registerLoading">{{ store.registerLoading ? 'Criando...' : intent === 'teacher' ? 'Criar conta de Professor' : 'Criar conta' }}<Icon name="chevron" /></button>
         <div class="auth-switch"><span>Já tem conta?</span><button type="button" class="link" @click="store.setAuthView('login')">Entrar</button></div>

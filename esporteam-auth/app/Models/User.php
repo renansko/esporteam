@@ -27,6 +27,9 @@ class User extends Authenticatable
         'two_factor_recovery_codes',
         'two_factor_confirmed_at',
         'tokens_revoked_at',
+        'birth_date',
+        'adult_attested_at',
+        'is_adult',
     ];
 
     protected $hidden = [
@@ -50,6 +53,9 @@ class User extends Authenticatable
             'two_factor_recovery_codes' => 'encrypted:array',
             'two_factor_confirmed_at' => 'datetime',
             'tokens_revoked_at' => 'datetime',
+            'birth_date' => 'date',
+            'adult_attested_at' => 'datetime',
+            'is_adult' => 'boolean',
         ];
     }
 }

@@ -35,6 +35,9 @@ function actingAsWorkspace(int $workspaceId, array $userClaims = [])
     if (isset($userClaims['profile'])) {
         $headers['X-Test-Profile'] = (string) $userClaims['profile'];
     }
+    if (array_key_exists('is_adult', $userClaims)) {
+        $headers['X-Test-Is-Adult'] = $userClaims['is_adult'] ? 'true' : 'false';
+    }
 
     return test()->withHeaders($headers);
 }

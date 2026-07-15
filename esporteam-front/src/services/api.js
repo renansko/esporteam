@@ -30,7 +30,7 @@ export async function login(email, password) {
   return data?.data ?? data
 }
 
-export async function register({ name, email, password, passwordConfirmation, registrationIntent = 'participant' }) {
+export async function register({ name, email, password, passwordConfirmation, registrationIntent = 'participant', birthDate, adultAttestation }) {
   const payload = {
     name,
     email,
@@ -38,8 +38,20 @@ export async function register({ name, email, password, passwordConfirmation, re
     password_confirmation: passwordConfirmation,
   }
   if (registrationIntent === 'teacher') payload.registration_intent = registrationIntent
+  if (birthDate) {
+    payload.birth_date = birthDate
+    payload.adult_attestation = adultAttestation
+  }
 
   const { data } = await authApi.post('/register', payload)
+  return data?.data ?? data
+}
+
+export async function completeAdultEligibility({ birthDate, adultAttestation }) {
+  const { data } = await authApi.post('/adult-eligibility', {
+    birth_date: birthDate,
+    adult_attestation: adultAttestation,
+  })
   return data?.data ?? data
 }
 

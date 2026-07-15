@@ -14,6 +14,7 @@ import {
   saveToken,
   login as apiLogin,
   register as apiRegister,
+  completeAdultEligibility as apiCompleteAdultEligibility,
   listWorkspaces,
   createWorkspace as apiCreateWorkspace,
   selectWorkspace,
@@ -176,12 +177,12 @@ export const useAppStore = defineStore('app', {
       }
     },
 
-    async register({ name, email, password, passwordConfirmation, city, region, intent = 'participant' }) {
+    async register({ name, email, password, passwordConfirmation, city, region, intent = 'participant', birthDate, adultAttestation }) {
       this.registerError = null
       this.registerErrors = null
       this.registerLoading = true
       try {
-        const { token } = await apiRegister({ name, email, password, passwordConfirmation, registrationIntent: intent })
+        const { token } = await apiRegister({ name, email, password, passwordConfirmation, registrationIntent: intent, birthDate, adultAttestation })
         if (!token) throw new Error('register_no_token')
         saveToken(token)
         this.token = token
@@ -212,6 +213,14 @@ export const useAppStore = defineStore('app', {
         this.auth = false
         this.workspaceSetupRequired = false
       }
+    },
+
+    async completeAdultEligibility({ birthDate, adultAttestation }) {
+      const { token } = await apiCompleteAdultEligibility({ birthDate, adultAttestation })
+      if (!token) throw new Error('adult_eligibility_no_token')
+      saveToken(token)
+      this.token = token
+      await this.loadParticipantSession()
     },
 
     async loadParticipantSession() {

@@ -35,6 +35,7 @@ class JwtService
             'permissions' => $user['permissions'] ?? 0,
             'is_esporteam_admin' => (($user['permissions'] ?? 0) & 2) === 2,
             'is_esporteam_owner' => (($user['permissions'] ?? 0) & 4) === 4,
+            'is_adult' => (bool) ($user['is_adult'] ?? false),
         ];
 
         if ($workspaceId) {
@@ -82,6 +83,7 @@ class JwtService
             'permissions'     => $targetUser['permissions'] ?? 0,
             'is_esporteam_admin'   => false,
             'is_esporteam_owner'   => false,
+            'is_adult' => (bool) ($targetUser['is_adult'] ?? false),
             'impersonated_by' => $adminId,
             'impersonated_at' => $now,
         ];
