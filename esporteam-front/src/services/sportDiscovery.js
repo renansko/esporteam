@@ -107,8 +107,8 @@ function normalizeLocation(payload = {}) {
     label,
     city: payload.city ?? '',
     region: payload.region ?? '',
-    latitude: firstValue(payload.latitude, payload.lat, null),
-    longitude: firstValue(payload.longitude, payload.lng, null),
+    latitude: firstValue(payload.latitude_approx, payload.latitudeApprox, payload.latitude, payload.lat, null),
+    longitude: firstValue(payload.longitude_approx, payload.longitudeApprox, payload.longitude, payload.lng, null),
   }
 }
 
@@ -238,7 +238,7 @@ export function normalizeSportSession(payload = {}) {
       ?? payload.host,
     ),
     startsAt: firstValue(session.starts_at, session.startsAt, session.start_time, session.startTime, null),
-    location: normalizeLocation(session.location ?? session),
+    location: normalizeLocation({ ...session, ...(session.location ?? {}) }),
     entryMode: firstValue(session.entry_mode, session.entryMode, payload.entry_mode, payload.entryMode, 'open'),
     entryRule: firstValue(session.entry_rule, session.entryRule, payload.entry_rule, payload.entryRule, null),
     requiresApproval: firstValue(session.requires_approval, session.requiresApproval, null),

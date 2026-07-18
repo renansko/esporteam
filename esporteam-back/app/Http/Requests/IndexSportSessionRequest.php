@@ -7,6 +7,7 @@ use App\Enums\SportSessionEntryMode;
 use App\Enums\SportSessionType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class IndexSportSessionRequest extends FormRequest
 {
@@ -27,6 +28,27 @@ class IndexSportSessionRequest extends FormRequest
             'region' => ['nullable', 'string', 'max:120'],
             'starts_after' => ['nullable', 'date'],
             'starts_before' => ['nullable', 'date', 'after:starts_after'],
+            // Bounds belong to the map viewport. Keeping the span small avoids a
+            // map pan from turning the public discovery endpoint into a world scan.
+            'south' => ['nullable', 'required_with:north,west,east', 'numeric', 'between:-90,90'],
+            'north' => ['nullable', 'required_with:south,west,east', 'numeric', 'between:-90,90', 'gt:south'],
+            'west' => ['nullable', 'required_with:south,north,east', 'numeric', 'between:-180,180'],
+            'east' => ['nullable', 'required_with:south,north,west', 'numeric', 'between:-180,180', 'gt:west'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $bounds = $this->only(['south', 'north', 'west', 'east']);
+
+            if (count(array_filter($bounds, static fn ($value) => $value !== null)) !== 4) {
+                return;
+            }
+
+            if (($bounds['north'] - $bounds['south']) > 10 || ($bounds['east'] - $bounds['west']) > 10) {
+                $validator->errors()->add('north', 'The map viewport must not span more than 10 degrees.');
+            }
+        });
     }
 }

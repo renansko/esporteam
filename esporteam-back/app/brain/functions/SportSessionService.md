@@ -12,6 +12,8 @@ Side effects: grava `sport_sessions` e adiciona o criador em `session_participan
 
 ## openSessions
 
+Aceita bounds completos de viewport (`south`, `north`, `west`, `east`) para a superficie de Mapa. Quando presentes, limita a consulta a coordenadas aproximadas dentro do retangulo; a validacao HTTP impede viewport com mais de 10 graus em qualquer eixo.
+
 Assinatura: `openSessions(int $userId, array $filters = []): Collection`
 
 Lista sessoes `open` e `public`, ordenadas por `starts_at` e limitadas a 50 itens. Filtros atuais: `sport_id`, `sport_slug`, `type`, `entry_mode`, `level`, `distance_km`, `weekday`/`starts_at`/`ends_at`, `has_available_slots`, `city`, `region`, `starts_after`, `starts_before`.

@@ -111,6 +111,42 @@ it('lists open public sport sessions by filters', function () {
         ->assertJsonPath('data.0.participant_count', 1);
 });
 
+it('lists only public sessions inside a requested map viewport', function () {
+    $host = createSessionSportProfileForUser(77, 'Host');
+    $sport = Sport::query()->create(['name' => 'Corrida', 'slug' => 'corrida']);
+
+    $inside = SportSession::query()->create([
+        'creator_profile_id' => $host->id,
+        'sport_id' => $sport->id,
+        'title' => 'Corrida no Ibirapuera',
+        'type' => 'corrida',
+        'starts_at' => now()->addDay(),
+        'latitude_approx' => -23.586,
+        'longitude_approx' => -46.657,
+        'capacity' => 8,
+        'visibility' => 'public',
+        'status' => 'open',
+    ]);
+    SportSession::query()->create([
+        'creator_profile_id' => $host->id,
+        'sport_id' => $sport->id,
+        'title' => 'Corrida longe',
+        'type' => 'corrida',
+        'starts_at' => now()->addDay(),
+        'latitude_approx' => -23.800,
+        'longitude_approx' => -46.700,
+        'capacity' => 8,
+        'visibility' => 'public',
+        'status' => 'open',
+    ]);
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->getJson('/api/sessions?south=-23.60&north=-23.57&west=-46.68&east=-46.64')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $inside->id);
+});
+
 it('lists public sessions by match filters without exposing vacancy counts', function () {
     $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
     $current = createSessionSportProfileForUser(88, 'Candidate');

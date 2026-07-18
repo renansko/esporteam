@@ -87,6 +87,12 @@ class SportSessionService
             ->when(isset($filters['region']), fn (Builder $query) => $query->where('region', $filters['region']))
             ->when(isset($filters['starts_after']), fn (Builder $query) => $query->where('starts_at', '>=', $filters['starts_after']))
             ->when(isset($filters['starts_before']), fn (Builder $query) => $query->where('starts_at', '<=', $filters['starts_before']))
+            ->when(
+                $this->hasViewportBounds($filters),
+                fn (Builder $query) => $query
+                    ->whereBetween('latitude_approx', [(float) $filters['south'], (float) $filters['north']])
+                    ->whereBetween('longitude_approx', [(float) $filters['west'], (float) $filters['east']]),
+            )
             ->orderBy('starts_at')
             ->orderBy('id')
             ->get();
@@ -103,6 +109,12 @@ class SportSessionService
             ])
             ->take(50)
             ->values();
+    }
+
+    private function hasViewportBounds(array $filters): bool
+    {
+        return collect(['south', 'north', 'west', 'east'])
+            ->every(fn (string $key) => array_key_exists($key, $filters));
     }
 
     /**

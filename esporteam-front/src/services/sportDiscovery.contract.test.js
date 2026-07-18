@@ -97,6 +97,7 @@ const backendCard = normalizeDiscoveryCard({
     id: 'session-2',
     title: 'Corrida no parque',
     starts_at: '2026-07-14T07:30:00-03:00',
+    location: { latitude_approx: -27.5969, longitude_approx: -48.5494 },
     location_label_public: 'Parque de Coqueiros',
     city: 'Florianopolis',
     region: 'SC',
@@ -123,6 +124,8 @@ assert.equal(backendCard.participantCount, 6)
 assert.deepEqual(backendCard.safetyActions, ['report'])
 assert.equal(backendCard.host.displayName, 'Marina Organizadora')
 assert.equal(backendCard.session.entryMode, 'publica_aprovacao')
+assert.equal(backendCard.session.location.latitude, -27.5969)
+assert.equal(backendCard.session.location.longitude, -48.5494)
 assert.equal(backendCard.session.requiresApproval, true)
 assert.equal(backendCard.session.modality.name, 'Corrida')
 assert.equal(backendCard.session.location.label, 'Parque de Coqueiros')

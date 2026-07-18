@@ -1,17 +1,6 @@
-export const DEFAULT_PARTICIPANT_TAB = 'discover'
+export const DEFAULT_PARTICIPANT_TAB = 'map'
 
 export const PARTICIPANT_TABS = [
-  {
-    id: 'discover',
-    label: 'Descobrir',
-    icon: 'cards',
-    eyebrow: 'Descoberta',
-    title: 'Sessoes Esportivas para voce',
-    emptyState: {
-      title: 'Descoberta pronta',
-      description: 'Este espaco recebe cards de Sessao Esportiva com Modalidade, Anfitriao da Sessao, Nivel Esportivo e proxima acao.',
-    },
-  },
   {
     id: 'map',
     label: 'Mapa',
@@ -24,8 +13,19 @@ export const PARTICIPANT_TABS = [
     },
   },
   {
+    id: 'discover',
+    label: 'Descobrir',
+    icon: 'cards',
+    eyebrow: 'Descoberta',
+    title: 'Sessoes Esportivas para voce',
+    emptyState: {
+      title: 'Descoberta pronta',
+      description: 'Este espaco recebe cards de Sessao Esportiva com Modalidade, Anfitriao da Sessao, Nivel Esportivo e proxima acao.',
+    },
+  },
+  {
     id: 'matches',
-    label: 'Agenda',
+    label: 'Eventos',
     icon: 'calendarCheck',
     eyebrow: 'Agenda',
     title: 'Proximos eventos',

@@ -32,8 +32,8 @@ function sessionCoordinates(session, index) {
   const raw = session.rawCard ?? {}
   const source = raw.session ?? raw
   const location = source.location ?? {}
-  const latitude = numberValue(location.latitude, location.lat, source.latitude, source.lat, raw.latitude, raw.lat)
-  const longitude = numberValue(location.longitude, location.lng, location.lon, source.longitude, source.lng, source.lon, raw.longitude, raw.lng, raw.lon)
+  const latitude = numberValue(location.latitude_approx, location.latitudeApprox, location.latitude, location.lat, source.latitude_approx, source.latitudeApprox, source.latitude, source.lat, raw.latitude_approx, raw.latitudeApprox, raw.latitude, raw.lat)
+  const longitude = numberValue(location.longitude_approx, location.longitudeApprox, location.longitude, location.lng, location.lon, source.longitude_approx, source.longitudeApprox, source.longitude, source.lng, source.lon, raw.longitude_approx, raw.longitudeApprox, raw.longitude, raw.lng, raw.lon)
   if (latitude !== null && longitude !== null) return [latitude, longitude]
 
   const angle = (index / Math.max(props.sessions.length, 1)) * Math.PI * 2
