@@ -14,6 +14,7 @@ use App\Models\SportSession;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -43,6 +44,8 @@ class SportSessionService
                 'sport_id' => $data['sport_id'] ?? null,
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,
+                'rules' => $data['rules'] ?? null,
+                'equipment' => $data['equipment'] ?? null,
                 'type' => $data['type'],
                 'starts_at' => $data['starts_at'],
                 'location_label' => $data['location_label'] ?? null,
@@ -84,17 +87,20 @@ class SportSessionService
                 ->first();
 
             if ($existing !== null) {
-                return $this->freshSession($existing);
+                return $this->withPublicSessionState($this->freshSession($existing), $profile);
             }
 
             $entryMode = SportSessionEntryMode::from($data['entry_mode']);
             $latitude = (float) $data['latitude'];
             $longitude = (float) $data['longitude'];
-            $session = SportSession::query()->create([
+            try {
+                $session = SportSession::query()->create([
                 'creator_profile_id' => $profile->id,
                 'sport_id' => $data['sport_id'],
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,
+                'rules' => $data['rules'] ?? null,
+                'equipment' => $data['equipment'] ?? null,
                 'type' => $data['type'],
                 'starts_at' => $data['starts_at'],
                 'ends_at' => $data['ends_at'],
@@ -116,12 +122,18 @@ class SportSessionService
                 'visibility' => $data['visibility'],
                 'status' => SportSessionStatus::Open->value,
                 'publication_key' => $publicationKey,
-            ]);
+                ]);
+            } catch (QueryException $exception) {
+                $session = SportSession::query()->where('creator_profile_id', $profile->id)
+                    ->where('publication_key', $publicationKey)->first();
+                if ($session === null) throw $exception;
+                return $this->withPublicSessionState($this->freshSession($session), $profile);
+            }
 
             $session->participants()->attach($profile->id, ['status' => SessionParticipantStatus::Joined->value]);
             app(DiscoveryCache::class)->invalidate($profile->user_id);
 
-            return $this->freshSession($session);
+            return $this->withPublicSessionState($this->freshSession($session), $profile);
         });
     }
 
@@ -153,7 +165,8 @@ class SportSessionService
             )
             ->orderBy('starts_at')
             ->orderBy('id')
-            ->get();
+            ->get()
+            ->map(fn (SportSession $session) => $this->withPublicSessionState($session, $profile));
 
         return $sessions
             ->filter(fn (SportSession $session) => $this->passesSessionLevelFilter($session, $filters['level'] ?? null))
@@ -233,7 +246,8 @@ class SportSessionService
             ->orderByDesc('starts_at')
             ->orderByDesc('id')
             ->limit(50)
-            ->get();
+            ->get()
+            ->map(fn (SportSession $session) => $this->withPublicSessionState($session, $profile));
     }
 
     /**
@@ -473,6 +487,10 @@ class SportSessionService
     {
         $session->setAttribute('distance_km', $profile === null ? null : $this->distanceFromSession($session, $profile));
         $session->setAttribute('next_action', $this->nextActionForProfile($session, $profile));
+        $session->setAttribute('exact_location_authorized', $profile !== null && (
+            $session->creator_profile_id === $profile->id
+            || in_array($this->participationFor($session, $profile)?->status?->value, ['joined', 'approved'], true)
+        ));
 
         return $session;
     }

@@ -1,0 +1,43 @@
+meta {
+  name: Publish One-off Session
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/sessions/publish-one-off
+  body: json
+  auth: bearer
+}
+
+headers {
+  Idempotency-Key: session-publish-local-001
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "sport_id": 1,
+    "title": "Volei no parque",
+    "type": "partida",
+    "starts_at": "2026-07-20T19:00:00-03:00",
+    "ends_at": "2026-07-20T21:00:00-03:00",
+    "timezone": "America/Sao_Paulo",
+    "meeting_point_label": "Portao 3, ao lado da quadra",
+    "location_label_public": "Parque Ibirapuera",
+    "city": "Sao Paulo",
+    "region": "SP",
+    "latitude": -23.587421,
+    "longitude": -46.657921,
+    "entry_mode": "publica_aprovacao",
+    "visibility": "public"
+  }
+}
+
+docs {
+  POST /api/sessions/publish-one-off publica uma Sessao Esportiva pontual.
+  O Idempotency-Key e obrigatorio; repetir a mesma chave retorna a mesma sessao.
+}

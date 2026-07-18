@@ -21,6 +21,8 @@ class SportSession extends Model
         'sport_id',
         'title',
         'description',
+        'rules',
+        'equipment',
         'type',
         'starts_at',
         'ends_at',

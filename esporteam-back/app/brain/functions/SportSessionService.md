@@ -10,6 +10,12 @@ Aceita `entry_mode` como `convite`, `publica_direta` ou `publica_aprovacao`. O c
 
 Side effects: grava `sport_sessions` e adiciona o criador em `session_participants` com status `joined`.
 
+## publishOneOff
+
+Assinatura: `publishOneOff(int $userId, array $data, string $publicationKey): SportSession`.
+
+Publica a Sessao Esportiva pontual vinda do wizard de Mapa. Exige Perfil Esportivo com identidade e localização aproximada, horário de início/fim, fuso IANA, modalidade, entrada, área pública e ponto de encontro. A chave de publicação é idempotente por anfitrião; colisões concorrentes retornam a sessão já criada. O ponto exato é armazenado separadamente e a Descoberta recebe coordenadas arredondadas. Invalida o cache global de Descoberta.
+
 ## openSessions
 
 Aceita bounds completos de viewport (`south`, `north`, `west`, `east`) para a superficie de Mapa. Quando presentes, limita a consulta a coordenadas aproximadas dentro do retangulo; a validacao HTTP impede viewport com mais de 10 graus em qualquer eixo.

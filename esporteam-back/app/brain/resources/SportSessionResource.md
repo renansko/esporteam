@@ -11,11 +11,13 @@ Shape HTTP de Sessao Esportiva.
 - `description`
 - `type`
 - `starts_at`
+- `ends_at`, `timezone`, `rules`, `equipment`
 - `location_label`
 - `city`
 - `region`
 - `location.latitude_approx`
 - `location.longitude_approx`
+- `meeting_point` somente para Anfitrião da Sessão e participação `joined`/`approved`; pedidos pendentes e público recebem apenas a área aproximada.
 - `capacity`
 - `visibility`
 - `status`

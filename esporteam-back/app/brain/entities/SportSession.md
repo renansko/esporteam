@@ -7,6 +7,9 @@ Sessao esportiva pontual criada por um Perfil Esportivo para partida, treino, co
 - `creator_profile_id`: Perfil Esportivo que criou a sessao.
 - `sport_id`: modalidade opcional.
 - `title`, `description`, `type`, `starts_at`.
+- `ends_at`, `timezone`, `rules`, `equipment` para publicação pontual.
+- `meeting_point_label`, `latitude_exact`, `longitude_exact`: ponto exato protegido.
+- `location_label_public`, `latitude_approx`, `longitude_approx`: representação pública aproximada.
 - `location_label`, `city`, `region`, `latitude_approx`, `longitude_approx`.
 - `capacity`: limite total de participantes ativos, incluindo o criador.
 - `entry_mode`: `convite`, `publica_direta` ou `publica_aprovacao`.

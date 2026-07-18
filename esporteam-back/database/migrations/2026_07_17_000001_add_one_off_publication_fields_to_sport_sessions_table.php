@@ -11,6 +11,8 @@ return new class extends Migration
         Schema::table('sport_sessions', function (Blueprint $table) {
             $table->timestamp('ends_at')->nullable()->after('starts_at');
             $table->string('timezone', 64)->nullable()->after('ends_at');
+            $table->text('rules')->nullable()->after('description');
+            $table->text('equipment')->nullable()->after('rules');
             $table->string('location_label_public')->nullable()->after('location_label');
             $table->string('meeting_point_label')->nullable()->after('location_label_public');
             $table->decimal('latitude_exact', 9, 6)->nullable()->after('longitude_approx');
@@ -28,6 +30,8 @@ return new class extends Migration
             $table->dropColumn([
                 'ends_at',
                 'timezone',
+                'rules',
+                'equipment',
                 'location_label_public',
                 'meeting_point_label',
                 'latitude_exact',
