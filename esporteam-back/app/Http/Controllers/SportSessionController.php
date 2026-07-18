@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\IndexSessionRecommendationRequest;
 use App\Http\Requests\IndexSportSessionRequest;
 use App\Http\Requests\PublishOneOffSportSessionRequest;
+use App\Http\Requests\PublishSportSessionSeriesRequest;
 use App\Http\Requests\StoreSessionInvitesRequest;
 use App\Http\Requests\StoreSportSessionRequest;
 use App\Http\Requests\UpdateSessionInviteRequest;
@@ -29,6 +30,7 @@ class SportSessionController extends Controller
     {
         $userId = (int) $request->user()->id;
         $filters = $request->validated();
+        $filters['_recurring_events'] = config('features.recurring_events', false);
         $sessions = $this->cache->remember(
             'map',
             $userId,
@@ -65,6 +67,24 @@ class SportSessionController extends Controller
         );
 
         return $this->createdResponse(new SportSessionResource($session), 'Session published.');
+    }
+
+    public function publishSeries(PublishSportSessionSeriesRequest $request): JsonResponse
+    {
+        $published = $this->sessions->publishSeries(
+            (int) $request->user()->id,
+            $request->validated(),
+            $request->validated('idempotency_key'),
+        );
+
+        return $this->createdResponse([
+            'series' => [
+                'id' => $published['series']->id, 'timezone' => $published['series']->timezone,
+                'interval_weeks' => $published['series']->interval_weeks, 'weekdays' => $published['series']->weekdays,
+                'ends_type' => $published['series']->ends_type,
+            ],
+            'occurrences' => SportSessionResource::collection($published['occurrences'])->resolve(),
+        ], 'Session series published.');
     }
 
     public function show(Request $request, SportSession $session): JsonResponse

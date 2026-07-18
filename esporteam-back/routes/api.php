@@ -55,6 +55,7 @@ Route::middleware('auth.service')->group(function () {
         ->middleware('throttle.user:map');
     Route::post('/sessions', [SportSessionController::class, 'store'])->middleware('adult.eligible');
     Route::post('/sessions/publish-one-off', [SportSessionController::class, 'publishOneOff'])->middleware('adult.eligible');
+    Route::post('/sessions/publish-series', [SportSessionController::class, 'publishSeries'])->middleware('adult.eligible');
     Route::get('/profile/sessions', [SportSessionController::class, 'participantSessions']);
     Route::get('/sessions/{session}', [SportSessionController::class, 'show'])
         ->whereNumber('session');

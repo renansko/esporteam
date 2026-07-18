@@ -11,10 +11,13 @@ use App\Models\ProfileSport;
 use App\Models\SessionParticipant;
 use App\Models\SportProfile;
 use App\Models\SportSession;
+use App\Models\SportSessionSeries;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -95,38 +98,41 @@ class SportSessionService
             $longitude = (float) $data['longitude'];
             try {
                 $session = SportSession::query()->create([
-                'creator_profile_id' => $profile->id,
-                'sport_id' => $data['sport_id'],
-                'title' => $data['title'],
-                'description' => $data['description'] ?? null,
-                'rules' => $data['rules'] ?? null,
-                'equipment' => $data['equipment'] ?? null,
-                'type' => $data['type'],
-                'starts_at' => $data['starts_at'],
-                'ends_at' => $data['ends_at'],
-                'timezone' => $data['timezone'],
-                'location_label' => $data['location_label_public'],
-                'location_label_public' => $data['location_label_public'],
-                'meeting_point_label' => $data['meeting_point_label'],
-                'city' => $data['city'],
-                'region' => $data['region'],
-                'latitude_approx' => round($latitude, 3),
-                'longitude_approx' => round($longitude, 3),
-                'latitude_exact' => $latitude,
-                'longitude_exact' => $longitude,
-                'capacity' => $data['capacity'] ?? null,
-                'requires_approval' => $entryMode->requiresApproval(),
-                'entry_mode' => $entryMode->value,
-                'min_level' => $data['min_level'] ?? null,
-                'max_level' => $data['max_level'] ?? null,
-                'visibility' => $data['visibility'],
-                'status' => SportSessionStatus::Open->value,
-                'publication_key' => $publicationKey,
+                    'creator_profile_id' => $profile->id,
+                    'sport_id' => $data['sport_id'],
+                    'title' => $data['title'],
+                    'description' => $data['description'] ?? null,
+                    'rules' => $data['rules'] ?? null,
+                    'equipment' => $data['equipment'] ?? null,
+                    'type' => $data['type'],
+                    'starts_at' => $data['starts_at'],
+                    'ends_at' => $data['ends_at'],
+                    'timezone' => $data['timezone'],
+                    'location_label' => $data['location_label_public'],
+                    'location_label_public' => $data['location_label_public'],
+                    'meeting_point_label' => $data['meeting_point_label'],
+                    'city' => $data['city'],
+                    'region' => $data['region'],
+                    'latitude_approx' => round($latitude, 3),
+                    'longitude_approx' => round($longitude, 3),
+                    'latitude_exact' => $latitude,
+                    'longitude_exact' => $longitude,
+                    'capacity' => $data['capacity'] ?? null,
+                    'requires_approval' => $entryMode->requiresApproval(),
+                    'entry_mode' => $entryMode->value,
+                    'min_level' => $data['min_level'] ?? null,
+                    'max_level' => $data['max_level'] ?? null,
+                    'visibility' => $data['visibility'],
+                    'status' => SportSessionStatus::Open->value,
+                    'publication_key' => $publicationKey,
                 ]);
             } catch (QueryException $exception) {
                 $session = SportSession::query()->where('creator_profile_id', $profile->id)
                     ->where('publication_key', $publicationKey)->first();
-                if ($session === null) throw $exception;
+                if ($session === null) {
+                    throw $exception;
+                }
+
                 return $this->withPublicSessionState($this->freshSession($session), $profile);
             }
 
@@ -138,6 +144,196 @@ class SportSessionService
     }
 
     /**
+     * Publishes a durable weekly rule and materializes its 90-day discovery horizon.
+     * Jobs use materializeSeries() below rather than owning recurrence rules themselves.
+     *
+     * @return array{series: SportSessionSeries, occurrences: Collection<int, SportSession>}
+     *
+     * @wiki app/brain/functions/SportSessionService.md#publishSeries
+     */
+    public function publishSeries(int $userId, array $data, string $publicationKey): array
+    {
+        if (! config('features.recurring_events', false)) {
+            throw ValidationException::withMessages(['recurring_events' => 'Publicacao de series nao esta disponivel.']);
+        }
+
+        $profile = $this->requireProfile($userId);
+        $this->assertProfileCanPublish($profile);
+        $this->assertValidLevelRange($data['min_level'] ?? null, $data['max_level'] ?? null);
+
+        return DB::transaction(function () use ($profile, $data, $publicationKey): array {
+            $series = SportSessionSeries::query()
+                ->where('creator_profile_id', $profile->id)
+                ->where('publication_key', $publicationKey)
+                ->first();
+
+            if ($series === null) {
+                $series = $this->createSeriesIdempotently($profile, $data, $publicationKey);
+            }
+
+            $occurrences = $this->materializeSeries($series, CarbonImmutable::now('UTC'));
+            app(DiscoveryCache::class)->invalidate($profile->user_id);
+
+            return ['series' => $series->fresh(), 'occurrences' => $occurrences];
+        });
+    }
+
+    /**
+     * @return Collection<int, SportSession>
+     *
+     * @wiki app/brain/functions/SportSessionService.md#materializeSeries
+     */
+    public function materializeSeries(SportSessionSeries $series, ?CarbonImmutable $now = null): Collection
+    {
+        if ($series->status !== 'active' || ! config('features.recurring_events', false)) {
+            return collect();
+        }
+
+        $now ??= CarbonImmutable::now('UTC');
+        $timezone = $series->timezone;
+        $horizon = $now->setTimezone($timezone)->addDays(90)->endOfDay();
+        $cursor = CarbonImmutable::parse($series->starts_on->toDateString(), $timezone)->startOfDay();
+        $seriesStart = CarbonImmutable::parse($series->starts_on->toDateString(), $timezone)->startOfDay();
+        $created = collect();
+        $ordinal = 0;
+        $duplicatesAvoided = 0;
+        $lastOccurrence = null;
+
+        try {
+            while ($cursor->lessThanOrEqualTo($horizon)) {
+                $weekOffset = intdiv($cursor->diffInDays($seriesStart), 7);
+                if ($weekOffset % $series->interval_weeks === 0 && in_array($cursor->isoWeekday(), $series->weekdays, true)) {
+                    $ordinal++;
+                    if ($this->seriesHasEndedBefore($series, $cursor, $ordinal)) {
+                        break;
+                    }
+
+                    $localStart = CarbonImmutable::parse($cursor->toDateString().' '.$series->starts_at_local, $timezone);
+                    if ($localStart->greaterThanOrEqualTo($now->setTimezone($timezone)->startOfDay())) {
+                        $key = $localStart->format('Y-m-d\\TH:i:sP');
+                        $lastOccurrence = $localStart;
+                        $occurrence = $this->findOrCreateSeriesOccurrence($series, $localStart, $key);
+                        $occurrence->participants()->syncWithoutDetaching([
+                            $series->creator_profile_id => ['status' => SessionParticipantStatus::Joined->value],
+                        ]);
+                        if ($occurrence->wasRecentlyCreated) {
+                            $created->push($this->freshSession($occurrence));
+                        } else {
+                            $duplicatesAvoided++;
+                        }
+                    }
+                }
+                $cursor = $cursor->addDay();
+            }
+        } catch (\Throwable $exception) {
+            Log::error('sport_session_series.materialization_failed', [
+                'series_id' => $series->id,
+                'exception' => $exception::class,
+            ]);
+            throw $exception;
+        }
+
+        Log::info('sport_session_series.materialized', [
+            'series_id' => $series->id,
+            'created_occurrences' => $created->count(),
+            'duplicates_avoided' => $duplicatesAvoided,
+            'has_next_occurrence' => $lastOccurrence !== null,
+            'horizon_delay_seconds' => $lastOccurrence === null ? null : max(0, $lastOccurrence->utc()->diffInSeconds($horizon->utc(), false)),
+        ]);
+
+        return $created;
+    }
+
+    private function findOrCreateSeriesOccurrence(SportSessionSeries $series, CarbonImmutable $localStart, string $key): SportSession
+    {
+        try {
+            return SportSession::query()->firstOrCreate([
+                'sport_session_series_id' => $series->id,
+                'occurrence_key' => $key,
+            ], $this->occurrenceAttributes($series, $localStart, $key));
+        } catch (QueryException $exception) {
+            $occurrence = SportSession::query()
+                ->where('sport_session_series_id', $series->id)
+                ->where('occurrence_key', $key)
+                ->first();
+            if ($occurrence === null) {
+                throw $exception;
+            }
+
+            return $occurrence;
+        }
+    }
+
+    private function createSeriesIdempotently(SportProfile $profile, array $data, string $publicationKey): SportSessionSeries
+    {
+        try {
+            return DB::transaction(fn (): SportSessionSeries => SportSessionSeries::query()->create(
+                $this->seriesAttributes($profile, $data, $publicationKey),
+            ));
+        } catch (QueryException $exception) {
+            $series = SportSessionSeries::query()
+                ->where('creator_profile_id', $profile->id)
+                ->where('publication_key', $publicationKey)
+                ->first();
+            if ($series === null) {
+                throw $exception;
+            }
+
+            return $series;
+        }
+    }
+
+    private function seriesAttributes(SportProfile $profile, array $data, string $publicationKey): array
+    {
+        $entryMode = SportSessionEntryMode::from($data['entry_mode']);
+
+        return [
+            'creator_profile_id' => $profile->id, 'sport_id' => $data['sport_id'],
+            'title' => $data['title'], 'description' => $data['description'] ?? null,
+            'rules' => $data['rules'] ?? null, 'equipment' => $data['equipment'] ?? null,
+            'type' => $data['type'], 'starts_on' => $data['starts_on'],
+            'starts_at_local' => $data['starts_at_local'], 'duration_minutes' => $data['duration_minutes'],
+            'timezone' => $data['timezone'], 'interval_weeks' => $data['interval_weeks'],
+            'weekdays' => $data['weekdays'], 'ends_type' => $data['ends_type'],
+            'ends_on' => $data['ends_on'] ?? null, 'occurrence_count' => $data['occurrence_count'] ?? null,
+            'location_label_public' => $data['location_label_public'],
+            'meeting_point_label' => $data['meeting_point_label'], 'city' => $data['city'], 'region' => $data['region'],
+            'latitude_approx' => round((float) $data['latitude'], 3), 'longitude_approx' => round((float) $data['longitude'], 3),
+            'latitude_exact' => $data['latitude'], 'longitude_exact' => $data['longitude'],
+            'capacity' => $data['capacity'] ?? null, 'requires_approval' => $entryMode->requiresApproval(),
+            'entry_mode' => $entryMode->value, 'min_level' => $data['min_level'] ?? null,
+            'max_level' => $data['max_level'] ?? null, 'visibility' => $data['visibility'],
+            'status' => 'active', 'publication_key' => $publicationKey,
+        ];
+    }
+
+    private function seriesHasEndedBefore(SportSessionSeries $series, CarbonImmutable $date, int $ordinal): bool
+    {
+        return ($series->ends_type === 'date' && $series->ends_on !== null && $date->greaterThan(CarbonImmutable::parse($series->ends_on->toDateString(), $series->timezone)->endOfDay()))
+            || ($series->ends_type === 'count' && $series->occurrence_count !== null && $ordinal > $series->occurrence_count);
+    }
+
+    private function occurrenceAttributes(SportSessionSeries $series, CarbonImmutable $localStart, string $key): array
+    {
+        $entryMode = SportSessionEntryMode::from($series->entry_mode);
+
+        return [
+            'creator_profile_id' => $series->creator_profile_id, 'sport_id' => $series->sport_id,
+            'title' => $series->title, 'description' => $series->description, 'rules' => $series->rules,
+            'equipment' => $series->equipment, 'type' => $series->type, 'starts_at' => $localStart->utc(),
+            'ends_at' => $localStart->addMinutes($series->duration_minutes)->utc(), 'timezone' => $series->timezone,
+            'location_label' => $series->location_label_public, 'location_label_public' => $series->location_label_public,
+            'meeting_point_label' => $series->meeting_point_label, 'city' => $series->city, 'region' => $series->region,
+            'latitude_approx' => $series->latitude_approx, 'longitude_approx' => $series->longitude_approx,
+            'latitude_exact' => $series->latitude_exact, 'longitude_exact' => $series->longitude_exact,
+            'capacity' => $series->capacity, 'requires_approval' => $entryMode->requiresApproval(),
+            'entry_mode' => $entryMode->value, 'min_level' => $series->min_level, 'max_level' => $series->max_level,
+            'visibility' => $series->visibility, 'status' => SportSessionStatus::Open->value,
+            'publication_key' => null, 'occurrence_key' => $key,
+        ];
+    }
+
+    /**
      * @wiki app/brain/functions/SportSessionService.md#openSessions
      */
     public function openSessions(int $userId, array $filters = []): Collection
@@ -145,7 +341,7 @@ class SportSessionService
         $currentProfile = $this->profileForUser($userId);
 
         $sessions = SportSession::query()
-            ->with(['creator', 'sport'])
+            ->with(['creator', 'sport', 'series'])
             ->withCount(['participants as participant_count' => fn (Builder $query) => $query->whereIn('session_participants.status', SessionParticipantStatus::activeValues())])
             ->where('status', SportSessionStatus::Open->value)
             ->where('visibility', 'public')
@@ -166,7 +362,7 @@ class SportSessionService
             ->orderBy('starts_at')
             ->orderBy('id')
             ->get()
-            ->map(fn (SportSession $session) => $this->withPublicSessionState($session, $profile));
+            ->map(fn (SportSession $session) => $this->withPublicSessionState($session, $currentProfile));
 
         return $sessions
             ->filter(fn (SportSession $session) => $this->passesSessionLevelFilter($session, $filters['level'] ?? null))
@@ -216,7 +412,7 @@ class SportSessionService
 
         $session = SportSession::query()
             ->whereKey($session->id)
-            ->with(['creator', 'sport', 'participants'])
+            ->with(['creator', 'sport', 'series', 'participants'])
             ->withCount(['participants as participant_count' => fn (Builder $query) => $query->whereIn('session_participants.status', SessionParticipantStatus::activeValues())])
             ->when(
                 $profile !== null,
@@ -226,7 +422,16 @@ class SportSessionService
             )
             ->firstOrFail();
 
-        return $this->withPublicSessionState($session, $profile);
+        $session = $this->withPublicSessionState($session, $profile);
+        if ($session->series !== null) {
+            $session->setAttribute('series_next_occurrence', SportSession::query()
+                ->where('sport_session_series_id', $session->series->id)
+                ->where('starts_at', '>', $session->starts_at)
+                ->orderBy('starts_at')
+                ->first());
+        }
+
+        return $session;
     }
 
     /**
@@ -237,7 +442,7 @@ class SportSessionService
         $profile = $this->requireProfile($userId);
 
         return SportSession::query()
-            ->with(['creator', 'sport', 'participants'])
+            ->with(['creator', 'sport', 'series', 'participants'])
             ->with(['participationRecords' => fn ($query) => $query
                 ->where('sport_profile_id', $profile->id)
                 ->with('profile')])
@@ -886,7 +1091,7 @@ class SportSessionService
     {
         return $session
             ->fresh()
-            ->load(['creator', 'sport', 'participants', 'participationRecords.profile'])
+            ->load(['creator', 'sport', 'series', 'participants', 'participationRecords.profile'])
             ->loadCount(['participants as participant_count' => fn (Builder $query) => $query->whereIn('session_participants.status', SessionParticipantStatus::activeValues())]);
     }
 

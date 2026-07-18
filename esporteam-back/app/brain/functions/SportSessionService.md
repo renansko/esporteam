@@ -16,6 +16,18 @@ Assinatura: `publishOneOff(int $userId, array $data, string $publicationKey): Sp
 
 Publica a Sessao Esportiva pontual vinda do wizard de Mapa. Exige Perfil Esportivo com identidade e localização aproximada, horário de início/fim, fuso IANA, modalidade, entrada, área pública e ponto de encontro. A chave de publicação é idempotente por anfitrião; colisões concorrentes retornam a sessão já criada. O ponto exato é armazenado separadamente e a Descoberta recebe coordenadas arredondadas. Invalida o cache global de Descoberta.
 
+## publishSeries
+
+Assinatura: `publishSeries(int $userId, array $data, string $publicationKey): array`.
+
+Cria ou retorna uma regra semanal idempotente e materializa, na mesma transacao, as ocorrencias futuras do horizonte de 90 dias. O horario e calculado no timezone IANA da serie, preservando o horario de parede em mudancas de DST.
+
+## materializeSeries
+
+Assinatura: `materializeSeries(SportSessionSeries $series, ?CarbonImmutable $now = null): Collection`.
+
+Repara ou estende uma serie ativa sem duplicar ocorrencias. Cada job e somente um adaptador desta interface; com a flag desligada nao cria novas ocorrencias e as ja materializadas permanecem descobriveis.
+
 ## openSessions
 
 Aceita bounds completos de viewport (`south`, `north`, `west`, `east`) para a superficie de Mapa. Quando presentes, limita a consulta a coordenadas aproximadas dentro do retangulo; a validacao HTTP impede viewport com mais de 10 graus em qualquer eixo.

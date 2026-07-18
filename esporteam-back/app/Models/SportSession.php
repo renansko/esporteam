@@ -18,6 +18,7 @@ class SportSession extends Model
 {
     protected $fillable = [
         'creator_profile_id',
+        'sport_session_series_id',
         'sport_id',
         'title',
         'description',
@@ -37,6 +38,7 @@ class SportSession extends Model
         'latitude_exact',
         'longitude_exact',
         'publication_key',
+        'occurrence_key',
         'capacity',
         'requires_approval',
         'entry_mode',
@@ -68,6 +70,11 @@ class SportSession extends Model
     public function sport(): BelongsTo
     {
         return $this->belongsTo(Sport::class);
+    }
+
+    public function series(): BelongsTo
+    {
+        return $this->belongsTo(SportSessionSeries::class, 'sport_session_series_id');
     }
 
     public function participationRecords(): HasMany

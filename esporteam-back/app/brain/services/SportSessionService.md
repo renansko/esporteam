@@ -15,6 +15,8 @@ Ele preserva `SportProfile` como identidade de participacao: callers passam `use
 ## Funcoes
 
 - [`createForUser`](../functions/SportSessionService.md#createForUser)
+- [`publishSeries`](../functions/SportSessionService.md#publishSeries)
+- [`materializeSeries`](../functions/SportSessionService.md#materializeSeries)
 - [`openSessions`](../functions/SportSessionService.md#openSessions)
 - [`detailForUser`](../functions/SportSessionService.md#detailForUser)
 - [`recommendationsForHost`](../functions/SportSessionService.md#recommendationsForHost)
@@ -34,3 +36,4 @@ Ele preserva `SportProfile` como identidade de participacao: callers passam `use
 - `GET /api/sessions` calcula `next_action` e filtra por distancia, nivel, horario e disponibilidade interna de vagas sem expor a quantidade de vagas restantes.
 - `GET /api/sessions/{id}` retorna detalhe somente de sessoes publicas abertas e bloqueia detalhe de anfitrioes bloqueados; carrega apenas participacao do Perfil Esportivo autenticado.
 - Nenhum fluxo de match em grupo aceita preco, taxa ou pagamento por vaga.
+- Series semanais sao regras duradouras; o modulo materializa um horizonte movel de 90 dias com chaves deterministicas. Jobs apenas chamam essa interface.

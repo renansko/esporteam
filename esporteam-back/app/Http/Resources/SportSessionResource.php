@@ -48,6 +48,17 @@ class SportSessionResource extends JsonResource
             'participant_count' => $this->participant_count ?? $this->participants_count,
             'distance_km' => $this->when($this->getAttribute('distance_km') !== null, $this->getAttribute('distance_km')),
             'next_action' => $this->getAttribute('next_action') ?? 'indisponivel',
+            'series' => $this->when(config('features.recurring_events', false) && $this->relationLoaded('series'), fn () => [
+                'id' => $this->series->id,
+                'timezone' => $this->series->timezone,
+                'interval_weeks' => $this->series->interval_weeks,
+                'weekdays' => $this->series->weekdays,
+                'ends_type' => $this->series->ends_type,
+                'next_occurrence' => $this->when($this->getAttribute('series_next_occurrence') !== null, fn () => [
+                    'id' => $this->getAttribute('series_next_occurrence')->id,
+                    'starts_at' => $this->getAttribute('series_next_occurrence')->starts_at?->toISOString(),
+                ]),
+            ]),
             'safety_actions' => $this->whenLoaded('creator', fn () => $this->safetyActions($request)),
             'creator' => $this->whenLoaded('creator', fn () => new PublicSportProfileResource($this->creator)),
             'sport' => $this->whenLoaded('sport', fn () => new SportResource($this->sport)),
@@ -91,5 +102,4 @@ class SportSessionResource extends JsonResource
             ],
         ];
     }
-
 }

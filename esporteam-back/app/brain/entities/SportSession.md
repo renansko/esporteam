@@ -22,6 +22,7 @@ Sessao esportiva pontual criada por um Perfil Esportivo para partida, treino, co
 
 - `creator`: belongsTo `SportProfile`.
 - `sport`: belongsTo `Sport`.
+- `series`: belongsTo `SportSessionSeries` quando e uma ocorrencia recorrente.
 - `participationRecords`: hasMany `SessionParticipant`.
 - `participants`: belongsToMany `SportProfile` via `session_participants`.
 
@@ -38,3 +39,5 @@ Depois de match 1:1 aceito, `PostMatchSportActionService` pode criar uma sessao 
 Cards publicos de Descoberta de sessoes mostram `participant_count`, mas nao mostram `capacity`, vagas restantes ou lotacao. Capacidade continua sendo regra interna para match, convite, entrada e aprovacao.
 
 Sessoes esportivas sao sempre gratuitas para participantes. Campos de cobranca como `price_cents`, `fee_cents`, `is_paid`, `payment_required` e `currency` nao pertencem a `sport_sessions` e devem ser rejeitados na criacao. Assinaturas de organizador/entusiasta sao billing da plataforma, nao taxa de evento.
+
+Ocorrencias de serie mantem a mesma forma de uma Sessao Esportiva pontual. A Descoberta nunca expande regras no cliente.
