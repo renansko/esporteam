@@ -19,6 +19,7 @@ import BottomSheet from './BottomSheet.vue'
 import ProfileBioAssistant from './ProfileBioAssistant.vue'
 import Skeleton from './Skeleton.vue'
 import NearbySessionsMap from './NearbySessionsMap.vue'
+import PublishOneOffSessionWizard from './PublishOneOffSessionWizard.vue'
 import { createParticipantMatchView } from '../features/participant/matches'
 import { firstValidationError } from '../services/validation'
 
@@ -59,6 +60,7 @@ const props = defineProps({
   sportProfileSaveSuccess: { type: Boolean, default: false },
   teacherProfileDraft: { type: Object, default: null },
   teacherHourlyPrice: { type: [Number, String], default: '' },
+  oneOffPublication: { type: Object, default: null },
 })
 const emit = defineEmits([
   'applyDiscoveryFilters',
@@ -82,6 +84,8 @@ const emit = defineEmits([
   'logout',
   'applyBioSuggestion',
   'acceptBioSuggestion',
+  'startOneOffPublication',
+  'oneOffPublished',
 ])
 
 const store = useAppStore()
@@ -456,6 +460,7 @@ async function highlightBioContext() {
         <div v-else-if="isMapTab && nearbySessionsLoading && !nearbySessionViews.length && !nearbySessionsError" class="loading-grace" aria-busy="true"></div>
 
         <section v-else-if="isMapTab && !nearbySessionsError" class="nearby-stage" aria-label="Mapa e Lista de Sessoes proximas">
+          <button v-if="oneOffPublication" class="nearby-publish-fab" type="button" aria-label="Criar Sessão Esportiva" @click="emit('startOneOffPublication')">+ Criar sessão</button>
           <div class="nearby-surface-toggle" role="tablist" aria-label="Alternar entre Mapa e Lista">
             <button
               type="button"
@@ -605,6 +610,12 @@ async function highlightBioContext() {
             </div>
           </section>
         </section>
+
+        <PublishOneOffSessionWizard
+          v-if="oneOffPublication"
+          :publication="oneOffPublication"
+          @published="session => emit('oneOffPublished', session)"
+        />
 
         <section v-else-if="isDiscoverTab && !discoveryError" class="discovery-empty-state" aria-label="Nenhuma Sessao Esportiva para descobrir">
           <div class="discovery-empty-map" aria-hidden="true">

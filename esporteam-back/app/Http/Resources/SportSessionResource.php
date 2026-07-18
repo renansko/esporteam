@@ -21,13 +21,21 @@ class SportSessionResource extends JsonResource
             'description' => $this->description,
             'type' => $this->type?->value,
             'starts_at' => $this->starts_at?->toISOString(),
+            'ends_at' => $this->ends_at?->toISOString(),
+            'timezone' => $this->timezone,
             'location_label' => $this->location_label,
+            'location_label_public' => $this->location_label_public ?? $this->location_label,
             'city' => $this->city,
             'region' => $this->region,
             'location' => [
                 'latitude_approx' => $this->latitude_approx,
                 'longitude_approx' => $this->longitude_approx,
             ],
+            'meeting_point' => $this->when($this->canReceiveExactLocation($request), fn () => [
+                'label' => $this->meeting_point_label,
+                'latitude' => $this->latitude_exact,
+                'longitude' => $this->longitude_exact,
+            ]),
             'capacity' => $this->when($this->isOwnedByRequester($request), $this->capacity),
             'requires_approval' => $this->requires_approval,
             'entry_mode' => $this->entry_mode?->value,
@@ -80,5 +88,17 @@ class SportSessionResource extends JsonResource
                 ],
             ],
         ];
+    }
+
+    private function canReceiveExactLocation(Request $request): bool
+    {
+        if ($this->isOwnedByRequester($request)) {
+            return true;
+        }
+
+        return $this->participationRecords()
+            ->whereHas('profile', fn ($query) => $query->where('user_id', $request->user()?->id))
+            ->whereIn('status', ['joined', 'approved'])
+            ->exists();
     }
 }

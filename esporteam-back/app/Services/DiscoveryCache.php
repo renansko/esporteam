@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Cache;
  */
 class DiscoveryCache
 {
+    public function invalidate(int $userId): void
+    {
+        Cache::increment('discovery:version');
+    }
+
     /**
      * @wiki app/brain/functions/DiscoveryCache.md#remember
      */

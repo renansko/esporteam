@@ -68,6 +68,64 @@ class SportSessionService
     }
 
     /**
+     * Publishes a one-off session from the map wizard. The exact meeting point
+     * stays on the session record but is never used by discovery.
+     */
+    public function publishOneOff(int $userId, array $data, string $publicationKey): SportSession
+    {
+        $profile = $this->requireProfile($userId);
+        $this->assertProfileCanPublish($profile);
+        $this->assertValidLevelRange($data['min_level'] ?? null, $data['max_level'] ?? null);
+
+        return DB::transaction(function () use ($profile, $data, $publicationKey) {
+            $existing = SportSession::query()
+                ->where('creator_profile_id', $profile->id)
+                ->where('publication_key', $publicationKey)
+                ->first();
+
+            if ($existing !== null) {
+                return $this->freshSession($existing);
+            }
+
+            $entryMode = SportSessionEntryMode::from($data['entry_mode']);
+            $latitude = (float) $data['latitude'];
+            $longitude = (float) $data['longitude'];
+            $session = SportSession::query()->create([
+                'creator_profile_id' => $profile->id,
+                'sport_id' => $data['sport_id'],
+                'title' => $data['title'],
+                'description' => $data['description'] ?? null,
+                'type' => $data['type'],
+                'starts_at' => $data['starts_at'],
+                'ends_at' => $data['ends_at'],
+                'timezone' => $data['timezone'],
+                'location_label' => $data['location_label_public'],
+                'location_label_public' => $data['location_label_public'],
+                'meeting_point_label' => $data['meeting_point_label'],
+                'city' => $data['city'],
+                'region' => $data['region'],
+                'latitude_approx' => round($latitude, 3),
+                'longitude_approx' => round($longitude, 3),
+                'latitude_exact' => $latitude,
+                'longitude_exact' => $longitude,
+                'capacity' => $data['capacity'] ?? null,
+                'requires_approval' => $entryMode->requiresApproval(),
+                'entry_mode' => $entryMode->value,
+                'min_level' => $data['min_level'] ?? null,
+                'max_level' => $data['max_level'] ?? null,
+                'visibility' => $data['visibility'],
+                'status' => SportSessionStatus::Open->value,
+                'publication_key' => $publicationKey,
+            ]);
+
+            $session->participants()->attach($profile->id, ['status' => SessionParticipantStatus::Joined->value]);
+            app(DiscoveryCache::class)->invalidate($profile->user_id);
+
+            return $this->freshSession($session);
+        });
+    }
+
+    /**
      * @wiki app/brain/functions/SportSessionService.md#openSessions
      */
     public function openSessions(int $userId, array $filters = []): Collection
@@ -115,6 +173,15 @@ class SportSessionService
     {
         return collect(['south', 'north', 'west', 'east'])
             ->every(fn (string $key) => array_key_exists($key, $filters));
+    }
+
+    private function assertProfileCanPublish(SportProfile $profile): void
+    {
+        if (blank($profile->display_name) || blank($profile->city) || blank($profile->region)) {
+            throw ValidationException::withMessages([
+                'profile' => 'Complete a identidade e a localizacao aproximada do Perfil Esportivo antes de publicar.',
+            ]);
+        }
     }
 
     /**

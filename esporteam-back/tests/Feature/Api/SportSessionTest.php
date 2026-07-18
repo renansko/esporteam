@@ -58,6 +58,55 @@ it('creates a sport session for the authenticated sport profile', function () {
         ->exists())->toBeTrue();
 });
 
+it('publishes a one-off session idempotently without exposing its exact meeting point publicly', function () {
+    $creator = SportProfile::query()->create([
+        'user_id' => 701,
+        'display_name' => 'Marina',
+        'city' => 'Sao Paulo',
+        'region' => 'SP',
+    ]);
+    $sport = Sport::query()->create(['name' => 'Volei', 'slug' => 'volei']);
+    $payload = [
+        'sport_id' => $sport->id,
+        'title' => 'Volei no parque',
+        'type' => 'partida',
+        'starts_at' => now()->addDay()->setTime(19, 0)->toISOString(),
+        'ends_at' => now()->addDay()->setTime(21, 0)->toISOString(),
+        'timezone' => 'America/Sao_Paulo',
+        'meeting_point_label' => 'Portao 3, ao lado da quadra',
+        'location_label_public' => 'Parque Ibirapuera',
+        'city' => 'Sao Paulo',
+        'region' => 'SP',
+        'latitude' => -23.587421,
+        'longitude' => -46.657921,
+        'entry_mode' => 'publica_aprovacao',
+        'visibility' => 'public',
+    ];
+
+    $first = actingAsWorkspace(1, ['id' => 701, 'is_adult' => true])
+        ->withHeader('Idempotency-Key', 'one-off-volleyball-701')
+        ->postJson('/api/sessions/publish-one-off', $payload)
+        ->assertCreated()
+        ->assertJsonPath('data.creator_profile_id', $creator->id)
+        ->assertJsonPath('data.location.latitude_approx', -23.587)
+        ->assertJsonPath('data.meeting_point.latitude', -23.587421)
+        ->json('data.id');
+
+    actingAsWorkspace(1, ['id' => 701, 'is_adult' => true])
+        ->withHeader('Idempotency-Key', 'one-off-volleyball-701')
+        ->postJson('/api/sessions/publish-one-off', $payload)
+        ->assertCreated()
+        ->assertJsonPath('data.id', $first);
+
+    expect(SportSession::query()->where('creator_profile_id', $creator->id)->count())->toBe(1);
+
+    createSessionSportProfileForUser(702, 'Visitor');
+    actingAsWorkspace(1, ['id' => 702, 'is_adult' => true])
+        ->getJson("/api/sessions/{$first}")
+        ->assertOk()
+        ->assertJsonMissing(['meeting_point']);
+});
+
 it('rejects paid fields when creating a sport session', function () {
     createSessionSportProfileForUser(77, 'Creator');
 

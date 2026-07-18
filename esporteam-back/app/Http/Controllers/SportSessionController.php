@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\IndexSessionRecommendationRequest;
 use App\Http\Requests\IndexSportSessionRequest;
+use App\Http\Requests\PublishOneOffSportSessionRequest;
 use App\Http\Requests\StoreSessionInvitesRequest;
 use App\Http\Requests\StoreSportSessionRequest;
 use App\Http\Requests\UpdateSessionInviteRequest;
@@ -48,6 +49,22 @@ class SportSessionController extends Controller
         );
 
         return $this->createdResponse(new SportSessionResource($session), 'Session created.');
+    }
+
+    public function publishOneOff(PublishOneOffSportSessionRequest $request): JsonResponse
+    {
+        $key = (string) $request->header('Idempotency-Key');
+        if ($key === '') {
+            abort(422, 'Idempotency-Key header is required.');
+        }
+
+        $session = $this->sessions->publishOneOff(
+            (int) $request->user()->id,
+            $request->validated(),
+            $key,
+        );
+
+        return $this->createdResponse(new SportSessionResource($session), 'Session published.');
     }
 
     public function show(Request $request, SportSession $session): JsonResponse

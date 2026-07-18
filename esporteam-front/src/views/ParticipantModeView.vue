@@ -8,10 +8,12 @@ import { useSportSessionDetail } from '../composables/useSportSessionDetail'
 import { useParticipantMatches } from '../composables/useParticipantMatches'
 import { useSportProfileEditor } from '../composables/useSportProfileEditor'
 import { useTeacherProfileEditor } from '../composables/useTeacherProfileEditor'
+import { useOneOffSessionPublication } from '../composables/useOneOffSessionPublication'
 
 const store = useAppStore()
 const activeSportProfile = computed(() => store.activeSportProfile)
 const activeTeacherProfile = computed(() => store.teacherProfile)
+const oneOffPublication = useOneOffSessionPublication()
 const { draft: teacherProfileDraft, hourlyPrice: teacherHourlyPrice } = useTeacherProfileEditor(activeTeacherProfile)
 const {
   draft: sportProfileDraft,
@@ -106,6 +108,15 @@ function reloadNearbySessions() {
   loadNearbySportSessions(store.activeSportProfile, discoverySessionFilters)
 }
 
+function startOneOffPublication() {
+  oneOffPublication.begin(store.activeSportProfile)
+}
+
+function handleOneOffPublished(session) {
+  reloadParticipantSessions()
+  store.upsertParticipantSportSession(session)
+}
+
 onMounted(() => {
   reloadParticipantSessions()
   loadParticipantMatches()
@@ -178,6 +189,7 @@ function acceptBioSuggestion(suggestion) {
     :sport-profile-save-success="sportProfileSaveSuccess"
     :teacher-profile-draft="store.teacherProfile ? teacherProfileDraft : null"
     :teacher-hourly-price="teacherHourlyPrice"
+    :one-off-publication="oneOffPublication"
     @apply-discovery-filters="applyDiscoveryFilters"
     @retry-discovery="reloadDiscoverySessions"
     @retry-nearby-sessions="reloadNearbySessions"
@@ -196,6 +208,8 @@ function acceptBioSuggestion(suggestion) {
     @save-sport-profile="saveProfile"
     @update-teacher-profile-field="updateTeacherProfileField"
     @update-teacher-hourly-price="updateTeacherHourlyPrice"
+    @start-one-off-publication="startOneOffPublication"
+    @one-off-published="handleOneOffPublished"
     @logout="store.logout"
     @apply-bio-suggestion="applyBioSuggestion"
     @accept-bio-suggestion="acceptBioSuggestion"

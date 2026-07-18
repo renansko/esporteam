@@ -434,6 +434,15 @@ export async function joinSportSession(sessionId) {
   return normalizeSportSessionDetail(data?.data ?? data)
 }
 
+export async function publishOneOffSportSession(payload, { idempotencyKey } = {}) {
+  if (!idempotencyKey) throw new Error('idempotency_key_required')
+
+  const { data } = await esporteamApi.post('/sessions/publish-one-off', payload, {
+    headers: { 'Idempotency-Key': idempotencyKey },
+  })
+  return normalizeSportSessionDetail(data?.data ?? data)
+}
+
 export async function joinOpenSportSession(sessionId) {
   return joinSportSession(sessionId)
 }
