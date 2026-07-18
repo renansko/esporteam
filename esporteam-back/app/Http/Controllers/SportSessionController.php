@@ -14,6 +14,7 @@ use App\Http\Resources\SessionRecommendationResource;
 use App\Http\Resources\SportSessionResource;
 use App\Models\SportProfile;
 use App\Models\SportSession;
+use App\Models\SportSessionSeries;
 use App\Services\DiscoveryCache;
 use App\Services\SportSessionService;
 use Illuminate\Http\JsonResponse;
@@ -110,9 +111,35 @@ class SportSessionController extends Controller
 
     public function join(Request $request, SportSession $session): JsonResponse
     {
-        $session = $this->sessions->join((int) $request->user()->id, $session);
+        $session = $this->sessions->joinOccurrence((int) $request->user()->id, $session);
 
         return $this->createdResponse(new SportSessionResource($session), 'Session joined.');
+    }
+
+    public function followSeries(Request $request, SportSessionSeries $series): JsonResponse
+    {
+        $series = $this->sessions->followSeries((int) $request->user()->id, $series);
+
+        return $this->createdResponse(['id' => $series->id, 'following' => true], 'Session series followed.');
+    }
+
+    public function unfollowSeries(Request $request, SportSessionSeries $series): JsonResponse
+    {
+        $this->sessions->unfollowSeries((int) $request->user()->id, $series);
+
+        return $this->successResponse(['id' => $series->id, 'following' => false], 'Session series unfollowed.');
+    }
+
+    public function events(Request $request): JsonResponse
+    {
+        $events = $this->sessions->eventsForUser((int) $request->user()->id);
+
+        return $this->successResponse([
+            'upcoming_confirmed' => SportSessionResource::collection($events['upcoming_confirmed'])->resolve(),
+            'pending_approval' => SportSessionResource::collection($events['pending_approval'])->resolve(),
+            'followed_series' => $events['followed_series']->map(fn (SportSessionSeries $series) => ['id' => $series->id, 'title' => $series->title, 'next_occurrences' => SportSessionResource::collection($series->occurrences)->resolve()])->values(),
+            'hosted' => SportSessionResource::collection($events['hosted'])->resolve(),
+        ], 'Events loaded.');
     }
 
     public function recommendations(IndexSessionRecommendationRequest $request, SportSession $session): JsonResponse

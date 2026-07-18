@@ -57,6 +57,9 @@ Route::middleware('auth.service')->group(function () {
     Route::post('/sessions/publish-one-off', [SportSessionController::class, 'publishOneOff'])->middleware('adult.eligible');
     Route::post('/sessions/publish-series', [SportSessionController::class, 'publishSeries'])->middleware('adult.eligible');
     Route::get('/profile/sessions', [SportSessionController::class, 'participantSessions']);
+    Route::get('/events', [SportSessionController::class, 'events']);
+    Route::post('/session-series/{series}/follow', [SportSessionController::class, 'followSeries'])->middleware('adult.eligible')->whereNumber('series');
+    Route::delete('/session-series/{series}/follow', [SportSessionController::class, 'unfollowSeries'])->middleware('adult.eligible')->whereNumber('series');
     Route::get('/sessions/{session}', [SportSessionController::class, 'show'])
         ->whereNumber('session');
     Route::get('/sessions/{session}/recommendations', [SportSessionController::class, 'recommendations'])

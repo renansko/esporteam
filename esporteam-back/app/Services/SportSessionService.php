@@ -12,6 +12,7 @@ use App\Models\SessionParticipant;
 use App\Models\SportProfile;
 use App\Models\SportSession;
 use App\Models\SportSessionSeries;
+use App\Models\SportSessionSeriesFollower;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
@@ -646,6 +647,62 @@ class SportSessionService
 
             return $this->freshSession($lockedSession);
         });
+    }
+
+    /** @wiki app/brain/functions/SportSessionService.md#joinOccurrence */
+    public function joinOccurrence(int $userId, SportSession $occurrence): SportSession
+    {
+        return $this->join($userId, $occurrence);
+    }
+
+    /** @wiki app/brain/functions/SportSessionService.md#followSeries */
+    public function followSeries(int $userId, SportSessionSeries $series): SportSessionSeries
+    {
+        if (! config('features.recurring_events', false) || $series->status !== 'active') {
+            abort(404);
+        }
+        $profile = $this->requireProfile($userId);
+        if ($series->creator_profile_id !== $profile->id && $this->profilesAreBlocked($series->creator_profile_id, $profile->id)) {
+            abort(404);
+        }
+
+        try {
+            SportSessionSeriesFollower::query()->firstOrCreate([
+                'sport_session_series_id' => $series->id,
+                'sport_profile_id' => $profile->id,
+            ]);
+        } catch (QueryException $exception) {
+            if (! SportSessionSeriesFollower::query()->where('sport_session_series_id', $series->id)->where('sport_profile_id', $profile->id)->exists()) {
+                throw $exception;
+            }
+        }
+
+        return $series;
+    }
+
+    /** @wiki app/brain/functions/SportSessionService.md#unfollowSeries */
+    public function unfollowSeries(int $userId, SportSessionSeries $series): void
+    {
+        $profile = $this->requireProfile($userId);
+        SportSessionSeriesFollower::query()->where('sport_session_series_id', $series->id)->where('sport_profile_id', $profile->id)->delete();
+    }
+
+    /** @wiki app/brain/functions/SportSessionService.md#eventsForUser */
+    public function eventsForUser(int $userId): array
+    {
+        $profile = $this->requireProfile($userId);
+        $sessions = $this->participantSessionsForUser($userId);
+        $followed = SportSessionSeries::query()->with(['sport', 'occurrences' => fn ($query) => $query->where('starts_at', '>=', now())->orderBy('starts_at')->limit(5)])
+            ->whereHas('followers', fn (Builder $query) => $query->where('sport_profile_id', $profile->id))->get();
+        $hosted = SportSession::query()->with(['creator', 'sport', 'series'])->where('creator_profile_id', $profile->id)->where('starts_at', '>=', now())->orderBy('starts_at')->get()
+            ->map(fn (SportSession $session) => $this->withPublicSessionState($session, $profile));
+
+        return [
+            'upcoming_confirmed' => $sessions->filter(fn (SportSession $session) => in_array($this->participationFor($session, $profile)?->status, [SessionParticipantStatus::Joined, SessionParticipantStatus::Approved], true))->values(),
+            'pending_approval' => $sessions->filter(fn (SportSession $session) => $this->participationFor($session, $profile)?->status === SessionParticipantStatus::Interested)->values(),
+            'followed_series' => $followed,
+            'hosted' => $hosted->values(),
+        ];
     }
 
     private function authorizeHost(int $userId, SportSession $session): SportProfile

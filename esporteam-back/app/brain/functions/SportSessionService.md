@@ -97,3 +97,17 @@ Registra participacao do Perfil Esportivo autenticado em uma sessao existente. A
 Falha com validacao quando a sessao nao esta `open`, a capacidade esta cheia para entrada direta, o perfil esta bloqueado/oculto, nao respeita a faixa de nivel ou ja entrou/pediu vaga.
 
 Side effects: cria ou reativa linha em `session_participants`.
+
+## joinOccurrence
+
+Assinatura: `joinOccurrence(int $userId, SportSession $occurrence): SportSession`.
+
+Intenção explícita de participar somente da ocorrência escolhida; preserva todas as transições e proteções do fluxo de participação.
+
+## followSeries / unfollowSeries
+
+Cria/remove a relação única entre Perfil Esportivo e série, sem criar ou cancelar participação em ocorrência. Acompanhamento não libera ponto exato.
+
+## eventsForUser
+
+Retorna a superfície agrupada de Eventos: próximas confirmadas, aguardando aprovação, séries acompanhadas com próximas ocorrências e atividades hospedadas.

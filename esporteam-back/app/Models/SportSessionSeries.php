@@ -43,4 +43,9 @@ class SportSessionSeries extends Model
     {
         return $this->hasMany(SportSession::class, 'sport_session_series_id');
     }
+
+    public function followers(): HasMany
+    {
+        return $this->hasMany(SportSessionSeriesFollower::class, 'sport_session_series_id');
+    }
 }

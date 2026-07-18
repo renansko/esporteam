@@ -1,0 +1,18 @@
+meta {
+  name: Follow Session Series
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/session-series/1/follow
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+docs {
+  Acompanha uma série sem criar participação em suas ocorrências. DELETE na mesma URL deixa de acompanhar.
+}
