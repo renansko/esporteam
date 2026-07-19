@@ -6,6 +6,7 @@ Conversa canônica criada sob demanda para uma Sessão Esportiva pontual. A sess
 
 - `sport_session_id`: Sessão Esportiva dona da conversa.
 - `status`: ciclo de vida inicial (`active`); arquivamento/moderação é responsabilidade da próxima issue.
+- Leituras e mute são preferências por Perfil Esportivo, isoladas da conversa e não expõem horários ou lista nominal.
 
 ## Relações
 

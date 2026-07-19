@@ -157,6 +157,7 @@ class SportSessionController extends Controller
             'pending_approval' => SportSessionResource::collection($events['pending_approval'])->resolve(),
             'followed_series' => $events['followed_series']->map(fn (SportSessionSeries $series) => ['id' => $series->id, 'title' => $series->title, 'next_occurrences' => SportSessionResource::collection($series->occurrences)->resolve()])->values(),
             'hosted' => SportSessionResource::collection($events['hosted'])->resolve(),
+            'recently_conversed' => SportSessionResource::collection($events['recently_conversed'])->resolve(),
         ], 'Events loaded.');
     }
 

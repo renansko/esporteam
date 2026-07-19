@@ -21,8 +21,9 @@ function client() {
   return echo
 }
 
-export function subscribeToEventConversation(conversationId, onMessage) {
+export function subscribeToEventConversation(conversationId, { onMessage, onSocial }) {
   const channelName = `event-conversations.${conversationId}`
   client().private(channelName).listen('.message.posted', onMessage)
+    .listen('.social.updated', onSocial)
   return () => echo?.leave(channelName)
 }

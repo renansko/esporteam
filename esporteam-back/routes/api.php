@@ -70,6 +70,8 @@ Route::middleware('auth.service')->group(function () {
         ->whereNumber('session');
     Route::post('/sessions/{session}/conversation/messages', [EventConversationController::class, 'store'])->middleware('adult.eligible')
         ->whereNumber('session');
+    Route::post('/sessions/{session}/conversation/actions', [EventConversationController::class, 'social'])->middleware('adult.eligible')
+        ->whereNumber('session');
     Route::get('/sessions/{session}/recommendations', [SportSessionController::class, 'recommendations'])
         ->whereNumber('session');
     Route::post('/sessions/{session}/invites', [SportSessionController::class, 'invite'])->middleware('adult.eligible')

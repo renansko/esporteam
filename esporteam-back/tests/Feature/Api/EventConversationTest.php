@@ -82,3 +82,26 @@ it('does not expose chat routes while the feature is disabled', function () {
     actingAsWorkspace(1, ['id' => $host->user_id, 'is_adult' => true])
         ->getJson("/api/sessions/{$session->id}/conversation")->assertNotFound();
 });
+
+it('applies replies, mentions, reactions, monotonic reads and mute through one social action endpoint', function () {
+    $host = SportProfile::query()->create(['user_id' => 2931, 'display_name' => 'Bia']);
+    $guest = SportProfile::query()->create(['user_id' => 2932, 'display_name' => 'Davi']);
+    $session = conversationSession($host, 'private');
+    $session->participants()->attach($guest->id, ['status' => 'joined']);
+    $headers = ['id' => $guest->user_id, 'is_adult' => true];
+    $messageId = 'e1fd5963-88a9-46d8-88d7-f8a5f41aef66';
+    $message = actingAsWorkspace(1, $headers)->postJson("/api/sessions/{$session->id}/conversation/messages", ['body' => 'Vamos?', 'client_message_id' => $messageId])->assertCreated()->json('data');
+
+    actingAsWorkspace(1, $headers)->postJson("/api/sessions/{$session->id}/conversation/actions", ['action' => 'mention', 'message_id' => $message['id'], 'mentioned_profile_id' => $host->id])
+        ->assertOk()->assertJsonPath('data.message.mentions.0.id', $host->id);
+    actingAsWorkspace(1, $headers)->postJson("/api/sessions/{$session->id}/conversation/actions", ['action' => 'reaction', 'message_id' => $message['id'], 'emoji' => '👍', 'active' => true])
+        ->assertOk()->assertJsonPath('data.message.reactions.0.count', 1);
+    actingAsWorkspace(1, $headers)->postJson("/api/sessions/{$session->id}/conversation/actions", ['action' => 'read', 'cursor' => $message['id']])->assertOk();
+    actingAsWorkspace(1, $headers)->postJson("/api/sessions/{$session->id}/conversation/actions", ['action' => 'read', 'cursor' => 0])
+        ->assertOk()->assertJsonPath('data.cursor', $message['id']);
+    actingAsWorkspace(1, $headers)->postJson("/api/sessions/{$session->id}/conversation/actions", ['action' => 'mute', 'muted' => true])
+        ->assertOk()->assertJsonPath('data.muted', true);
+    actingAsWorkspace(1, $headers)->postJson("/api/sessions/{$session->id}/conversation/actions", [
+        'action' => 'reply', 'message_id' => $message['id'], 'body' => 'Sim!', 'client_message_id' => '6ed75e52-f4ec-4e1f-b4b7-82d007ca1a4e',
+    ])->assertOk()->assertJsonPath('data.message.reply_to.id', $message['id']);
+});

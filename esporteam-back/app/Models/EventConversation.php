@@ -22,4 +22,9 @@ class EventConversation extends Model
     {
         return $this->hasMany(EventMessage::class)->orderBy('id');
     }
+
+    public function reads(): HasMany
+    {
+        return $this->hasMany(EventConversationRead::class);
+    }
 }

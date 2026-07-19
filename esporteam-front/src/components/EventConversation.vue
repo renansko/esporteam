@@ -1,80 +1,42 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { openEventConversation, postEventConversationMessage } from '../services/api'
-import { subscribeToEventConversation } from '../services/eventConversationRealtime'
+import { useEventConversation } from '../composables/useEventConversation'
 
 const props = defineProps({ sessionId: { type: [String, Number], default: null } })
-const messages = ref([])
-const text = ref('')
-const loading = ref(false)
-const sending = ref(false)
-const error = ref('')
-let unsubscribe = null
-
-function merge(items = []) {
-  const known = new Map(messages.value.map(message => [String(message.id), message]))
-  items.forEach(message => known.set(String(message.id), message))
-  messages.value = [...known.values()].sort((a, b) => Number(a.id) - Number(b.id))
-}
-
-async function load() {
-  if (!props.sessionId) return
-  loading.value = true; error.value = ''
-  try {
-    const conversation = await openEventConversation(props.sessionId)
-    messages.value = []
-    merge(conversation.messages)
-    unsubscribe?.()
-    unsubscribe = subscribeToEventConversation(conversation.conversation.id, message => merge([message]))
-  } catch (err) {
-    // A flag desligada ou uma sessão ainda sem conversa não prejudica o detalhe.
-    if (err?.response?.status !== 404) error.value = 'Não foi possível carregar a conversa.'
-  } finally { loading.value = false }
-}
-
-async function send() {
-  const body = text.value.trim()
-  if (!body || sending.value || !props.sessionId) return
-  sending.value = true; error.value = ''
-  try {
-    const message = await postEventConversationMessage(props.sessionId, {
-      body,
-      clientMessageId: crypto.randomUUID(),
-    })
-    merge([message]); text.value = ''
-  } catch { error.value = 'Mensagem não enviada. Tente novamente.' }
-  finally { sending.value = false }
-}
-
-watch(() => props.sessionId, load, { immediate: true })
+const sessionId = ref(props.sessionId)
+const chat = useEventConversation(sessionId)
+watch(() => props.sessionId, value => { sessionId.value = value; chat.load() }, { immediate: true })
 </script>
 
 <template>
   <section v-if="sessionId" class="event-conversation" aria-label="Conversa da Sessão Esportiva">
-    <h3>Conversa</h3>
-    <p v-if="loading" class="event-conversation-muted">Carregando conversa…</p>
-    <p v-else-if="!messages.length" class="event-conversation-muted">Seja a primeira pessoa a combinar os detalhes.</p>
+    <header><h3>Conversa</h3><button type="button" class="event-conversation-mute" @click="chat.setMuted(!chat.muted)">{{ chat.muted ? 'Ativar avisos' : 'Silenciar' }}</button></header>
+    <p v-if="chat.loading" class="event-conversation-muted">Carregando conversa…</p>
+    <p v-else-if="!chat.messages.length" class="event-conversation-muted">Seja a primeira pessoa a combinar os detalhes.</p>
     <ol v-else class="event-conversation-messages">
-      <li v-for="message in messages" :key="message.id"><strong>{{ message.author?.display_name || 'Perfil Esportivo' }}</strong><span>{{ message.body }}</span></li>
+      <li v-for="message in chat.messages" :key="message.id">
+        <strong>{{ message.author?.display_name || 'Perfil Esportivo' }}</strong>
+        <small v-if="message.reply_to">Em resposta a {{ message.reply_to.author?.display_name || 'mensagem removida' }}: {{ message.reply_to.body || 'Mensagem removida' }}</small>
+        <span>{{ message.body }}</span>
+        <div class="event-conversation-actions"><button v-for="emoji in ['👍', '❤️', '😂']" :key="emoji" type="button" @click="chat.react(message.id, emoji)">{{ emoji }} {{ message.reactions?.find(item => item.emoji === emoji)?.count || '' }}</button></div>
+        <small v-if="message.seen_by_count !== undefined">Visto por {{ message.seen_by_count }}</small>
+      </li>
     </ol>
-    <form class="event-conversation-composer" @submit.prevent="send">
+    <p v-if="chat.typingProfileId" class="event-conversation-muted">Alguém está digitando…</p>
+    <form class="event-conversation-composer" @submit.prevent="chat.send">
       <label class="sr-only" for="event-conversation-body">Mensagem</label>
-      <textarea id="event-conversation-body" v-model="text" maxlength="2000" rows="2" placeholder="Escreva uma mensagem" :disabled="sending" />
-      <button type="submit" :disabled="sending || !text.trim()">{{ sending ? 'Enviando…' : 'Enviar' }}</button>
+      <textarea id="event-conversation-body" v-model="chat.text" maxlength="2000" rows="2" placeholder="Escreva uma mensagem" :disabled="chat.sending" @input="chat.typing(true)" @blur="chat.typing(false)" />
+      <button type="submit" :disabled="chat.sending || !chat.text.trim()">{{ chat.sending ? 'Enviando…' : 'Enviar' }}</button>
     </form>
-    <p v-if="error" class="event-conversation-error" role="alert">{{ error }}</p>
+    <p v-if="chat.error" class="event-conversation-error" role="alert">{{ chat.error }}</p>
   </section>
 </template>
 
 <style scoped>
 .event-conversation { border-top: 1px solid #e7e2d8; margin-top: 20px; padding-top: 18px; }
-.event-conversation h3 { margin: 0 0 10px; font-size: 16px; }
-.event-conversation-muted { color: #6c675e; font-size: 13px; }
-.event-conversation-messages { display: grid; gap: 9px; list-style: none; margin: 0 0 12px; padding: 0; }
-.event-conversation-messages li { display: grid; gap: 2px; border-radius: 10px; background: #f6f3ed; padding: 9px 11px; font-size: 13px; }
-.event-conversation-messages strong { font-size: 12px; }
-.event-conversation-composer { display: grid; gap: 8px; }
-.event-conversation-composer textarea { resize: vertical; font: inherit; padding: 9px; }
-.event-conversation-composer button { justify-self: end; }
-.event-conversation-error { color: #b42318; font-size: 13px; }
+.event-conversation header { align-items: center; display: flex; justify-content: space-between; margin-bottom: 10px; }
+.event-conversation h3 { margin: 0; font-size: 16px; }.event-conversation-mute { font: inherit; font-size: 12px; }
+.event-conversation-muted { color: #6c675e; font-size: 13px; }.event-conversation-messages { display: grid; gap: 9px; list-style: none; margin: 0 0 12px; padding: 0; }
+.event-conversation-messages li { display: grid; gap: 4px; border-radius: 10px; background: #f6f3ed; padding: 9px 11px; font-size: 13px; }.event-conversation-messages strong { font-size: 12px; }.event-conversation-messages small { color: #6c675e; }
+.event-conversation-actions { display: flex; gap: 4px; }.event-conversation-actions button { font-size: 12px; }.event-conversation-composer { display: grid; gap: 8px; }.event-conversation-composer textarea { resize: vertical; font: inherit; padding: 9px; }.event-conversation-composer button { justify-self: end; }.event-conversation-error { color: #b42318; font-size: 13px; }
 </style>

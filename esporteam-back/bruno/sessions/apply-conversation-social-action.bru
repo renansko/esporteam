@@ -1,0 +1,24 @@
+meta {
+  name: Apply conversation social action
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/api/sessions/1/conversation/actions
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{jwtToken}}
+}
+
+body:json {
+  {
+    "action": "reaction",
+    "message_id": 1,
+    "emoji": "👍",
+    "active": true
+  }
+}

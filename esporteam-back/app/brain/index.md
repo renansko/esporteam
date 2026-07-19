@@ -46,7 +46,7 @@
 - [`functions/DiscoveryService.md`](functions/DiscoveryService.md) — `discoverForUser`, `profilesForUser`, modos e filtros compartilhados
 - [`functions/DiscoveryCache.md`](functions/DiscoveryCache.md) — cache versionado por usuário, superfície e filtros
 - [`functions/SportSessionService.md`](functions/SportSessionService.md) — `createForUser`, `openSessions`, recomendacoes, convites, decisoes e `join`
-- [`functions/EventConversationService.md`](functions/EventConversationService.md) — `openConversation` e `postMessage`
+- [`functions/EventConversationService.md`](functions/EventConversationService.md) — abertura, postagem e `applySocialAction`
 - [`functions/PostMatchSportActionService.md`](functions/PostMatchSportActionService.md) — `actionsForUser` e `saveSessionForUser`
 - [`functions/IdeaIngestionService.md`](functions/IdeaIngestionService.md) — contratos das funções públicas
 - [`functions/ClusteringService.md`](functions/ClusteringService.md) — `executeRun` e side effects

@@ -11,3 +11,4 @@ Módulo profundo de conversa de Sessão Esportiva pontual. Centraliza criação 
 
 - [`openConversation`](../functions/EventConversationService.md#openConversation)
 - [`postMessage`](../functions/EventConversationService.md#postMessage)
+- `applySocialAction` concentra reply, mention, reaction, read, mute e typing sem espalhar regras sociais pelos controllers.

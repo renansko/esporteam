@@ -7,6 +7,8 @@ use App\Enums\SessionParticipantStatus;
 use App\Enums\SportSessionEntryMode;
 use App\Enums\SportSessionStatus;
 use App\Models\Connection;
+use App\Models\EventConversationRead;
+use App\Models\EventMessage;
 use App\Models\ProfileSport;
 use App\Models\SessionParticipant;
 use App\Models\SportProfile;
@@ -771,13 +773,29 @@ class SportSessionService
             ->whereHas('followers', fn (Builder $query) => $query->where('sport_profile_id', $profile->id))->get();
         $hosted = SportSession::query()->with(['creator', 'sport', 'series'])->where('creator_profile_id', $profile->id)->where('starts_at', '>=', now())->orderBy('starts_at')->get()
             ->map(fn (SportSession $session) => $this->withPublicSessionState($session, $profile));
+        $recentlyConversed = SportSession::query()->with(['creator', 'sport', 'series', 'conversation'])
+            ->where('starts_at', '>=', now())
+            ->whereHas('conversation.messages', fn (Builder $query) => $query->where('author_profile_id', $profile->id))
+            ->latest('updated_at')
+            ->get()
+            ->map(fn (SportSession $session) => $this->withConversationUnreadState($this->withPublicSessionState($session, $profile), $profile));
 
         return [
             'upcoming_confirmed' => $sessions->filter(fn (SportSession $session) => in_array($this->participationFor($session, $profile)?->status, [SessionParticipantStatus::Joined, SessionParticipantStatus::Approved], true))->values(),
             'pending_approval' => $sessions->filter(fn (SportSession $session) => $this->participationFor($session, $profile)?->status === SessionParticipantStatus::Interested)->values(),
             'followed_series' => $followed,
             'hosted' => $hosted->values(),
+            'recently_conversed' => $recentlyConversed->values(),
         ];
+    }
+
+    private function withConversationUnreadState(SportSession $session, SportProfile $profile): SportSession
+    {
+        $conversationId = $session->conversation?->id;
+        if ($conversationId === null) return $session->setAttribute('conversation_unread_count', 0);
+        $cursor = (int) EventConversationRead::query()->where(['event_conversation_id' => $conversationId, 'sport_profile_id' => $profile->id])->value('last_read_message_id');
+        return $session->setAttribute('conversation_unread_count', EventMessage::query()->where('event_conversation_id', $conversationId)
+            ->where('author_profile_id', '!=', $profile->id)->where('id', '>', $cursor)->count());
     }
 
     private function authorizeHost(int $userId, SportSession $session): SportProfile

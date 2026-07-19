@@ -52,6 +52,7 @@ class SportSessionResource extends JsonResource
             'participant_count' => $this->participant_count ?? $this->participants_count,
             'distance_km' => $this->when($this->getAttribute('distance_km') !== null, $this->getAttribute('distance_km')),
             'next_action' => $this->getAttribute('next_action') ?? 'indisponivel',
+            'conversation_unread_count' => $this->when($this->getAttribute('conversation_unread_count') !== null, $this->getAttribute('conversation_unread_count')),
             'series' => $this->when(config('features.recurring_events', false) && $this->relationLoaded('series'), fn () => [
                 'id' => $this->series->id,
                 'timezone' => $this->series->timezone,

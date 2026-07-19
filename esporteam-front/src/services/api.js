@@ -38,6 +38,11 @@ export async function postEventConversationMessage(sessionId, { body, clientMess
   return data?.data ?? data
 }
 
+export async function applyEventConversationSocialAction(sessionId, action) {
+  const { data } = await esporteamApi.post(`/sessions/${sessionId}/conversation/actions`, action)
+  return data?.data ?? data
+}
+
 export async function login(email, password) {
   const { data } = await authApi.post('/login', { email, password })
   return data?.data ?? data
