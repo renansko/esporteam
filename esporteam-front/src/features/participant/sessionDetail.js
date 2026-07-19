@@ -48,6 +48,7 @@ export function createSportSessionDetailView(detail, {
       : 'check'
 
   return {
+    id: detail.id,
     title: detail.title,
     modalityLabel: detail.modality?.name || 'Modalidade',
     modalityIcon: resolveSportIcon(detail.modality),

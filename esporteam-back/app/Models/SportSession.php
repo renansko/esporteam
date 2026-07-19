@@ -88,6 +88,11 @@ class SportSession extends Model
         return $this->hasMany(SessionParticipant::class)->orderBy('id');
     }
 
+    public function conversation(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(EventConversation::class);
+    }
+
     public function participants(): BelongsToMany
     {
         return $this->belongsToMany(SportProfile::class, 'session_participants', 'sport_session_id', 'sport_profile_id')

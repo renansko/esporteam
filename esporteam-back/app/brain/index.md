@@ -16,6 +16,8 @@
 - [`entities/AvailabilityWindow.md`](entities/AvailabilityWindow.md) — Disponibilidade recorrente de um Perfil Esportivo
 - [`entities/SportSession.md`](entities/SportSession.md) — Sessao Esportiva pontual ou hospedada por um Perfil Esportivo
 - [`entities/SportSessionSeries.md`](entities/SportSessionSeries.md) — regra semanal duradoura e ocorrencias materializadas
+- [`entities/EventConversation.md`](entities/EventConversation.md) — conversa canônica de uma Sessão Esportiva pontual
+- [`entities/EventMessage.md`](entities/EventMessage.md) — mensagem textual durável e idempotente
 - [`entities/SessionParticipant.md`](entities/SessionParticipant.md) — participacao, convite e interesse de Perfil Esportivo em uma Sessao Esportiva
 - [`entities/Idea.md`](entities/Idea.md) — entrada bruta, schema da tabela `ideas` (com embedding)
 - [`entities/RoadmapItem.md`](entities/RoadmapItem.md) — item priorizado do roadmap + recomputeScore
@@ -30,6 +32,7 @@
 - [`services/DiscoveryService.md`](services/DiscoveryService.md) — Descoberta determinística por modos de pessoas, sessões e locais
 - [`services/DiscoveryCache.md`](services/DiscoveryCache.md) — Cache versionado das respostas de Descoberta e mapa
 - [`services/SportSessionService.md`](services/SportSessionService.md) — criacao, listagem aberta, participacao e match em grupo de Sessoes Esportivas
+- [`services/EventConversationService.md`](services/EventConversationService.md) — autorização, histórico e postagem de conversa de Sessão Esportiva
 - [`services/PostMatchSportActionService.md`](services/PostMatchSportActionService.md) — proximas acoes, horario/local e sessao depois de match aceito
 - [`services/IdeaIngestionService.md`](services/IdeaIngestionService.md) — ponto único de criação de Ideas (gera embedding)
 - [`services/ClusteringService.md`](services/ClusteringService.md) — orquestrador da run (LLM + fallback)
@@ -43,6 +46,7 @@
 - [`functions/DiscoveryService.md`](functions/DiscoveryService.md) — `discoverForUser`, `profilesForUser`, modos e filtros compartilhados
 - [`functions/DiscoveryCache.md`](functions/DiscoveryCache.md) — cache versionado por usuário, superfície e filtros
 - [`functions/SportSessionService.md`](functions/SportSessionService.md) — `createForUser`, `openSessions`, recomendacoes, convites, decisoes e `join`
+- [`functions/EventConversationService.md`](functions/EventConversationService.md) — `openConversation` e `postMessage`
 - [`functions/PostMatchSportActionService.md`](functions/PostMatchSportActionService.md) — `actionsForUser` e `saveSessionForUser`
 - [`functions/IdeaIngestionService.md`](functions/IdeaIngestionService.md) — contratos das funções públicas
 - [`functions/ClusteringService.md`](functions/ClusteringService.md) — `executeRun` e side effects

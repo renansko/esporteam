@@ -5,6 +5,7 @@ use App\Http\Controllers\ClassOfferingController;
 use App\Http\Controllers\ClusteringRunController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\DiscoveryController;
+use App\Http\Controllers\EventConversationController;
 use App\Http\Controllers\IdeaController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\PostMatchSportActionController;
@@ -16,8 +17,11 @@ use App\Http\Controllers\SportProfileController;
 use App\Http\Controllers\SportSessionController;
 use App\Http\Controllers\TeacherProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::get('/health', fn () => response()->json(['status' => 'ok']));
+
+Broadcast::routes(['middleware' => ['auth.service']]);
 
 Route::middleware('auth.service')->group(function () {
     Route::get('/me', MeController::class);
@@ -61,6 +65,10 @@ Route::middleware('auth.service')->group(function () {
     Route::post('/session-series/{series}/follow', [SportSessionController::class, 'followSeries'])->middleware('adult.eligible')->whereNumber('series');
     Route::delete('/session-series/{series}/follow', [SportSessionController::class, 'unfollowSeries'])->middleware('adult.eligible')->whereNumber('series');
     Route::get('/sessions/{session}', [SportSessionController::class, 'show'])
+        ->whereNumber('session');
+    Route::get('/sessions/{session}/conversation', [EventConversationController::class, 'show'])->middleware('adult.eligible')
+        ->whereNumber('session');
+    Route::post('/sessions/{session}/conversation/messages', [EventConversationController::class, 'store'])->middleware('adult.eligible')
         ->whereNumber('session');
     Route::get('/sessions/{session}/recommendations', [SportSessionController::class, 'recommendations'])
         ->whereNumber('session');

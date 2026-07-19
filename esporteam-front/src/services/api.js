@@ -25,6 +25,19 @@ export const authApi = makeClient('/auth')
 export const wsApi = makeClient('/ws')
 export const esporteamApi = makeClient('/api')
 
+export async function openEventConversation(sessionId, { cursor = null } = {}) {
+  const { data } = await esporteamApi.get(`/sessions/${sessionId}/conversation`, { params: cursor ? { cursor } : undefined })
+  return data?.data ?? data
+}
+
+export async function postEventConversationMessage(sessionId, { body, clientMessageId }) {
+  const { data } = await esporteamApi.post(`/sessions/${sessionId}/conversation/messages`, {
+    body,
+    client_message_id: clientMessageId,
+  })
+  return data?.data ?? data
+}
+
 export async function login(email, password) {
   const { data } = await authApi.post('/login', { email, password })
   return data?.data ?? data

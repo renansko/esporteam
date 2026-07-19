@@ -20,6 +20,7 @@ import ProfileBioAssistant from './ProfileBioAssistant.vue'
 import Skeleton from './Skeleton.vue'
 import NearbySessionsMap from './NearbySessionsMap.vue'
 import PublishOneOffSessionWizard from './PublishOneOffSessionWizard.vue'
+import EventConversation from './EventConversation.vue'
 import { createParticipantMatchView } from '../features/participant/matches'
 import { firstValidationError } from '../services/validation'
 
@@ -978,6 +979,8 @@ async function highlightBioContext() {
             <h3>Pessoas indo</h3>
             <p>{{ sportSessionDetailView.participants.join(', ') }}</p>
           </section>
+
+          <EventConversation :session-id="sportSessionDetailView.id" />
 
           <p
             v-if="sportSessionDetailView.participationFeedback"

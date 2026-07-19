@@ -139,8 +139,15 @@ services:
       REDIS_HOST: esporteam-redis
       REDIS_CLIENT: phpredis
       SESSION_DRIVER: file
-      QUEUE_CONNECTION: sync
-      BROADCAST_CONNECTION: log
+      QUEUE_CONNECTION: redis
+      BROADCAST_CONNECTION: reverb
+      FEATURE_EVENT_SOCIAL_CHAT: "true"
+      REVERB_APP_ID: esporteam
+      REVERB_APP_KEY: esporteam-reverb-key
+      REVERB_APP_SECRET: esporteam-reverb-secret
+      REVERB_HOST: esporteam-reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
       AUTH_SERVICE_URL: http://esporteam-auth:8000
       WORKSPACE_SERVICE_URL: http://esporteam-workspace:8000
     command: >
@@ -191,6 +198,62 @@ services:
       - esporteam-back
       - esporteam-auth
       - esporteam-workspace
+
+  esporteam-reverb:
+    build:
+      context: ../esporteam-back
+      dockerfile: ../esporteam-docker/dockerfiles/back.Dockerfile
+    container_name: esporteam-reverb
+    working_dir: /var/www
+    environment:
+      REDIS_HOST: esporteam-redis
+      REVERB_APP_ID: esporteam
+      REVERB_APP_KEY: esporteam-reverb-key
+      REVERB_APP_SECRET: esporteam-reverb-secret
+      REVERB_HOST: esporteam-reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    volumes:
+      - ../esporteam-back:/var/www
+      - esporteam-back-vendor:/var/www/vendor
+    ports:
+      - "8080:8080"
+    depends_on:
+      esporteam-redis:
+        condition: service_healthy
+
+  esporteam-back-queue:
+    build:
+      context: ../esporteam-back
+      dockerfile: ../esporteam-docker/dockerfiles/back.Dockerfile
+    working_dir: /var/www
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: esporteam-postgres
+      DB_PORT: 5432
+      DB_DATABASE: esporteam_back
+      DB_USERNAME: esporteam
+      DB_PASSWORD: secret
+      REDIS_HOST: esporteam-redis
+      QUEUE_CONNECTION: redis
+      BROADCAST_CONNECTION: reverb
+      FEATURE_EVENT_SOCIAL_CHAT: "true"
+      REVERB_APP_ID: esporteam
+      REVERB_APP_KEY: esporteam-reverb-key
+      REVERB_APP_SECRET: esporteam-reverb-secret
+      REVERB_HOST: esporteam-reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+    command: php artisan queue:work redis --queue=default,broadcasts --tries=3 --timeout=60
+    volumes:
+      - ../esporteam-back:/var/www
+      - esporteam-back-vendor:/var/www/vendor
+    depends_on:
+      esporteam-postgres:
+        condition: service_healthy
+      esporteam-redis:
+        condition: service_healthy
 
 volumes:
   esporteam-pgdata:
