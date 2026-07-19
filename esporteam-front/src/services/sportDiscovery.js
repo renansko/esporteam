@@ -450,3 +450,21 @@ export async function joinOpenSportSession(sessionId) {
 export async function requestCuratedSportSessionParticipation(sessionId) {
   return joinSportSession(sessionId)
 }
+
+export async function updateSportSessionOccurrence(sessionId, payload) {
+  if (!sessionId) throw new Error('session_id_required')
+  const { data } = await esporteamApi.patch(`/sessions/${sessionId}/occurrence`, payload)
+  return normalizeSportSessionDetail(data?.data ?? data)
+}
+
+export async function updateSportSessionSeriesFromOccurrence(sessionId, payload) {
+  if (!sessionId) throw new Error('session_id_required')
+  const { data } = await esporteamApi.patch(`/sessions/${sessionId}/series-from`, payload)
+  return normalizeSportSessionDetail(data?.data ?? data)
+}
+
+export async function cancelSportSessionOccurrence(sessionId, payload) {
+  if (!sessionId) throw new Error('session_id_required')
+  const { data } = await esporteamApi.post(`/sessions/${sessionId}/cancel`, payload)
+  return normalizeSportSessionDetail(data?.data ?? data)
+}

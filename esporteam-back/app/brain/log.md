@@ -21,3 +21,4 @@
 | 2026-07-12 | #21 | Front do fluxo de Bio Assistida e contrato persistente de onboarding, histórico paginado, erros estruturados e criação idempotente. |
 | 2026-07-17 | #26 | Series semanais: regra duradoura, ocorrencias em horizonte movel de 90 dias, idempotencia, DST e scheduler de reparo. |
 | 2026-07-17 | #27 | Participação por ocorrência, acompanhamento idempotente de série e superfície agrupada de Eventos. |
+| 2026-07-17 | #28 | Gestão de exceções, mudanças futuras e cancelamento de ocorrências recorrentes. |

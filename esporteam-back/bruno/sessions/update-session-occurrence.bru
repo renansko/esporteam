@@ -1,0 +1,25 @@
+meta {
+  name: Update Session Occurrence
+  type: http
+  seq: 12
+}
+
+patch {
+  url: {{baseUrl}}/sessions/1/occurrence
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "version": 1,
+    "title": "Volei no ginasio"
+  }
+}
+
+docs {
+  Cria uma exceção duradoura apenas para a ocorrência escolhida. A versão evita sobrescrever edição concorrente.
+}

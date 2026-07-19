@@ -7,6 +7,7 @@ Identidade duradoura de uma regra semanal publicada por um Anfitriao da Sessao.
 - `starts_on`, `starts_at_local`, `timezone`, `duration_minutes`, `interval_weeks` e `weekdays` definem o horario de parede.
 - Termino e `never`, `date` (`ends_on`) ou `count` (`occurrence_count`).
 - `publication_key` e unica por anfitriao; `occurrence_key` e unica por serie na ocorrencia materializada.
+- `version` protege alterações da regra contra edições concorrentes.
 - Localizacao exata permanece na serie e em cada ocorrencia; Descoberta usa somente os valores aproximados.
 
 ## Relacionamentos
@@ -14,3 +15,5 @@ Identidade duradoura de uma regra semanal publicada por um Anfitriao da Sessao.
 - `creator`: Anfitriao da Sessao (`SportProfile`).
 - `sport`: Modalidade.
 - `occurrences`: Sessoes Esportivas materializadas.
+
+`changeSeriesFromOccurrence` aplica detalhes revisados às ocorrências futuras equivalentes, preservando IDs e participações; exceções isoladas não são reescritas.

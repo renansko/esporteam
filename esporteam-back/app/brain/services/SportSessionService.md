@@ -26,6 +26,9 @@ Ele preserva `SportProfile` como identidade de participacao: callers passam `use
 - [`join`](../functions/SportSessionService.md#join)
 - [`joinOccurrence`](../functions/SportSessionService.md#joinOccurrence)
 - [`followSeries`](../functions/SportSessionService.md#followSeries)
+- [`changeOccurrence`](../functions/SportSessionService.md#changeOccurrence)
+- [`changeSeriesFromOccurrence`](../functions/SportSessionService.md#changeSeriesFromOccurrence)
+- [`cancelOccurrence`](../functions/SportSessionService.md#cancelOccurrence)
 - [`eventsForUser`](../functions/SportSessionService.md#eventsForUser)
 - [`participantSessionsForUser`](../functions/SportSessionService.md#participantSessionsForUser)
 
@@ -40,3 +43,4 @@ Ele preserva `SportProfile` como identidade de participacao: callers passam `use
 - `GET /api/sessions/{id}` retorna detalhe somente de sessoes publicas abertas e bloqueia detalhe de anfitrioes bloqueados; carrega apenas participacao do Perfil Esportivo autenticado.
 - Nenhum fluxo de match em grupo aceita preco, taxa ou pagamento por vaga.
 - Series semanais sao regras duradouras; o modulo materializa um horizonte movel de 90 dias com chaves deterministicas. Jobs apenas chamam essa interface.
+- Gestão de recorrência é restrita ao Anfitrião e usa `version` para devolver conflito recuperável.

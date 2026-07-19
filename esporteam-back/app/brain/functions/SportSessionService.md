@@ -108,6 +108,24 @@ Intenção explícita de participar somente da ocorrência escolhida; preserva t
 
 Cria/remove a relação única entre Perfil Esportivo e série, sem criar ou cancelar participação em ocorrência. Acompanhamento não libera ponto exato.
 
+## changeOccurrence
+
+Assinatura: `changeOccurrence(int $userId, SportSession $occurrence, array $data): SportSession`.
+
+O Anfitrião altera somente uma ocorrência de série. Exige `version`, grava uma exceção duradoura e invalida a Descoberta.
+
+## changeSeriesFromOccurrence
+
+Assinatura: `changeSeriesFromOccurrence(int $userId, SportSession $occurrence, array $data): SportSession`.
+
+Altera a regra a partir da ocorrência selecionada, mantendo os registros futuros equivalentes e suas participações.
+
+## cancelOccurrence
+
+Assinatura: `cancelOccurrence(int $userId, SportSession $occurrence, int $version, ?string $reason): SportSession`.
+
+Cancela apenas a ocorrência; a série e os registros de participantes são preservados e `change_notice` fica disponível para Eventos.
+
 ## eventsForUser
 
 Retorna a superfície agrupada de Eventos: próximas confirmadas, aguardando aprovação, séries acompanhadas com próximas ocorrências e atividades hospedadas.

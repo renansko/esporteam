@@ -17,6 +17,8 @@ Sessao esportiva pontual criada por um Perfil Esportivo para partida, treino, co
 - `requires_approval`: quando verdadeiro, pedidos de vaga ficam `interested` ate aprovacao do anfitriao.
 - `visibility`: `public` ou `private`.
 - `status`: `open`, `cancelled` ou `completed`.
+- `version`: contador de concorrência otimista para alterações do Anfitrião.
+- `is_series_override`, `change_notice` e `cancelled_reason`: exceção duradoura, estado de alteração/cancelamento e motivo interno.
 
 ## Relacionamentos
 
@@ -41,3 +43,5 @@ Cards publicos de Descoberta de sessoes mostram `participant_count`, mas nao mos
 Sessoes esportivas sao sempre gratuitas para participantes. Campos de cobranca como `price_cents`, `fee_cents`, `is_paid`, `payment_required` e `currency` nao pertencem a `sport_sessions` e devem ser rejeitados na criacao. Assinaturas de organizador/entusiasta sao billing da plataforma, nao taxa de evento.
 
 Ocorrencias de serie mantem a mesma forma de uma Sessao Esportiva pontual. A Descoberta nunca expande regras no cliente.
+
+Uma ocorrência cancelada continua registrada para participantes, mas deixa de ser aberta/descobrível. Uma alteração isolada não é sobrescrita por mudanças futuras da série.

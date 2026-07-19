@@ -1,0 +1,26 @@
+meta {
+  name: Update Series From Occurrence
+  type: http
+  seq: 13
+}
+
+patch {
+  url: {{baseUrl}}/sessions/1/series-from
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "version": 1,
+    "starts_at_local": "20:00",
+    "title": "Volei no ginasio"
+  }
+}
+
+docs {
+  Altera a regra efetiva a partir da ocorrência, preservando os registros de participação futuros equivalentes.
+}

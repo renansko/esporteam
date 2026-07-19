@@ -655,6 +655,81 @@ class SportSessionService
         return $this->join($userId, $occurrence);
     }
 
+    /**
+     * Applies a durable exception to one materialized occurrence only.
+     *
+     * @wiki app/brain/functions/SportSessionService.md#changeOccurrence
+     */
+    public function changeOccurrence(int $userId, SportSession $occurrence, array $data): SportSession
+    {
+        $host = $this->authorizeOccurrenceHost($userId, $occurrence);
+
+        return DB::transaction(function () use ($occurrence, $data, $host) {
+            $locked = SportSession::query()->whereKey($occurrence->id)->lockForUpdate()->firstOrFail();
+            $this->assertCurrentVersion($locked->version, $data['version']);
+            $this->assertValidLevelRange($data['min_level'] ?? $locked->min_level, $data['max_level'] ?? $locked->max_level);
+
+            $locked->fill($this->occurrenceChanges($data));
+            $locked->is_series_override = true;
+            $locked->change_notice = 'updated';
+            $locked->version++;
+            $locked->save();
+            app(DiscoveryCache::class)->invalidate($host->user_id);
+
+            return $this->freshSession($locked);
+        });
+    }
+
+    /**
+     * Changes the effective weekly rule from an occurrence onward while retaining
+     * the already-materialized records (and their participation) as identities.
+     *
+     * @wiki app/brain/functions/SportSessionService.md#changeSeriesFromOccurrence
+     */
+    public function changeSeriesFromOccurrence(int $userId, SportSession $occurrence, array $data): SportSession
+    {
+        $host = $this->authorizeOccurrenceHost($userId, $occurrence);
+
+        return DB::transaction(function () use ($occurrence, $data, $host) {
+            $anchor = SportSession::query()->whereKey($occurrence->id)->lockForUpdate()->firstOrFail();
+            $this->assertCurrentVersion($anchor->version, $data['version']);
+            $series = SportSessionSeries::query()->whereKey($anchor->sport_session_series_id)->lockForUpdate()->firstOrFail();
+            $this->assertCurrentVersion($series->version, $data['series_version']);
+            $this->assertValidLevelRange($data['min_level'] ?? $series->min_level, $data['max_level'] ?? $series->max_level);
+
+            $series->fill($this->seriesChanges($data));
+            $series->starts_on = $anchor->starts_at->setTimezone($series->timezone)->toDateString();
+            $series->version++;
+            $series->save();
+            $this->replanFutureOccurrences($series->fresh(), $anchor);
+            app(DiscoveryCache::class)->invalidate($host->user_id);
+
+            return $this->freshSession($anchor->fresh());
+        });
+    }
+
+    /** @wiki app/brain/functions/SportSessionService.md#cancelOccurrence */
+    public function cancelOccurrence(int $userId, SportSession $occurrence, int $version, ?string $reason = null): SportSession
+    {
+        $host = $this->authorizeOccurrenceHost($userId, $occurrence);
+
+        return DB::transaction(function () use ($occurrence, $version, $reason, $host) {
+            $locked = SportSession::query()->whereKey($occurrence->id)->lockForUpdate()->firstOrFail();
+            $this->assertCurrentVersion($locked->version, $version);
+            if ($locked->status !== SportSessionStatus::Open) {
+                throw ValidationException::withMessages(['session' => 'Occurrence is no longer open.']);
+            }
+            $locked->status = SportSessionStatus::Cancelled;
+            $locked->cancelled_reason = $reason;
+            $locked->change_notice = 'cancelled';
+            $locked->version++;
+            $locked->save();
+            app(DiscoveryCache::class)->invalidate($host->user_id);
+
+            return $this->freshSession($locked);
+        });
+    }
+
     /** @wiki app/brain/functions/SportSessionService.md#followSeries */
     public function followSeries(int $userId, SportSessionSeries $series): SportSessionSeries
     {
@@ -714,6 +789,140 @@ class SportSessionService
         }
 
         return $profile;
+    }
+
+    private function authorizeOccurrenceHost(int $userId, SportSession $occurrence): SportProfile
+    {
+        $profile = $this->requireProfile($userId);
+        if ($occurrence->sport_session_series_id === null || $occurrence->creator_profile_id !== $profile->id) {
+            // Management URLs must not reveal a series or occurrence to another profile.
+            abort(404, 'Occurrence not found.');
+        }
+
+        return $profile;
+    }
+
+    private function assertCurrentVersion(int $current, int $provided): void
+    {
+        if ($current !== $provided) {
+            abort(409, 'This occurrence changed since it was opened. Reload it and try again.');
+        }
+    }
+
+    private function occurrenceChanges(array $data): array
+    {
+        $changes = collect($data)->except(['version'])->only([
+            'title', 'description', 'rules', 'equipment', 'starts_at', 'ends_at', 'timezone', 'meeting_point_label',
+            'location_label_public', 'city', 'region', 'capacity', 'entry_mode', 'visibility', 'min_level', 'max_level',
+        ])->all();
+        if (array_key_exists('location_label_public', $changes)) {
+            $changes['location_label'] = $changes['location_label_public'];
+        }
+        if (array_key_exists('latitude', $data)) {
+            $changes['latitude_exact'] = $data['latitude'];
+            $changes['latitude_approx'] = round((float) $data['latitude'], 3);
+        }
+        if (array_key_exists('longitude', $data)) {
+            $changes['longitude_exact'] = $data['longitude'];
+            $changes['longitude_approx'] = round((float) $data['longitude'], 3);
+        }
+        if (array_key_exists('entry_mode', $changes)) {
+            $changes['requires_approval'] = SportSessionEntryMode::from($changes['entry_mode'])->requiresApproval();
+        }
+
+        return $changes;
+    }
+
+    private function seriesChanges(array $data): array
+    {
+        $changes = $this->occurrenceChanges($data);
+        unset($changes['starts_at'], $changes['ends_at'], $changes['location_label']);
+        foreach (['starts_at_local', 'interval_weeks', 'weekdays', 'ends_type', 'ends_on', 'occurrence_count'] as $key) {
+            if (array_key_exists($key, $data)) {
+                $changes[$key] = $data[$key];
+            }
+        }
+
+        return $changes;
+    }
+
+    /** Reconciles the materialized future set with a changed weekly rule. */
+    private function replanFutureOccurrences(SportSessionSeries $series, SportSession $anchor): void
+    {
+        $now = CarbonImmutable::now('UTC');
+        $future = SportSession::query()->where('sport_session_series_id', $series->id)
+            ->where('starts_at', '>=', $anchor->starts_at)->lockForUpdate()->get();
+        $horizon = $now->setTimezone($series->timezone)->addDays(90)->endOfDay();
+        if ($future->isNotEmpty()) {
+            $horizon = $horizon->max($future->max('starts_at')->setTimezone($series->timezone)->endOfDay());
+        }
+        $existingByDate = $future->groupBy(fn (SportSession $session) => $session->starts_at->setTimezone($series->timezone)->toDateString());
+
+        $anchorLocalStart = CarbonImmutable::parse(
+            $anchor->starts_at->setTimezone($series->timezone)->toDateString().' '.$series->starts_at_local,
+            $series->timezone,
+        );
+        $desiredStarts = $this->recurrenceStartsUntil($series, $horizon)
+            ->prepend($anchorLocalStart)
+            ->unique(fn (CarbonImmutable $start) => $start->toDateString())
+            ->values();
+
+        foreach ($desiredStarts as $localStart) {
+            if ($localStart->utc()->lessThan($anchor->starts_at)) {
+                continue;
+            }
+            $date = $localStart->toDateString();
+            /** @var SportSession|null $equivalent */
+            $equivalent = $existingByDate->pull($date)?->shift();
+            $key = $localStart->format('Y-m-d\\TH:i:sP');
+            if ($equivalent === null) {
+                $equivalent = $this->findOrCreateSeriesOccurrence($series, $localStart, $key);
+                $equivalent->participants()->syncWithoutDetaching([$series->creator_profile_id => ['status' => SessionParticipantStatus::Joined->value]]);
+                continue;
+            }
+            if ($equivalent->is_series_override || $equivalent->status !== SportSessionStatus::Open) {
+                continue;
+            }
+            $equivalent->fill(array_merge($this->occurrenceAttributes($series, $localStart, $key), [
+                'change_notice' => 'updated', 'version' => $equivalent->version + 1,
+            ]));
+            $equivalent->save();
+        }
+
+        $existingByDate->flatten()->each(function (SportSession $obsolete): void {
+            if ($obsolete->is_series_override || $obsolete->status !== SportSessionStatus::Open) {
+                return;
+            }
+            $hasExternalParticipation = $obsolete->participationRecords()
+                ->where('sport_profile_id', '!=', $obsolete->creator_profile_id)->exists();
+            if (! $hasExternalParticipation) {
+                $obsolete->delete();
+                return;
+            }
+            $obsolete->status = SportSessionStatus::Cancelled;
+            $obsolete->change_notice = 'cancelled';
+            $obsolete->version++;
+            $obsolete->save();
+        });
+    }
+
+    /** @return Collection<int, CarbonImmutable> */
+    private function recurrenceStartsUntil(SportSessionSeries $series, CarbonImmutable $horizon): Collection
+    {
+        $timezone = $series->timezone;
+        $cursor = CarbonImmutable::parse($series->starts_on->toDateString(), $timezone)->startOfDay();
+        $starts = collect();
+        $ordinal = 0;
+        while ($cursor->lessThanOrEqualTo($horizon)) {
+            $seriesOffset = intdiv($cursor->diffInDays(CarbonImmutable::parse($series->starts_on->toDateString(), $timezone)->startOfDay()), 7);
+            if ($seriesOffset % $series->interval_weeks === 0 && in_array($cursor->isoWeekday(), $series->weekdays, true)) {
+                $ordinal++;
+                if ($this->seriesHasEndedBefore($series, $cursor, $ordinal)) break;
+                $starts->push(CarbonImmutable::parse($cursor->toDateString().' '.$series->starts_at_local, $timezone));
+            }
+            $cursor = $cursor->addDay();
+        }
+        return $starts;
     }
 
     private function lockOpenSession(SportSession $session): SportSession

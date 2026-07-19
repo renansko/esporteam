@@ -1,0 +1,25 @@
+meta {
+  name: Cancel Session Occurrence
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/sessions/1/cancel
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "version": 1,
+    "reason": "Quadra interditada"
+  }
+}
+
+docs {
+  Cancela somente a ocorrência, mantendo a série ativa e a ocorrência visível como cancelada para participantes.
+}

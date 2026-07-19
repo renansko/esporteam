@@ -45,6 +45,10 @@ class SportSessionResource extends JsonResource
             'max_level' => $this->max_level,
             'visibility' => $this->visibility,
             'status' => $this->status?->value,
+            'version' => $this->version,
+            'is_series_override' => $this->is_series_override,
+            'change_notice' => $this->change_notice,
+            'cancelled_reason' => $this->when($this->isOwnedByRequester($request), $this->cancelled_reason),
             'participant_count' => $this->participant_count ?? $this->participants_count,
             'distance_km' => $this->when($this->getAttribute('distance_km') !== null, $this->getAttribute('distance_km')),
             'next_action' => $this->getAttribute('next_action') ?? 'indisponivel',
@@ -54,6 +58,7 @@ class SportSessionResource extends JsonResource
                 'interval_weeks' => $this->series->interval_weeks,
                 'weekdays' => $this->series->weekdays,
                 'ends_type' => $this->series->ends_type,
+                'version' => $this->series->version,
                 'next_occurrence' => $this->when($this->getAttribute('series_next_occurrence') !== null, fn () => [
                     'id' => $this->getAttribute('series_next_occurrence')->id,
                     'starts_at' => $this->getAttribute('series_next_occurrence')->starts_at?->toISOString(),

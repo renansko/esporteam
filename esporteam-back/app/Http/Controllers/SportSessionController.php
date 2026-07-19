@@ -10,6 +10,9 @@ use App\Http\Requests\StoreSessionInvitesRequest;
 use App\Http\Requests\StoreSportSessionRequest;
 use App\Http\Requests\UpdateSessionInviteRequest;
 use App\Http\Requests\UpdateSessionParticipantRequest;
+use App\Http\Requests\UpdateSportSessionOccurrenceRequest;
+use App\Http\Requests\UpdateSportSessionSeriesFromOccurrenceRequest;
+use App\Http\Requests\CancelSportSessionOccurrenceRequest;
 use App\Http\Resources\SessionRecommendationResource;
 use App\Http\Resources\SportSessionResource;
 use App\Models\SportProfile;
@@ -114,6 +117,21 @@ class SportSessionController extends Controller
         $session = $this->sessions->joinOccurrence((int) $request->user()->id, $session);
 
         return $this->createdResponse(new SportSessionResource($session), 'Session joined.');
+    }
+
+    public function updateOccurrence(UpdateSportSessionOccurrenceRequest $request, SportSession $session): JsonResponse
+    {
+        return $this->successResponse(new SportSessionResource($this->sessions->changeOccurrence((int) $request->user()->id, $session, $request->validated())), 'Occurrence updated.');
+    }
+
+    public function updateSeriesFromOccurrence(UpdateSportSessionSeriesFromOccurrenceRequest $request, SportSession $session): JsonResponse
+    {
+        return $this->successResponse(new SportSessionResource($this->sessions->changeSeriesFromOccurrence((int) $request->user()->id, $session, $request->validated())), 'Future occurrences updated.');
+    }
+
+    public function cancelOccurrence(CancelSportSessionOccurrenceRequest $request, SportSession $session): JsonResponse
+    {
+        return $this->successResponse(new SportSessionResource($this->sessions->cancelOccurrence((int) $request->user()->id, $session, $request->validated('version'), $request->validated('reason'))), 'Occurrence cancelled.');
     }
 
     public function followSeries(Request $request, SportSessionSeries $series): JsonResponse

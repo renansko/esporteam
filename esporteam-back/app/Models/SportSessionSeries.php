@@ -20,6 +20,7 @@ class SportSessionSeries extends Model
         'city', 'region', 'latitude_approx', 'longitude_approx', 'latitude_exact', 'longitude_exact',
         'capacity', 'requires_approval', 'entry_mode', 'min_level', 'max_level', 'visibility', 'status',
         'publication_key',
+        'version',
     ];
 
     protected $casts = [
@@ -27,6 +28,7 @@ class SportSessionSeries extends Model
         'duration_minutes' => 'integer', 'interval_weeks' => 'integer', 'occurrence_count' => 'integer',
         'latitude_approx' => 'float', 'longitude_approx' => 'float', 'latitude_exact' => 'float',
         'longitude_exact' => 'float', 'capacity' => 'integer', 'requires_approval' => 'boolean',
+        'version' => 'integer',
     ];
 
     public function creator(): BelongsTo

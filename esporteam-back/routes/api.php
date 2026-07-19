@@ -72,6 +72,9 @@ Route::middleware('auth.service')->group(function () {
         ->whereNumber('session');
     Route::post('/sessions/{session}/join', [SportSessionController::class, 'join'])->middleware('adult.eligible')
         ->whereNumber('session');
+    Route::patch('/sessions/{session}/occurrence', [SportSessionController::class, 'updateOccurrence'])->middleware('adult.eligible')->whereNumber('session');
+    Route::patch('/sessions/{session}/series-from', [SportSessionController::class, 'updateSeriesFromOccurrence'])->middleware('adult.eligible')->whereNumber('session');
+    Route::post('/sessions/{session}/cancel', [SportSessionController::class, 'cancelOccurrence'])->middleware('adult.eligible')->whereNumber('session');
     Route::get('/post-match-actions', [PostMatchSportActionController::class, 'index']);
     Route::post('/post-match-actions/session', [PostMatchSportActionController::class, 'saveSession'])->middleware('adult.eligible');
 
