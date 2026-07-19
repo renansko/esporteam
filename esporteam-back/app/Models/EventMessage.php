@@ -37,4 +37,9 @@ class EventMessage extends Model
     {
         return $this->hasMany(EventMessageReaction::class);
     }
+
+    public function media(): HasMany
+    {
+        return $this->hasMany(EventMessageMedia::class)->orderBy('position');
+    }
 }

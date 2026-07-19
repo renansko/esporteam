@@ -4,6 +4,7 @@ use App\Http\Controllers\BioSuggestionController;
 use App\Http\Controllers\ClassOfferingController;
 use App\Http\Controllers\ClusteringRunController;
 use App\Http\Controllers\ConnectionController;
+use App\Http\Controllers\ConversationMediaController;
 use App\Http\Controllers\DiscoveryController;
 use App\Http\Controllers\EventConversationController;
 use App\Http\Controllers\IdeaController;
@@ -70,6 +71,9 @@ Route::middleware('auth.service')->group(function () {
         ->whereNumber('session');
     Route::post('/sessions/{session}/conversation/messages', [EventConversationController::class, 'store'])->middleware('adult.eligible')
         ->whereNumber('session');
+    Route::post('/sessions/{session}/conversation/media/prepare', [ConversationMediaController::class, 'prepare'])->middleware('adult.eligible')->whereNumber('session');
+    Route::post('/sessions/{session}/conversation/media/complete', [ConversationMediaController::class, 'complete'])->middleware('adult.eligible')->whereNumber('session');
+    Route::get('/conversation-media/{media}', [ConversationMediaController::class, 'show'])->middleware('adult.eligible')->whereNumber('media');
     Route::post('/sessions/{session}/conversation/actions', [EventConversationController::class, 'social'])->middleware('adult.eligible')
         ->whereNumber('session');
     Route::get('/sessions/{session}/recommendations', [SportSessionController::class, 'recommendations'])
@@ -107,3 +111,6 @@ Route::middleware('auth.service')->group(function () {
     Route::get('/roadmap/{id}', [RoadmapController::class, 'show'])
         ->whereNumber('id');
 });
+
+Route::put('/conversation-media/upload/{key}', [ConversationMediaController::class, 'localUpload'])->name('conversation-media.upload')->where('key', '.*');
+Route::get('/conversation-media/download/{key}', [ConversationMediaController::class, 'localDownload'])->name('conversation-media.download')->where('key', '.*');

@@ -38,7 +38,7 @@ class EventConversationService
         $this->rateLimit('read', $profile->id, $session->id, 60, 60);
         $conversation = $this->conversationFor($session);
         $messages = EventMessage::query()
-            ->with(['author', 'replyTo.author', 'mentions.profile', 'reactions'])
+            ->with(['author', 'replyTo.author', 'mentions.profile', 'reactions', 'media.media'])
             ->where('event_conversation_id', $conversation->id)
             ->when($cursor !== null, fn ($query) => $query->where('id', '>', $cursor))
             ->orderBy('id')
@@ -63,17 +63,17 @@ class EventConversationService
     }
 
     /** @wiki app/brain/functions/EventConversationService.md#postMessage */
-    public function postMessage(int $userId, SportSession $session, string $body, string $clientMessageId, ?int $replyToMessageId = null): EventMessage
+    public function postMessage(int $userId, SportSession $session, ?string $body, string $clientMessageId, ?int $replyToMessageId = null, array $mediaIds = []): EventMessage
     {
         $profile = $this->requireProfile($userId);
         $this->assertMayAccess($profile, $session);
         $this->rateLimit('write', $profile->id, $session->id, 20, 60);
-        $body = trim(strip_tags($body));
-        if ($body === '') {
+        $body = trim(strip_tags((string) $body));
+        if ($body === '' && $mediaIds === []) {
             throw ValidationException::withMessages(['body' => 'A mensagem precisa conter texto.']);
         }
 
-        return DB::transaction(function () use ($profile, $session, $body, $clientMessageId, $replyToMessageId): EventMessage {
+        return DB::transaction(function () use ($profile, $session, $body, $clientMessageId, $replyToMessageId, $mediaIds): EventMessage {
             $conversation = $this->conversationFor($session);
             $existing = EventMessage::query()
                 ->with('author')
@@ -82,7 +82,7 @@ class EventConversationService
                 ->where('client_message_id', $clientMessageId)
                 ->first();
             if ($existing !== null) {
-                return $existing;
+                return $existing->load(['media.media']);
             }
 
             try {
@@ -92,12 +92,17 @@ class EventConversationService
                     'author_profile_id' => $profile->id,
                     'client_message_id' => $clientMessageId,
                     'body' => $body,
-                ])->load(['author', 'replyTo.author', 'mentions.profile', 'reactions']);
+                ]);
+                if ($mediaIds !== []) {
+                    $media = app(ConversationMediaService::class)->approvedForMessage($conversation, $profile->id, $mediaIds);
+                    foreach ($media as $position => $item) $message->media()->create(['conversation_media_id' => $item->id, 'position' => $position]);
+                }
+                $message->load(['author', 'replyTo.author', 'mentions.profile', 'reactions', 'media.media']);
             } catch (QueryException $exception) {
                 $message = EventMessage::query()->with('author')
                     ->where('event_conversation_id', $conversation->id)
                     ->where('author_profile_id', $profile->id)
-                    ->where('client_message_id', $clientMessageId)->first();
+                    ->where('client_message_id', $clientMessageId)->first()?->load(['media.media']);
                 if ($message === null) {
                     throw $exception;
                 }
@@ -260,6 +265,19 @@ class EventConversationService
         } catch (NotFoundHttpException) {
             return false;
         }
+    }
+
+    /** Authorizes access and returns the canonical conversation for adjacent deep modules. */
+    public function authorizedConversation(int $userId, SportSession $session): EventConversation
+    {
+        $profile = $this->requireProfile($userId);
+        $this->assertMayAccess($profile, $session);
+        return $this->conversationFor($session);
+    }
+
+    public function profileForUser(int $userId): SportProfile
+    {
+        return $this->requireProfile($userId);
     }
 
     private function conversationFor(SportSession $session): EventConversation

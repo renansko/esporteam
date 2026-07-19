@@ -3,6 +3,14 @@
 namespace App\Providers;
 
 use App\Services\WorkspaceClient;
+use App\Contracts\ConversationMedia\ContentSafetyScanner;
+use App\Contracts\ConversationMedia\ImageNormalizer;
+use App\Contracts\ConversationMedia\MalwareScanner;
+use App\Contracts\ConversationMedia\MediaStorage;
+use App\Services\ConversationMedia\AwsContentSafetyScanner;
+use App\Services\ConversationMedia\ClamAvMalwareScanner;
+use App\Services\ConversationMedia\FilesystemMediaStorage;
+use App\Services\ConversationMedia\ImageMagickNormalizer;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -18,6 +26,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(WorkspaceClient::class, function () {
             return new WorkspaceClient(rtrim((string) config('services.workspace_service.url'), '/'));
         });
+        $this->app->singleton(MediaStorage::class, FilesystemMediaStorage::class);
+        $this->app->singleton(MalwareScanner::class, ClamAvMalwareScanner::class);
+        $this->app->singleton(ContentSafetyScanner::class, AwsContentSafetyScanner::class);
+        $this->app->singleton(ImageNormalizer::class, ImageMagickNormalizer::class);
     }
 
     public function boot(): void

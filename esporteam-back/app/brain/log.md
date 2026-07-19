@@ -24,3 +24,4 @@
 | 2026-07-17 | #28 | Gestão de exceções, mudanças futuras e cancelamento de ocorrências recorrentes. |
 | 2026-07-19 | #29 | EventConversation e EventMessage: histórico durável, autorização, cursor, idempotência e broadcast Reverb. |
 | 2026-07-19 | #30 | Ações sociais da conversa: reply, menção, reações, leitura monotônica, mute e estado de não lidos. |
+| 2026-07-19 | #31 | Conversation Media: fotos privadas, processamento por scanners, variantes seguras e vínculo à mensagem. |

@@ -1,0 +1,17 @@
+meta {
+  name: Prepare conversation media upload
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/sessions/1/conversation/media/prepare
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "mime": "image/jpeg"
+  }
+}

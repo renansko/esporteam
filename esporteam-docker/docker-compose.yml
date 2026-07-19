@@ -31,6 +31,16 @@ services:
       timeout: 3s
       retries: 10
 
+  esporteam-clamav:
+    image: clamav/clamav:1.4
+    container_name: esporteam-clamav
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --version"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
   esporteam-auth:
     build:
       context: ../esporteam-auth
@@ -148,6 +158,8 @@ services:
       REVERB_HOST: esporteam-reverb
       REVERB_PORT: 8080
       REVERB_SCHEME: http
+      CONVERSATION_MEDIA_DISK: s3
+      CONVERSATION_MEDIA_CLAMAV_SOCKET: tcp://esporteam-clamav:3310
       AUTH_SERVICE_URL: http://esporteam-auth:8000
       WORKSPACE_SERVICE_URL: http://esporteam-workspace:8000
     command: >
@@ -177,6 +189,8 @@ services:
       esporteam-postgres:
         condition: service_healthy
       esporteam-redis:
+        condition: service_healthy
+      esporteam-clamav:
         condition: service_healthy
 
   esporteam-front:
@@ -245,7 +259,7 @@ services:
       REVERB_HOST: esporteam-reverb
       REVERB_PORT: 8080
       REVERB_SCHEME: http
-    command: php artisan queue:work redis --queue=default,broadcasts --tries=3 --timeout=60
+    command: php artisan queue:work redis --queue=default,broadcasts,conversation-media --tries=3 --timeout=60
     volumes:
       - ../esporteam-back:/var/www
       - esporteam-back-vendor:/var/www/vendor
@@ -253,6 +267,8 @@ services:
       esporteam-postgres:
         condition: service_healthy
       esporteam-redis:
+        condition: service_healthy
+      esporteam-clamav:
         condition: service_healthy
 
 volumes:

@@ -32,7 +32,7 @@ class EventConversationController extends Controller
     public function store(StoreEventMessageRequest $request, SportSession $session): JsonResponse
     {
         $this->assertEnabled();
-        $message = $this->conversations->postMessage((int) $request->user()->id, $session, $request->string('body')->toString(), $request->string('client_message_id')->toString());
+        $message = $this->conversations->postMessage((int) $request->user()->id, $session, $request->input('body'), $request->string('client_message_id')->toString(), null, $request->input('media_ids', []));
         $request->attributes->set('sport_profile_id', SportProfile::query()->where('user_id', $request->user()->id)->value('id'));
 
         return $this->createdResponse(new EventMessageResource($message), 'Message posted.');

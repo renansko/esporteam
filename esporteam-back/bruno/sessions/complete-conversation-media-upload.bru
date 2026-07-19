@@ -1,0 +1,17 @@
+meta {
+  name: Complete conversation media upload
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/sessions/1/conversation/media/complete
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "upload_id": "00000000-0000-4000-8000-000000000000"
+  }
+}

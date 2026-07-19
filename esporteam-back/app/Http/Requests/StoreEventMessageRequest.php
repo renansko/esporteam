@@ -9,8 +9,10 @@ class StoreEventMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body' => ['required', 'string', 'max:2000'],
+            'body' => ['nullable', 'string', 'max:2000', 'required_without:media_ids'],
             'client_message_id' => ['required', 'uuid'],
+            'media_ids' => ['nullable', 'array', 'max:4'],
+            'media_ids.*' => ['integer', 'distinct'],
         ];
     }
 }

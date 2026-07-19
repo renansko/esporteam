@@ -30,11 +30,27 @@ export async function openEventConversation(sessionId, { cursor = null } = {}) {
   return data?.data ?? data
 }
 
-export async function postEventConversationMessage(sessionId, { body, clientMessageId }) {
+export async function postEventConversationMessage(sessionId, { body, clientMessageId, mediaIds = [] }) {
   const { data } = await esporteamApi.post(`/sessions/${sessionId}/conversation/messages`, {
     body,
     client_message_id: clientMessageId,
+    media_ids: mediaIds,
   })
+  return data?.data ?? data
+}
+
+export async function prepareEventConversationMedia(sessionId, mime) {
+  const { data } = await esporteamApi.post(`/sessions/${sessionId}/conversation/media/prepare`, { mime })
+  return data?.data ?? data
+}
+
+export async function completeEventConversationMedia(sessionId, uploadId) {
+  const { data } = await esporteamApi.post(`/sessions/${sessionId}/conversation/media/complete`, { upload_id: uploadId })
+  return data?.data ?? data
+}
+
+export async function getEventConversationMedia(mediaId) {
+  const { data } = await esporteamApi.get(`/conversation-media/${mediaId}`)
   return data?.data ?? data
 }
 

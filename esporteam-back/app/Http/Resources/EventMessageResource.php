@@ -25,6 +25,10 @@ class EventMessageResource extends JsonResource
             'reactions' => $this->whenLoaded('reactions', fn () => $this->reactions
                 ->groupBy('emoji')->map(fn ($items, $emoji) => ['emoji' => $emoji, 'count' => $items->count(), 'reacted' => $items->contains('sport_profile_id', $request->attributes->get('sport_profile_id'))])->values()),
             'seen_by_count' => $this->when($this->getAttribute('seen_by_count') !== null, $this->getAttribute('seen_by_count')),
+            'media' => $this->whenLoaded('media', fn () => $this->media->map(fn ($link) => [
+                'id' => $link->media?->id,
+                'status' => $link->media?->status,
+            ])->values()),
             'author' => [
                 'id' => $this->author?->id,
                 'display_name' => $this->author?->display_name,
