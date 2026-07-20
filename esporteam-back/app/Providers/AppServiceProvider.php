@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Services\WorkspaceClient;
+use App\Contracts\ConversationPushAdapter;
+use App\Services\FakeConversationPushAdapter;
+use App\Services\VapidConversationPushAdapter;
 use App\Contracts\ConversationMedia\ContentSafetyScanner;
 use App\Contracts\ConversationMedia\ImageNormalizer;
 use App\Contracts\ConversationMedia\MalwareScanner;
@@ -30,6 +33,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(MalwareScanner::class, ClamAvMalwareScanner::class);
         $this->app->singleton(ContentSafetyScanner::class, AwsContentSafetyScanner::class);
         $this->app->singleton(ImageNormalizer::class, ImageMagickNormalizer::class);
+        $this->app->singleton(ConversationPushAdapter::class, fn () => defined('APP_RUNNING_TESTS')
+            ? new FakeConversationPushAdapter()
+            : new VapidConversationPushAdapter());
     }
 
     public function boot(): void

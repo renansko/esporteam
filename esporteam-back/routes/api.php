@@ -5,6 +5,7 @@ use App\Http\Controllers\ClassOfferingController;
 use App\Http\Controllers\ClusteringRunController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\ConversationMediaController;
+use App\Http\Controllers\ConversationPushController;
 use App\Http\Controllers\DiscoveryController;
 use App\Http\Controllers\EventConversationController;
 use App\Http\Controllers\IdeaController;
@@ -26,6 +27,10 @@ Broadcast::routes(['middleware' => ['auth.service']]);
 
 Route::middleware('auth.service')->group(function () {
     Route::get('/me', MeController::class);
+    Route::get('/push', [ConversationPushController::class, 'show']);
+    Route::post('/push/subscriptions', [ConversationPushController::class, 'subscribe']);
+    Route::patch('/push/preferences', [ConversationPushController::class, 'preference']);
+    Route::delete('/push/subscriptions', [ConversationPushController::class, 'unsubscribe']);
 
     Route::get('/sports', [SportController::class, 'index']);
     Route::get('/discovery', [DiscoveryController::class, 'index'])

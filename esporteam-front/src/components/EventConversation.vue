@@ -1,16 +1,18 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useEventConversation } from '../composables/useEventConversation'
+import { enablePushAfterExplicitAction } from '../services/pushNotifications'
 
 const props = defineProps({ sessionId: { type: [String, Number], default: null } })
 const sessionId = ref(props.sessionId)
 const chat = useEventConversation(sessionId)
+const enablePush = async () => { try { await enablePushAfterExplicitAction() } catch {} }
 watch(() => props.sessionId, value => { sessionId.value = value; chat.load() }, { immediate: true })
 </script>
 
 <template>
   <section v-if="sessionId" class="event-conversation" aria-label="Conversa da Sessão Esportiva">
-    <header><h3>Conversa</h3><button type="button" class="event-conversation-mute" @click="chat.setMuted(!chat.muted)">{{ chat.muted ? 'Ativar avisos' : 'Silenciar' }}</button></header>
+    <header><h3>Conversa</h3><span><button type="button" class="event-conversation-mute" @click="enablePush">Ativar notificações</button> <button type="button" class="event-conversation-mute" @click="chat.setMuted(!chat.muted)">{{ chat.muted ? 'Ativar avisos' : 'Silenciar' }}</button></span></header>
     <p v-if="chat.loading" class="event-conversation-muted">Carregando conversa…</p>
     <p v-else-if="!chat.messages.length" class="event-conversation-muted">Seja a primeira pessoa a combinar os detalhes.</p>
     <ol v-else class="event-conversation-messages">

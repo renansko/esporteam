@@ -1,0 +1,17 @@
+meta {
+  name: Register push subscription
+  type: http
+  seq: 2
+}
+post {
+  url: {{baseUrl}}/api/push/subscriptions
+  body: json
+  auth: bearer
+}
+body:json {
+  {
+    "device_id": "browser-device-1",
+    "endpoint": "https://push.example.test/subscription",
+    "keys": { "p256dh": "public-key", "auth": "auth-secret" }
+  }
+}

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Events\EventConversationMessagePosted;
 use App\Events\EventConversationSocialStateChanged;
+use App\Jobs\DeliverConversationPush;
 use App\Models\Connection;
 use App\Models\EventConversation;
 use App\Models\EventConversationMute;
@@ -119,6 +120,9 @@ class EventConversationService
                 } catch (\Throwable $exception) {
                     Log::warning('event_conversation.broadcast_failed', ['message_id' => $message->id, 'exception' => $exception::class]);
                 }
+                if ($message->reply_to_event_message_id !== null) {
+                    DeliverConversationPush::dispatch($message->id, 'reply', $message->replyTo?->author_profile_id);
+                }
             });
 
             return $message;
@@ -174,6 +178,7 @@ class EventConversationService
             abort(403, 'This profile cannot be mentioned in this conversation.');
         }
         EventMessageMention::query()->firstOrCreate(['event_message_id' => $message->id, 'mentioned_profile_id' => $command['mentioned_profile_id']]);
+        DeliverConversationPush::dispatch($message->id, 'mention', (int) $command['mentioned_profile_id']);
         $message = $message->fresh(['author', 'replyTo.author', 'mentions.profile', 'reactions']);
         $this->broadcastSocial($conversation->id, 'message', $message);
 
@@ -292,6 +297,7 @@ class EventConversationService
         $message->load(['author', 'replyTo.author', 'mentions.profile', 'reactions', 'media.media']);
         $this->audit($conversation, $actor->id, null, 'announcement', null, null, ['message_id' => $message->id]);
         $this->broadcastSocial($conversation->id, 'message', $message);
+        DB::afterCommit(fn () => DeliverConversationPush::dispatch($message->id, 'announcement'));
         return $message;
     }
 

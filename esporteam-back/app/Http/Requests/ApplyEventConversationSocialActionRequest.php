@@ -19,7 +19,7 @@ class ApplyEventConversationSocialActionRequest extends FormRequest
             'active' => ['nullable', 'boolean'],
             'cursor' => ['nullable', 'integer', 'min:0'],
             'muted' => ['nullable', 'boolean'],
-            'reason' => ['nullable', 'string', 'max:240', 'required_if:action,hide,mute_profile,ban'],
+            'reason' => ['nullable', 'string', 'max:240'],
             'target_profile_id' => ['nullable', 'integer', 'exists:sport_profiles,id'],
             'expires_at' => ['nullable', 'date', 'after:now'],
         ];

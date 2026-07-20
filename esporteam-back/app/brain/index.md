@@ -34,6 +34,7 @@
 - [`services/DiscoveryCache.md`](services/DiscoveryCache.md) — Cache versionado das respostas de Descoberta e mapa
 - [`services/SportSessionService.md`](services/SportSessionService.md) — criacao, listagem aberta, participacao e match em grupo de Sessoes Esportivas
 - [`services/EventConversationService.md`](services/EventConversationService.md) — autorização, histórico e postagem de conversa de Sessão Esportiva
+- [`services/NotificationPolicy.md`](services/NotificationPolicy.md) — decisões seletivas e adapter de Web Push
 - [`services/ConversationMediaService.md`](services/ConversationMediaService.md) — upload e aprovação segura de fotos
 - [`services/PostMatchSportActionService.md`](services/PostMatchSportActionService.md) — proximas acoes, horario/local e sessao depois de match aceito
 - [`services/IdeaIngestionService.md`](services/IdeaIngestionService.md) — ponto único de criação de Ideas (gera embedding)
@@ -49,6 +50,7 @@
 - [`functions/DiscoveryCache.md`](functions/DiscoveryCache.md) — cache versionado por usuário, superfície e filtros
 - [`functions/SportSessionService.md`](functions/SportSessionService.md) — `createForUser`, `openSessions`, recomendacoes, convites, decisoes e `join`
 - [`functions/EventConversationService.md`](functions/EventConversationService.md) — abertura, postagem e `applySocialAction`
+- [`functions/NotificationPolicy.md`](functions/NotificationPolicy.md) — política e entrega idempotente
 - [`functions/ConversationMediaService.md`](functions/ConversationMediaService.md) — preparação e processamento de fotos
 - [`functions/PostMatchSportActionService.md`](functions/PostMatchSportActionService.md) — `actionsForUser` e `saveSessionForUser`
 - [`functions/IdeaIngestionService.md`](functions/IdeaIngestionService.md) — contratos das funções públicas

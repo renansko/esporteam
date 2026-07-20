@@ -59,6 +59,26 @@ export async function applyEventConversationSocialAction(sessionId, action) {
   return data?.data ?? data
 }
 
+export async function getPushSettings() {
+  const { data } = await esporteamApi.get('/push')
+  return data?.data ?? data
+}
+
+export async function registerPushSubscription(subscription) {
+  const { data } = await esporteamApi.post('/push/subscriptions', subscription)
+  return data?.data ?? data
+}
+
+export async function setPushEnabled(enabled) {
+  const { data } = await esporteamApi.patch('/push/preferences', { enabled })
+  return data?.data ?? data
+}
+
+export async function removePushSubscription(deviceId) {
+  const { data } = await esporteamApi.delete('/push/subscriptions', { data: deviceId ? { device_id: deviceId } : {} })
+  return data?.data ?? data
+}
+
 export async function login(email, password) {
   const { data } = await authApi.post('/login', { email, password })
   return data?.data ?? data
@@ -175,6 +195,8 @@ export async function acceptBioSuggestion(suggestionId) {
 
 export async function logoutOnAuth() {
   try {
+    const deviceId = localStorage.getItem('esporteam.push.device')
+    if (deviceId) await removePushSubscription(deviceId)
     await authApi.post('/logout')
   } catch {
     // Best-effort: se o servidor falhar, ainda limpamos o token local.

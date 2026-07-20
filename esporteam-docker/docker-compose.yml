@@ -152,6 +152,7 @@ services:
       QUEUE_CONNECTION: redis
       BROADCAST_CONNECTION: reverb
       FEATURE_EVENT_SOCIAL_CHAT: "true"
+      FEATURE_EVENT_PUSH_NOTIFICATIONS: "true"
       REVERB_APP_ID: esporteam
       REVERB_APP_KEY: esporteam-reverb-key
       REVERB_APP_SECRET: esporteam-reverb-secret

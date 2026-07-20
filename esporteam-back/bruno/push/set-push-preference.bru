@@ -1,0 +1,13 @@
+meta {
+  name: Set push preference
+  type: http
+  seq: 3
+}
+patch {
+  url: {{baseUrl}}/api/push/preferences
+  body: json
+  auth: bearer
+}
+body:json {
+  { "enabled": true }
+}
