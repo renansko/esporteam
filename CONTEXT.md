@@ -60,6 +60,14 @@ _Avoid_: Agenda, horario, calendario
 A directed social request or relationship between two sport profiles, including friendship and blocking. A block removes the pair from mutual discovery.
 _Avoid_: Amizade, contato, relacao
 
+**Sancao de Conversa**:
+Uma restricao temporaria de escrita ou banimento aplicada pelo Anfitriao da Sessao dentro de uma conversa. Ela nao altera a participacao na Sessao Esportiva.
+_Avoid_: Remover participante, punicao global
+
+**Trilha de Auditoria de Conversa**:
+O registro nao publico de acoes privilegiadas de uma conversa, incluindo ator, alvo, motivo, estado anterior e posterior e instante.
+_Avoid_: Log de chat publico
+
 **Grupo Esportivo**:
 A set of sport profiles organized around a modality or recurring sport participation.
 _Avoid_: Turma, time, comunidade

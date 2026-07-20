@@ -2,6 +2,7 @@
 
 use App\Models\Connection;
 use App\Models\EventMessage;
+use App\Models\EventConversationAudit;
 use App\Models\SportProfile;
 use App\Models\SportSession;
 use Illuminate\Support\Facades\Event;
@@ -104,4 +105,59 @@ it('applies replies, mentions, reactions, monotonic reads and mute through one s
     actingAsWorkspace(1, $headers)->postJson("/api/sessions/{$session->id}/conversation/actions", [
         'action' => 'reply', 'message_id' => $message['id'], 'body' => 'Sim!', 'client_message_id' => '6ed75e52-f4ec-4e1f-b4b7-82d007ca1a4e',
     ])->assertOk()->assertJsonPath('data.message.reply_to.id', $message['id']);
+});
+
+it('keeps a tombstone when the author removes a message or the host hides one', function () {
+    $host = SportProfile::query()->create(['user_id' => 2941, 'display_name' => 'Ana']);
+    $guest = SportProfile::query()->create(['user_id' => 2942, 'display_name' => 'Leo']);
+    $session = conversationSession($host, 'private');
+    $session->participants()->attach($guest->id, ['status' => 'joined']);
+    $guestHeaders = ['id' => $guest->user_id, 'is_adult' => true];
+    $hostHeaders = ['id' => $host->user_id, 'is_adult' => true];
+
+    $first = actingAsWorkspace(1, $guestHeaders)->postJson("/api/sessions/{$session->id}/conversation/messages", [
+        'body' => 'Conteúdo para remover', 'client_message_id' => '25c9bb8d-2d57-4fb6-8d15-11bb2ed04448',
+    ])->assertCreated()->json('data');
+    actingAsWorkspace(1, $guestHeaders)->postJson("/api/sessions/{$session->id}/conversation/actions", [
+        'action' => 'remove', 'message_id' => $first['id'],
+    ])->assertOk()->assertJsonPath('data.message.status', 'removed')->assertJsonPath('data.message.body', null);
+
+    $second = actingAsWorkspace(1, $guestHeaders)->postJson("/api/sessions/{$session->id}/conversation/messages", [
+        'body' => 'Conteúdo para ocultar', 'client_message_id' => 'ee3b0d9e-0cf9-49c9-9a4c-a03fb684ca1c',
+    ])->assertCreated()->json('data');
+    actingAsWorkspace(1, $hostHeaders)->postJson("/api/sessions/{$session->id}/conversation/actions", [
+        'action' => 'hide', 'message_id' => $second['id'], 'reason' => 'Conteúdo inadequado',
+    ])->assertOk()->assertJsonPath('data.message.status', 'hidden')->assertJsonPath('data.message.body', null);
+
+    expect(EventMessage::query()->find($first['id'])->body)->toBe('Conteúdo para remover')
+        ->and(EventMessage::query()->find($second['id'])->moderation_reason)->toBe('Conteúdo inadequado');
+    actingAsWorkspace(1, $guestHeaders)->postJson("/api/sessions/{$session->id}/conversation/actions", [
+        'action' => 'hide', 'message_id' => $second['id'],
+    ])->assertForbidden();
+});
+
+it('keeps host sanctions separate from session participation and audits announcements', function () {
+    $host = SportProfile::query()->create(['user_id' => 2951, 'display_name' => 'Beto']);
+    $guest = SportProfile::query()->create(['user_id' => 2952, 'display_name' => 'Mia']);
+    $session = conversationSession($host, 'private');
+    $session->participants()->attach($guest->id, ['status' => 'joined']);
+    $hostHeaders = ['id' => $host->user_id, 'is_adult' => true];
+    $guestHeaders = ['id' => $guest->user_id, 'is_adult' => true];
+
+    actingAsWorkspace(1, $hostHeaders)->postJson("/api/sessions/{$session->id}/conversation/actions", [
+        'action' => 'announce', 'body' => 'A quadra mudou.', 'client_message_id' => 'a2ad9538-b327-4385-9dd0-23a3b8b3a5e7',
+    ])->assertOk()->assertJsonPath('data.message.kind', 'announcement');
+    actingAsWorkspace(1, $hostHeaders)->postJson("/api/sessions/{$session->id}/conversation/actions", [
+        'action' => 'mute_profile', 'target_profile_id' => $guest->id, 'reason' => 'Pausa', 'expires_at' => now()->addHour()->toISOString(),
+    ])->assertOk()->assertJsonPath('data.sanction.type', 'mute_profile');
+    actingAsWorkspace(1, $guestHeaders)->postJson("/api/sessions/{$session->id}/conversation/messages", [
+        'body' => 'Ainda consigo?', 'client_message_id' => 'cb717ce3-8135-4437-9c9b-1d24d5129a0f',
+    ])->assertForbidden();
+    expect($session->fresh()->participants()->pluck('sport_profiles.id')->all())->toContain($guest->id)
+        ->and(EventConversationAudit::query()->where('action', 'announcement')->exists())->toBeTrue();
+
+    actingAsWorkspace(1, $hostHeaders)->postJson("/api/sessions/{$session->id}/conversation/actions", [
+        'action' => 'ban', 'target_profile_id' => $guest->id, 'reason' => 'Reincidência',
+    ])->assertOk();
+    actingAsWorkspace(1, $guestHeaders)->getJson("/api/sessions/{$session->id}/conversation")->assertNotFound();
 });

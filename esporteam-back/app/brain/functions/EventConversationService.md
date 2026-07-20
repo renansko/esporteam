@@ -10,4 +10,4 @@
 
 ## applySocialAction
 
-`applySocialAction(userId, session, command)` recebe uma intenção validada (`reply`, `mention`, `reaction`, `read`, `mute` ou `typing`). Mantém autorização, mesma conversa, unicidade e cursor monotônico no módulo; typing só é difundido em tempo real e não é persistido.
+`applySocialAction(userId, session, command)` recebe uma intenção validada (`reply`, `mention`, `reaction`, `read`, `mute`, `typing`, `remove`, `hide`, `mute_profile`, `ban` ou `announce`). Mantém autorização, mesma conversa, unicidade, sanções e cursor monotônico no módulo; remoções e ocultações preservam a evidência e expõem somente um tombstone. Sanções e anúncios do Anfitrião da Sessão geram auditoria não pública; conversa arquivada só permite leitura.

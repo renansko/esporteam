@@ -11,7 +11,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class EventMessage extends Model
 {
-    protected $fillable = ['event_conversation_id', 'reply_to_event_message_id', 'author_profile_id', 'client_message_id', 'body'];
+    protected $fillable = [
+        'event_conversation_id', 'reply_to_event_message_id', 'author_profile_id', 'client_message_id', 'body',
+        'status', 'kind', 'moderated_by_profile_id', 'moderation_reason', 'moderated_at',
+    ];
+
+    protected $casts = [
+        'moderated_at' => 'datetime',
+    ];
 
     public function conversation(): BelongsTo
     {
@@ -41,5 +48,10 @@ class EventMessage extends Model
     public function media(): HasMany
     {
         return $this->hasMany(EventMessageMedia::class)->orderBy('position');
+    }
+
+    public function moderatedBy(): BelongsTo
+    {
+        return $this->belongsTo(SportProfile::class, 'moderated_by_profile_id');
     }
 }

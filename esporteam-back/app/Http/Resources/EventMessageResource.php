@@ -9,14 +9,20 @@ class EventMessageResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $status = $this->status ?? 'published';
+
         return [
             'id' => $this->id,
             'cursor' => (string) $this->id,
             'client_message_id' => $this->client_message_id,
-            'body' => $this->body,
+            'body' => $status === 'published' ? $this->body : null,
+            'status' => $status,
+            'kind' => $this->kind ?? 'message',
+            'tombstone' => $status !== 'published',
             'reply_to' => $this->whenLoaded('replyTo', fn () => $this->replyTo === null ? null : [
                 'id' => $this->replyTo->id,
-                'body' => $this->replyTo->body,
+                'body' => ($this->replyTo->status ?? 'published') === 'published' ? $this->replyTo->body : null,
+                'status' => $this->replyTo->status ?? 'published',
                 'author' => ['id' => $this->replyTo->author?->id, 'display_name' => $this->replyTo->author?->display_name],
             ]),
             'mentions' => $this->whenLoaded('mentions', fn () => $this->mentions->map(fn ($mention) => [

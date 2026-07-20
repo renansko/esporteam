@@ -22,6 +22,11 @@ class ReportController extends Controller
             (int) $data['reported_profile_id'],
             $data['reason'],
             $data['details'] ?? null,
+            array_filter([
+                'event_conversation_id' => $data['event_conversation_id'] ?? null,
+                'event_message_id' => $data['event_message_id'] ?? null,
+                'sport_session_id' => $data['sport_session_id'] ?? null,
+            ]),
         );
 
         return $this->createdResponse(new ReportResource($report), 'Report created.');

@@ -726,6 +726,7 @@ class SportSessionService
             $locked->change_notice = 'cancelled';
             $locked->version++;
             $locked->save();
+            app(EventConversationService::class)->archiveCancelledSession($locked);
             app(DiscoveryCache::class)->invalidate($host->user_id);
 
             return $this->freshSession($locked);

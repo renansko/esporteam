@@ -11,7 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class EventConversation extends Model
 {
-    protected $fillable = ['sport_session_id', 'status'];
+    protected $fillable = ['sport_session_id', 'sport_session_series_id', 'status', 'archived_at'];
+
+    protected $casts = ['archived_at' => 'datetime'];
 
     public function session(): BelongsTo
     {
@@ -26,5 +28,10 @@ class EventConversation extends Model
     public function reads(): HasMany
     {
         return $this->hasMany(EventConversationRead::class);
+    }
+
+    public function sanctions(): HasMany
+    {
+        return $this->hasMany(EventConversationSanction::class);
     }
 }

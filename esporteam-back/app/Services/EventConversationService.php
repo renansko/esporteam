@@ -7,6 +7,8 @@ use App\Events\EventConversationSocialStateChanged;
 use App\Models\Connection;
 use App\Models\EventConversation;
 use App\Models\EventConversationMute;
+use App\Models\EventConversationAudit;
+use App\Models\EventConversationSanction;
 use App\Models\EventConversationRead;
 use App\Models\EventMessage;
 use App\Models\EventMessageMention;
@@ -75,6 +77,7 @@ class EventConversationService
 
         return DB::transaction(function () use ($profile, $session, $body, $clientMessageId, $replyToMessageId, $mediaIds): EventMessage {
             $conversation = $this->conversationFor($session);
+            $this->assertWritable($profile, $conversation);
             $existing = EventMessage::query()
                 ->with('author')
                 ->where('event_conversation_id', $conversation->id)
@@ -129,6 +132,9 @@ class EventConversationService
         $this->assertMayAccess($profile, $session);
         $conversation = $this->conversationFor($session);
         $action = $command['action'];
+        if (! in_array($action, ['read', 'mute'], true)) {
+            $this->assertWritable($profile, $conversation);
+        }
 
         return match ($action) {
             'reply' => ['message' => $this->reply($profile, $session, $conversation, $command)],
@@ -137,6 +143,10 @@ class EventConversationService
             'read' => $this->read($profile, $conversation, $command),
             'mute' => $this->mute($profile, $conversation, $command),
             'typing' => $this->typing($profile, $conversation, $command),
+            'remove' => ['message' => $this->remove($profile, $conversation, $command)],
+            'hide' => ['message' => $this->hide($profile, $session, $conversation, $command)],
+            'mute_profile', 'ban' => $this->sanction($profile, $session, $conversation, $action, $command),
+            'announce' => ['message' => $this->announce($profile, $session, $conversation, $command)],
         };
     }
 
@@ -226,6 +236,83 @@ class EventConversationService
         return ['active' => ($command['active'] ?? true) !== false];
     }
 
+    private function remove(SportProfile $profile, EventConversation $conversation, array $command): EventMessage
+    {
+        $message = $this->messageInConversation($conversation, (int) ($command['message_id'] ?? 0));
+        if ($message->author_profile_id !== $profile->id) {
+            abort(403, 'Only the author can remove this message.');
+        }
+
+        return $this->moderateMessage($profile, $conversation, $message, 'removed', null);
+    }
+
+    private function hide(SportProfile $profile, SportSession $session, EventConversation $conversation, array $command): EventMessage
+    {
+        if ($session->creator_profile_id !== $profile->id) {
+            abort(403, 'Only the session host can hide a message.');
+        }
+        $message = $this->messageInConversation($conversation, (int) ($command['message_id'] ?? 0));
+
+        return $this->moderateMessage($profile, $conversation, $message, 'hidden', $command['reason'] ?? null);
+    }
+
+    private function sanction(SportProfile $actor, SportSession $session, EventConversation $conversation, string $type, array $command): array
+    {
+        $this->assertHost($actor, $session);
+        $targetId = (int) ($command['target_profile_id'] ?? 0);
+        if ($targetId === 0 || $targetId === $actor->id) {
+            throw ValidationException::withMessages(['target_profile_id' => 'Escolha outro Perfil Esportivo.']);
+        }
+        $target = SportProfile::query()->findOrFail($targetId);
+        $before = EventConversationSanction::query()->where([
+            'event_conversation_id' => $conversation->id, 'sport_profile_id' => $target->id, 'type' => $type,
+        ])->first();
+        $sanction = EventConversationSanction::query()->updateOrCreate([
+            'event_conversation_id' => $conversation->id, 'sport_profile_id' => $target->id, 'type' => $type,
+        ], [
+            'imposed_by_profile_id' => $actor->id, 'reason' => $command['reason'] ?? null,
+            'expires_at' => $type === 'mute_profile' ? ($command['expires_at'] ?? null) : null,
+        ]);
+        $this->audit($conversation, $actor->id, $target->id, $type, $command['reason'] ?? null, $before?->only(['type', 'reason', 'expires_at']), $sanction->only(['type', 'reason', 'expires_at']));
+        $this->broadcastSocial($conversation->id, 'sanction', null, ['profile_id' => $target->id, 'type' => $type]);
+
+        return ['sanction' => ['profile_id' => $target->id, 'type' => $type, 'expires_at' => $sanction->expires_at?->toISOString()]];
+    }
+
+    private function announce(SportProfile $actor, SportSession $session, EventConversation $conversation, array $command): EventMessage
+    {
+        $this->assertHost($actor, $session);
+        $body = trim(strip_tags((string) ($command['body'] ?? '')));
+        if ($body === '') throw ValidationException::withMessages(['body' => 'O anúncio precisa conter texto.']);
+        $key = $command['client_message_id'] ?? null;
+        if ($key === null) throw ValidationException::withMessages(['client_message_id' => 'Obrigatório para anúncio.']);
+        $message = EventMessage::query()->firstOrCreate([
+            'event_conversation_id' => $conversation->id, 'author_profile_id' => $actor->id, 'client_message_id' => $key,
+        ], ['body' => $body, 'kind' => 'announcement']);
+        $message->load(['author', 'replyTo.author', 'mentions.profile', 'reactions', 'media.media']);
+        $this->audit($conversation, $actor->id, null, 'announcement', null, null, ['message_id' => $message->id]);
+        $this->broadcastSocial($conversation->id, 'message', $message);
+        return $message;
+    }
+
+    private function moderateMessage(SportProfile $actor, EventConversation $conversation, EventMessage $message, string $status, ?string $reason): EventMessage
+    {
+        if ($message->status === 'removed' || $message->status === 'hidden') {
+            return $message->load(['author', 'replyTo.author', 'mentions.profile', 'reactions', 'media.media']);
+        }
+        $message->update([
+            'status' => $status,
+            'moderated_by_profile_id' => $actor->id,
+            'moderation_reason' => $reason,
+            'moderated_at' => now(),
+        ]);
+        $this->audit($conversation, $actor->id, $message->author_profile_id, $status, $reason, ['status' => 'published'], ['status' => $status]);
+        $message = $message->fresh(['author', 'replyTo.author', 'mentions.profile', 'reactions', 'media.media']);
+        $this->broadcastSocial($conversation->id, 'message', $message);
+
+        return $message;
+    }
+
     private function messageInConversation(EventConversation $conversation, int $messageId): EventMessage
     {
         return EventMessage::query()->where('event_conversation_id', $conversation->id)->findOr($messageId, fn () => throw new NotFoundHttpException);
@@ -275,6 +362,27 @@ class EventConversationService
         return $this->conversationFor($session);
     }
 
+    /** Archive a point-in-time conversation and leave an auditable system notice. */
+    public function archiveCancelledSession(SportSession $session): void
+    {
+        if ($session->sport_session_series_id !== null) return;
+        $conversation = $this->conversationFor($session);
+        if ($conversation->status === 'archived') return;
+        $conversation->update(['status' => 'archived', 'archived_at' => now()]);
+        EventMessage::query()->create([
+            'event_conversation_id' => $conversation->id, 'author_profile_id' => $session->creator_profile_id,
+            'client_message_id' => (string) \Illuminate\Support\Str::uuid(), 'body' => 'Esta Sessão Esportiva foi cancelada.', 'kind' => 'system',
+        ]);
+        $this->audit($conversation, null, null, 'archived_cancelled', $session->cancelled_reason, ['status' => 'active'], ['status' => 'archived']);
+        $this->broadcastSocial($conversation->id, 'lifecycle', null, ['status' => 'archived']);
+    }
+
+    public function archiveExpiredConversations(): int
+    {
+        return EventConversation::query()->where('status', 'active')->whereHas('session', fn ($q) => $q->whereNotNull('ends_at')->where('ends_at', '<=', now()->subDay())->whereNull('sport_session_series_id'))
+            ->update(['status' => 'archived', 'archived_at' => now()]);
+    }
+
     public function profileForUser(int $userId): SportProfile
     {
         return $this->requireProfile($userId);
@@ -282,6 +390,11 @@ class EventConversationService
 
     private function conversationFor(SportSession $session): EventConversation
     {
+        if ($session->sport_session_series_id !== null) {
+            return EventConversation::query()->firstOrCreate([
+                'sport_session_series_id' => $session->sport_session_series_id,
+            ], ['sport_session_id' => $session->id]);
+        }
         try {
             return EventConversation::query()->firstOrCreate(['sport_session_id' => $session->id]);
         } catch (QueryException $exception) {
@@ -301,7 +414,7 @@ class EventConversationService
 
     private function assertMayAccess(SportProfile $profile, SportSession $session): void
     {
-        if ($session->sport_session_series_id !== null || $session->status->value !== 'open') {
+        if (($session->sport_session_series_id === null && $session->status->value !== 'open') || ($session->sport_session_series_id !== null && $session->series?->status !== 'active')) {
             throw new NotFoundHttpException;
         }
         $isHost = $session->creator_profile_id === $profile->id;
@@ -319,6 +432,34 @@ class EventConversationService
                 throw new NotFoundHttpException;
             }
         }
+        $conversationId = EventConversation::query()
+            ->when($session->sport_session_series_id !== null,
+                fn ($query) => $query->where('sport_session_series_id', $session->sport_session_series_id),
+                fn ($query) => $query->where('sport_session_id', $session->id))
+            ->value('id');
+        if ($conversationId !== null && EventConversationSanction::query()->where([
+            'event_conversation_id' => $conversationId, 'sport_profile_id' => $profile->id, 'type' => 'ban',
+        ])->exists()) {
+            throw new NotFoundHttpException;
+        }
+    }
+
+    private function assertWritable(SportProfile $profile, EventConversation $conversation): void
+    {
+        if ($conversation->status === 'archived') abort(403, 'This conversation is read-only.');
+        $sanctions = EventConversationSanction::query()->where('event_conversation_id', $conversation->id)->where('sport_profile_id', $profile->id)
+            ->where(fn ($query) => $query->where('type', 'ban')->orWhere(fn ($q) => $q->where('type', 'mute_profile')->where(fn ($until) => $until->whereNull('expires_at')->orWhere('expires_at', '>', now()))))->exists();
+        if ($sanctions) abort(403, 'This profile cannot post in this conversation.');
+    }
+
+    private function assertHost(SportProfile $profile, SportSession $session): void
+    {
+        if ($session->creator_profile_id !== $profile->id) abort(403, 'Only the session host can moderate this conversation.');
+    }
+
+    private function audit(EventConversation $conversation, ?int $actorId, ?int $targetId, string $action, ?string $reason, ?array $before, ?array $after): void
+    {
+        EventConversationAudit::query()->create(['event_conversation_id' => $conversation->id, 'actor_profile_id' => $actorId, 'target_profile_id' => $targetId, 'action' => $action, 'reason' => $reason, 'before' => $before, 'after' => $after]);
     }
 
     private function profilesAreBlocked(int $firstProfileId, int $secondProfileId): bool

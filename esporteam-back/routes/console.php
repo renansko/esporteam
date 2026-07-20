@@ -3,6 +3,7 @@
 use App\Console\Commands\ClusteringWatchdogCommand;
 use App\Jobs\MaterializeSportSessionSeries;
 use App\Models\SportSessionSeries;
+use App\Services\EventConversationService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -21,3 +22,5 @@ Schedule::call(function (): void {
         fn (int $id) => MaterializeSportSessionSeries::dispatch($id),
     );
 })->hourly();
+
+Schedule::call(fn () => app(EventConversationService::class)->archiveExpiredConversations())->hourly();

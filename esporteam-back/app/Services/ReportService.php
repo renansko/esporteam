@@ -7,7 +7,7 @@ use App\Models\SportProfile;
 
 class ReportService
 {
-    public function createForUser(int $userId, int $reportedProfileId, string $reason, ?string $details = null): Report
+    public function createForUser(int $userId, int $reportedProfileId, string $reason, ?string $details = null, array $conversationContext = []): Report
     {
         $reporter = $this->requireProfile($userId);
 
@@ -26,6 +26,7 @@ class ReportService
             'context' => [
                 'reporter' => $this->profileContext($reporter),
                 'reported' => $this->profileContext($reported),
+                ...$conversationContext,
             ],
         ]);
 
