@@ -1,0 +1,36 @@
+/*
+ * Cola Aí brand foundation
+ *
+ * Sources:
+ * - Cola Aí logo reference: blue + lime + warm off-white.
+ * - "Paleta de cor 1": volcanic rock, alpine ice, lichen green and summit stone.
+ *
+ * Keep these as brand tokens. Product components should consume semantic tokens
+ * (for example --cola-ai-action) rather than hard-coding individual hex values.
+ */
+
+:root {
+  /* Core brand */
+  --cola-ai-blue: #353bab;
+  --cola-ai-blue-deep: #303090;
+  --cola-ai-lime: #c8e91e;
+  --cola-ai-lime-light: #cced20;
+  --cola-ai-canvas: #fbfaf6;
+
+  /* Nature palette */
+  --cola-ai-volcanic-slag: #3d3d3d;
+  --cola-ai-alpine-ice: #ebecee;
+  --cola-ai-lichen-green: #c4e326;
+  --cola-ai-summit-stone: #8a8c8f;
+
+  /* Semantic aliases for future Cola Aí screens */
+  --cola-ai-page: var(--cola-ai-canvas);
+  --cola-ai-surface: #ffffff;
+  --cola-ai-text: var(--cola-ai-blue-deep);
+  --cola-ai-text-muted: var(--cola-ai-summit-stone);
+  --cola-ai-action: var(--cola-ai-blue);
+  --cola-ai-action-highlight: var(--cola-ai-lime);
+  --cola-ai-line: color-mix(in srgb, var(--cola-ai-summit-stone) 28%, white);
+  --cola-ai-action-soft: color-mix(in srgb, var(--cola-ai-blue) 10%, white);
+  --cola-ai-highlight-soft: color-mix(in srgb, var(--cola-ai-lime) 18%, white);
+}
