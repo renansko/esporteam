@@ -10,8 +10,10 @@ const props = defineProps({
   selectedSessionId: { type: [String, Number], default: null },
   participantAvatarUrl: { type: String, default: '' },
   participantInitials: { type: String, default: 'PE' },
+  selectable: { type: Boolean, default: false },
+  selectedLocation: { type: Object, default: null },
 })
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'location-select'])
 
 const mapElement = ref(null)
 const locationStatus = ref(props.sessions.length
@@ -21,7 +23,9 @@ let map
 let L
 let sessionLayer
 let currentLocationMarker
+let selectedLocationMarker
 let currentLocation = [-27.5949, -48.5482]
+let disposed = false
 
 function numberValue(...values) {
   const value = values.find(item => Number.isFinite(Number(item)))
@@ -93,6 +97,26 @@ function drawSessions() {
   if (bounds.length > 1) map.fitBounds(bounds, { padding: [38, 38], maxZoom: 15 })
 }
 
+function drawSelectedLocation() {
+  if (!map || !props.selectable) return
+  selectedLocationMarker?.remove()
+  if (!props.selectedLocation) return
+
+  selectedLocationMarker = L.marker([props.selectedLocation.latitude, props.selectedLocation.longitude], {
+    icon: L.divIcon({
+      className: 'nearby-selected-location-marker',
+      html: '<span></span>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    }),
+  }).addTo(map).bindTooltip('Local da Sessão', { direction: 'top', offset: [0, -12] })
+}
+
+function handleMapClick(event) {
+  if (!props.selectable) return
+  emit('location-select', { latitude: event.latlng.lat, longitude: event.latlng.lng })
+}
+
 function locateParticipant() {
   if (!navigator.geolocation) {
     locationStatus.value = 'Localização indisponível neste dispositivo'
@@ -106,6 +130,7 @@ function locateParticipant() {
     locationStatus.value = props.sessions.length
       ? 'Mostrando Sessões próximas de você'
       : 'Nenhuma Sessão Esportiva próxima · explore o mapa'
+    if (!map || disposed) return
     map.setView(currentLocation, 14)
     drawCurrentLocation()
     drawSessions()
@@ -118,6 +143,7 @@ function locateParticipant() {
 
 onMounted(async () => {
   L = (await import('leaflet')).default
+  if (disposed || !mapElement.value) return
   L.Icon.Default.mergeOptions({
     iconRetinaUrl: markerIcon2x,
     iconUrl: markerIcon,
@@ -130,6 +156,8 @@ onMounted(async () => {
     maxZoom: 20,
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
   }).addTo(map)
+  if (props.selectable) map.on('click', handleMapClick)
+  drawSelectedLocation()
   locateParticipant()
 })
 
@@ -140,7 +168,14 @@ watch(() => [props.sessions, props.selectedSessionId], () => {
   }
 }, { deep: true })
 watch(() => [props.participantAvatarUrl, props.participantInitials], drawCurrentLocation)
-onBeforeUnmount(() => map?.remove())
+watch(() => props.selectedLocation, drawSelectedLocation, { deep: true })
+onBeforeUnmount(() => {
+  disposed = true
+  map?.off('click', handleMapClick)
+  selectedLocationMarker?.remove()
+  map?.remove()
+  map = null
+})
 </script>
 
 <template>
