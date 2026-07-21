@@ -60,7 +60,7 @@ try {
           },
         },
       ],
-    })
+    }, { participantTab: 'discover' })
 
   assert.match(html, /class="discovery-deck"/)
   assert.match(html, /class="session-card discovery-action-card"/)
@@ -107,8 +107,8 @@ try {
       primaryActionLabel: 'Vou participar',
       primaryActionIcon: 'check',
       primaryActionToneClass: 'session-detail-primary-open',
-    },
-  })
+      },
+    })
 
   assert.match(detailHtml, /aria-label="Detalhe da Sessao Esportiva"/)
   assert.match(detailHtml, /Corrida aberta no parque/)
@@ -150,8 +150,8 @@ try {
       primaryActionLabel: 'Pedir para participar',
       primaryActionIcon: 'lock',
       primaryActionToneClass: 'session-detail-primary-curated',
-    },
-  })
+      },
+    })
 
   assert.match(curatedDetailHtml, /class="session-entry-badge session-entry-badge-curated"/)
   assert.match(curatedDetailHtml, /Com curadoria/)
@@ -330,22 +330,20 @@ try {
   assert.match(nearbyListHtml, /session-detail-feedback session-detail-feedback-pending/)
 
   const loadingHtml = await renderShell({
-    discoveryCards: [],
-    discoveryLoading: true,
+    nearbySessions: [],
+    nearbySessionsLoading: true,
   })
 
   assert.match(loadingHtml, /aria-busy="true"/)
-  assert.match(loadingHtml, /loading-grace|session-card-skeleton/)
+  assert.match(loadingHtml, /nearby-stage-skeleton|loading-grace/)
 
   const defaultEmptyHtml = await renderShell({
-    discoveryCards: [],
+    nearbySessions: [],
   })
 
-  assert.match(defaultEmptyHtml, /Não encontramos nenhuma Sessão Esportiva ainda/)
-  assert.doesNotMatch(defaultEmptyHtml, /Explorar outros locais/)
+  assert.match(defaultEmptyHtml, /Mapa e Lista preparados/)
   assert.doesNotMatch(defaultEmptyHtml, /Abra o mapa/)
   assert.doesNotMatch(defaultEmptyHtml, /segunda chance/i)
-  assert.match(defaultEmptyHtml, /filtros/i)
 
   const emptyNearbyMapHtml = await renderShell({
     discoveryCards: [],
@@ -366,7 +364,7 @@ try {
       description: 'Nao foi possivel atualizar a Descoberta agora. Verifique sua conexao e tente novamente.',
       retryLabel: 'Tentar novamente',
     },
-  })
+  }, { participantTab: 'discover' })
 
   assert.match(errorHtml, /Descoberta sem atualizacao/)
   assert.match(errorHtml, /Tentar novamente/)
