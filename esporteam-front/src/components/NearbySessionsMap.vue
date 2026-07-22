@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import 'leaflet/dist/leaflet.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
@@ -13,7 +13,7 @@ const props = defineProps({
   selectable: { type: Boolean, default: false },
   selectedLocation: { type: Object, default: null },
 })
-const emit = defineEmits(['select', 'location-select'])
+const emit = defineEmits(['select', 'location-select', 'selection-cancel'])
 
 const mapElement = ref(null)
 const mapAriaLabel = computed(() => props.selectable
@@ -122,6 +122,18 @@ function handleMapClick(event) {
   emit('location-select', { latitude: event.latlng.lat, longitude: event.latlng.lng })
 }
 
+function syncSelectable(selectable) {
+  if (!map) return
+  map.off('click', handleMapClick)
+  if (selectable) map.on('click', handleMapClick)
+  locationStatus.value = selectable
+    ? publicationLocationStatus()
+    : props.sessions.length
+      ? 'Mostrando Sessões próximas de você'
+      : 'Nenhuma Sessão Esportiva próxima · explore o mapa'
+  nextTick(() => map?.invalidateSize())
+}
+
 function publicationLocationStatus() {
   return props.selectedLocation
     ? 'Sua localização e o local da sessão estão marcados'
@@ -171,7 +183,7 @@ onMounted(async () => {
     maxZoom: 20,
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
   }).addTo(map)
-  if (props.selectable) map.on('click', handleMapClick)
+  syncSelectable(props.selectable)
   drawSelectedLocation()
   locateParticipant()
 })
@@ -183,9 +195,11 @@ watch(() => [props.sessions, props.selectedSessionId], () => {
   }
 }, { deep: true })
 watch(() => [props.participantAvatarUrl, props.participantInitials], drawCurrentLocation)
+watch(() => props.selectable, syncSelectable)
 watch(() => props.selectedLocation, () => {
   drawSelectedLocation()
   if (props.selectable) locationStatus.value = publicationLocationStatus()
+  nextTick(() => map?.invalidateSize())
 }, { deep: true })
 onBeforeUnmount(() => {
   disposed = true
@@ -197,8 +211,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="nearby-real-map nearby-map">
+  <div :class="['nearby-real-map', 'nearby-map', { 'nearby-real-map--selecting': selectable && !selectedLocation }]">
     <div ref="mapElement" class="nearby-real-map-canvas" :aria-label="mapAriaLabel"></div>
     <p class="nearby-location-status">{{ locationStatus }}</p>
+    <button v-if="selectable && !selectedLocation" class="nearby-map-cancel" type="button" @click="emit('selection-cancel')">Cancelar</button>
   </div>
 </template>

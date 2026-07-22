@@ -502,6 +502,7 @@ async function highlightBioContext() {
               :selected-location="publicationSelectedLocation"
               @select="selectNearbySession"
               @location-select="selectOneOffLocation"
+              @selection-cancel="oneOffPublication?.close?.()"
             />
 
             <section

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import { createSSRApp, h } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { createPinia } from 'pinia'
@@ -296,7 +297,11 @@ try {
   }, { participantTab: 'map' })
 
   assert.equal((publicationBeforeLocationHtml.match(/nearby-real-map-canvas/g) || []).length, 1)
+  assert.match(publicationBeforeLocationHtml, /nearby-real-map--selecting/)
   assert.doesNotMatch(publicationBeforeLocationHtml, /class="publication-panel"/)
+
+  const nearbyMapSource = await readFile(new URL('./NearbySessionsMap.vue', import.meta.url), 'utf8')
+  assert.match(nearbyMapSource, /watch\(\(\) => props\.selectable/)
 
   const publicationHtml = await renderShell({
     discoveryCards: [],
