@@ -1733,20 +1733,23 @@ body {
 .discovery-action-skip { border-color: #d6d1c6; color: #6c675e; }
 .discovery-action-interest { border-color: #c2d2f1; background: #e9effb; color: #2f63c7; }
 
-.nearby-stage { margin: 12px -16px -12px; gap: 0; }
+.nearby-stage { position: relative; margin: 12px -16px -12px; gap: 0; }
+.nearby-publish-fab { position: absolute; z-index: 650; top: 54px; right: 16px; min-height: 46px; border: 0; border-radius: 999px; padding: 0 18px; background: var(--cola-ai-action); color: #fff; font: inherit; font-weight: 800; box-shadow: 0 8px 22px color-mix(in srgb, var(--cola-ai-action) 30%, transparent); }
+.nearby-publish-fab:hover { background: var(--cola-ai-blue-deep); }
+.nearby-publish-fab:focus-visible { outline: 3px solid var(--cola-ai-action-highlight); outline-offset: 2px; }
 .nearby-surface-toggle { margin: 0 16px 12px; gap: 0; border-color: #e6e2d9; padding: 3px; background: #eeebe4; }
 .nearby-surface-button { min-height: 32px; font-weight: 400; }
 .nearby-surface-button.active { color: #201e1a; font-weight: 600; box-shadow: 0 1px 2px rgba(40, 36, 30, .08); }
 .nearby-real-map { position: relative; min-height: 300px; border: 0; border-radius: 0; }
-.nearby-real-map-canvas { width: 100%; height: 300px; background: #eeebe4; }
+.nearby-real-map-canvas { width: 100%; height: 300px; background: var(--cola-ai-alpine-ice); }
 .nearby-real-map .leaflet-tile-pane { filter: grayscale(1) contrast(.88) brightness(1.08); opacity: .88; }
-.nearby-location-status { position: absolute; z-index: 500; top: 10px; left: 50%; transform: translateX(-50%); margin: 0; border: 1px solid #e6e2d9; border-radius: 20px; padding: 5px 10px; background: rgba(255,255,255,.94); color: #6c675e; font-size: 11px; white-space: nowrap; box-shadow: 0 2px 8px rgba(40,36,30,.08); }
+.nearby-location-status { position: absolute; z-index: 500; top: 10px; left: 50%; transform: translateX(-50%); max-width:calc(100% - 24px); margin: 0; border: 1px solid var(--cola-ai-line); border-radius: 20px; padding: 5px 10px; background: color-mix(in srgb, var(--cola-ai-surface) 94%, transparent); color: var(--cola-ai-text-muted); font-size: 11px; text-align:center; white-space: nowrap; overflow:hidden; text-overflow:ellipsis; box-shadow: 0 2px 8px rgba(40,36,30,.08); }
 .nearby-participant-marker { border: 0; background: transparent; }
 .nearby-selected-location-marker { border: 0; background: transparent; }
-.nearby-selected-location-marker span { display: block; width: 22px; height: 22px; border: 4px solid #fff; border-radius: 50%; background: #0f766e; box-shadow: 0 2px 8px rgba(15, 118, 110, .45); }
-.nearby-participant-avatar { width: 46px; height: 46px; border: 3px solid #fff; border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: #2f63c7; color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 3px 12px rgba(32, 43, 66, .3); }
+.nearby-selected-location-marker span { display: block; width: 22px; height: 22px; border: 4px solid var(--cola-ai-surface); border-radius: 50%; background: var(--cola-ai-action-highlight); box-shadow: 0 2px 8px color-mix(in srgb, var(--cola-ai-action-highlight) 48%, transparent); }
+.nearby-participant-avatar { width: 46px; height: 46px; border: 3px solid var(--cola-ai-surface); border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: var(--cola-ai-action); color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 3px 12px color-mix(in srgb, var(--cola-ai-action) 30%, transparent); }
 .nearby-participant-avatar img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: cover; }
-.leaflet-container { font-family: "IBM Plex Sans", sans-serif; }
+.leaflet-container { font-family: var(--font-sans); }
 .leaflet-control-attribution { padding: 1px 4px !important; background: rgba(255,255,255,.72) !important; font-size: 8px; opacity: .72; }
 .nearby-map-empty { min-height: 150px; border-top: 1px solid #e6e2d9; padding: 24px 20px 28px; display: grid; align-content: center; gap: 7px; background: #fff; }
 .nearby-map-empty-eyebrow { margin: 0; color: #8a857c; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }

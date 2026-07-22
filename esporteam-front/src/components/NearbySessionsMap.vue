@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import 'leaflet/dist/leaflet.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
@@ -16,9 +16,14 @@ const props = defineProps({
 const emit = defineEmits(['select', 'location-select'])
 
 const mapElement = ref(null)
-const locationStatus = ref(props.sessions.length
-  ? 'Localizando você…'
-  : 'Nenhuma Sessão Esportiva próxima · localizando você…')
+const mapAriaLabel = computed(() => props.selectable
+  ? 'Mapa para escolher o local da Sessão Esportiva'
+  : 'Mapa real de Sessões Esportivas próximas')
+const locationStatus = ref(props.selectable
+  ? 'Localizando você para escolher o ponto da sessão…'
+  : props.sessions.length
+    ? 'Localizando você…'
+    : 'Nenhuma Sessão Esportiva próxima · localizando você…')
 let map
 let L
 let sessionLayer
@@ -117,6 +122,12 @@ function handleMapClick(event) {
   emit('location-select', { latitude: event.latlng.lat, longitude: event.latlng.lng })
 }
 
+function publicationLocationStatus() {
+  return props.selectedLocation
+    ? 'Sua localização e o local da sessão estão marcados'
+    : 'Toque no mapa para marcar o local da sessão'
+}
+
 function locateParticipant() {
   if (!navigator.geolocation) {
     locationStatus.value = 'Localização indisponível neste dispositivo'
@@ -127,7 +138,9 @@ function locateParticipant() {
 
   navigator.geolocation.getCurrentPosition(({ coords }) => {
     currentLocation = [coords.latitude, coords.longitude]
-    locationStatus.value = props.sessions.length
+    locationStatus.value = props.selectable
+      ? publicationLocationStatus()
+      : props.sessions.length
       ? 'Mostrando Sessões próximas de você'
       : 'Nenhuma Sessão Esportiva próxima · explore o mapa'
     if (!map || disposed) return
@@ -135,7 +148,9 @@ function locateParticipant() {
     drawCurrentLocation()
     drawSessions()
   }, () => {
-    locationStatus.value = 'Ative a localização para centralizar o mapa em você'
+    locationStatus.value = props.selectable
+      ? publicationLocationStatus()
+      : 'Ative a localização para centralizar o mapa em você'
     drawCurrentLocation()
     drawSessions()
   }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 })
@@ -168,7 +183,10 @@ watch(() => [props.sessions, props.selectedSessionId], () => {
   }
 }, { deep: true })
 watch(() => [props.participantAvatarUrl, props.participantInitials], drawCurrentLocation)
-watch(() => props.selectedLocation, drawSelectedLocation, { deep: true })
+watch(() => props.selectedLocation, () => {
+  drawSelectedLocation()
+  if (props.selectable) locationStatus.value = publicationLocationStatus()
+}, { deep: true })
 onBeforeUnmount(() => {
   disposed = true
   map?.off('click', handleMapClick)
@@ -180,7 +198,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="nearby-real-map nearby-map">
-    <div ref="mapElement" class="nearby-real-map-canvas" aria-label="Mapa real de Sessões Esportivas próximas"></div>
+    <div ref="mapElement" class="nearby-real-map-canvas" :aria-label="mapAriaLabel"></div>
     <p class="nearby-location-status">{{ locationStatus }}</p>
   </div>
 </template>

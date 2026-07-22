@@ -21,6 +21,13 @@ export function useOneOffSessionPublication({ publish = publishOneOffSportSessio
   const key = ref(newPublicationKey())
   const draft = ref({})
   const sports = ref([])
+  const selectedLocation = computed(() => {
+    if (draft.value.latitude === '' || draft.value.longitude === '') return null
+    return {
+      latitude: Number(draft.value.latitude),
+      longitude: Number(draft.value.longitude),
+    }
+  })
   const canReview = computed(() => Boolean(
     draft.value.sport_id && draft.value.title && draft.value.type && draft.value.starts_at && draft.value.ends_at
     && draft.value.timezone && draft.value.meeting_point_label && draft.value.location_label_public
@@ -52,6 +59,13 @@ export function useOneOffSessionPublication({ publish = publishOneOffSportSessio
 
   function close() { open.value = false }
 
+  function selectLocation({ latitude, longitude }) {
+    draft.value.latitude = latitude
+    draft.value.longitude = longitude
+    draft.value.meeting_point_label = 'Ponto selecionado no mapa'
+    draft.value.location_label_public = draft.value.city || 'Região selecionada no mapa'
+  }
+
   async function publishDraft() {
     if (!canReview.value) return null
     loading.value = true
@@ -69,5 +83,18 @@ export function useOneOffSessionPublication({ publish = publishOneOffSportSessio
     }
   }
 
-  return { open, step, loading, error, draft, sports, canReview, begin, close, publishDraft }
+  return {
+    open,
+    step,
+    loading,
+    error,
+    draft,
+    sports,
+    selectedLocation,
+    canReview,
+    begin,
+    close,
+    selectLocation,
+    publishDraft,
+  }
 }

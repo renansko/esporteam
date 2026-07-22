@@ -220,9 +220,20 @@ const nearbySessionViews = computed(() => (
     ? props.nearbySessions.map((card, index) => createNearbySportSessionView(card, index))
     : []
 ))
+const oneOffPublicationOpen = computed(() => Boolean(props.oneOffPublication?.open?.value))
+const publicationMapSessions = computed(() => (
+  oneOffPublicationOpen.value ? [] : nearbySessionViews.value
+))
+const publicationSelectedLocation = computed(() => (
+  props.oneOffPublication?.selectedLocation?.value ?? null
+))
 const selectedNearbySessionView = computed(() => (
   nearbySessionViews.value.find(item => item.id === selectedNearbySessionId.value) || null
 ))
+
+function selectOneOffLocation(location) {
+  props.oneOffPublication?.selectLocation?.(location)
+}
 
 const sportProfile = computed(() => store.activeSportProfile)
 const hasProfileData = computed(() => {
@@ -461,8 +472,8 @@ async function highlightBioContext() {
         <div v-else-if="isMapTab && nearbySessionsLoading && !nearbySessionViews.length && !nearbySessionsError" class="loading-grace" aria-busy="true"></div>
 
         <section v-else-if="isMapTab && !nearbySessionsError" class="nearby-stage" aria-label="Mapa e Lista de Sessoes proximas">
-          <button v-if="oneOffPublication" class="nearby-publish-fab" type="button" aria-label="Criar Sessão Esportiva" @click="emit('startOneOffPublication')">+ Criar sessão</button>
-          <div class="nearby-surface-toggle" role="tablist" aria-label="Alternar entre Mapa e Lista">
+          <button v-if="oneOffPublication && !oneOffPublicationOpen" class="nearby-publish-fab" type="button" aria-label="Criar Sessão Esportiva" @click="emit('startOneOffPublication')">+ Criar sessão</button>
+          <div v-if="!oneOffPublicationOpen" class="nearby-surface-toggle" role="tablist" aria-label="Alternar entre Mapa e Lista">
             <button
               type="button"
               :class="['nearby-surface-button', { active: nearbySurface === 'map' }]"
@@ -481,17 +492,20 @@ async function highlightBioContext() {
             </button>
           </div>
 
-          <template v-if="nearbySurface === 'map'">
+          <template v-if="oneOffPublicationOpen || nearbySurface === 'map'">
             <NearbySessionsMap
-              :sessions="nearbySessionViews"
+              :sessions="publicationMapSessions"
               :selected-session-id="selectedNearbySessionId"
               :participant-avatar-url="sportProfile.avatarUrl"
               :participant-initials="initials"
+              :selectable="oneOffPublicationOpen"
+              :selected-location="publicationSelectedLocation"
               @select="selectNearbySession"
+              @location-select="selectOneOffLocation"
             />
 
             <section
-              v-if="!nearbySessionViews.length"
+              v-if="!oneOffPublicationOpen && !nearbySessionViews.length"
               class="nearby-map-empty"
               aria-label="Nenhuma Sessao Esportiva nesta regiao"
             >
@@ -532,7 +546,7 @@ async function highlightBioContext() {
           </section>
 
           <section
-            v-if="selectedNearbySessionView"
+            v-if="selectedNearbySessionView && !oneOffPublicationOpen"
             class="nearby-summary-sheet"
             aria-label="Resumo da Sessao Esportiva"
           >

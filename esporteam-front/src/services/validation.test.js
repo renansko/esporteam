@@ -12,6 +12,10 @@ assert.equal(isValidField('renansk', { type: 'email', required: true }), false)
 assert.equal(isValidField('', { required: true }), false)
 assert.equal(apiErrorMessage({ message: 'The given data was invalid.' }), 'Os dados informados são inválidos.')
 assert.equal(apiErrorMessage({ message: 'Network Error' }), 'Não foi possível conectar ao servidor.')
+assert.equal(
+  apiErrorMessage({ code: 'adult_eligibility_required', message: 'adult_eligibility_required' }),
+  'Confirme sua maioridade para continuar.',
+)
 assert.equal(apiErrorMessage({ message: 'Perfil Esportivo já confirmado.' }), 'Perfil Esportivo já confirmado.')
 assert.equal(
   apiErrorMessage({

@@ -277,6 +277,45 @@ try {
   assert.doesNotMatch(nearbyMapHtml, /Modalidade a definir/)
   assert.doesNotMatch(nearbyMapHtml, /Disponibilidade a definir/)
 
+  const publicationHtml = await renderShell({
+    discoveryCards: [],
+    nearbySessions: [],
+    nearbySurfaceMode: 'map',
+    oneOffPublication: {
+      open: { value: true },
+      draft: {
+        value: {
+          sport_id: '',
+          title: '',
+          starts_at: '',
+          ends_at: '',
+          meeting_point_label: '',
+          city: 'Florianópolis',
+          region: 'SC',
+          latitude: -27.5969,
+          longitude: -48.5494,
+          capacity: '',
+          description: '',
+          entry_mode: 'publica_direta',
+        },
+      },
+      sports: { value: [] },
+      selectedLocation: { value: { latitude: -27.5969, longitude: -48.5494 } },
+      canReview: { value: false },
+      loading: { value: false },
+      error: { value: '' },
+      close: () => {},
+      selectLocation: () => {},
+      publishDraft: async () => null,
+    },
+  }, { participantTab: 'map' })
+
+  assert.equal((publicationHtml.match(/nearby-real-map-canvas/g) || []).length, 1)
+  assert.match(publicationHtml, /Modalidade/)
+  assert.match(publicationHtml, /Cadastre uma Modalidade no seu Perfil Esportivo/)
+  assert.match(publicationHtml, /class="publication-submit"/)
+  assert.doesNotMatch(publicationHtml, /ID da modalidade|latitude|longitude|-27\.59690|-48\.54940|adult_eligibility/i)
+
   const nearbyListHtml = await renderShell({
     discoveryCards: [],
     nearbySessions: [

@@ -24,6 +24,8 @@ const API_MESSAGES = {
   workspace_select_failed: 'Não foi possível selecionar o Workspace.',
   load_failed: 'Não foi possível carregar os dados.',
   create_failed: 'Não foi possível criar a ideia.',
+  adult_eligibility_required: 'Confirme sua maioridade para continuar.',
+  adult_eligibility_no_token: 'Não foi possível confirmar sua maioridade. Tente novamente.',
   login_no_token: 'Não foi possível concluir o acesso.',
   register_no_token: 'Não foi possível concluir o cadastro.',
 }
@@ -68,6 +70,7 @@ export function apiErrorMessage(errorOrPayload, fallback = 'Não foi possível c
     return `A ${VALIDATION_FIELD_LABELS[field]} selecionada não está disponível.`
   }
 
+  if (payload.code && API_MESSAGES[payload.code]) return API_MESSAGES[payload.code]
   if (message) return formatValidationMessage(message, field)
   return translateApiMessage(payload.message || errorOrPayload?.message, fallback)
 }
