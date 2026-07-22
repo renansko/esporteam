@@ -1,5 +1,11 @@
 import { resolveSportIcon } from './sportIcons.js'
 
+export function resolveDiscoverySwipeAction(deltaX, cardWidth, canShowInterest = true) {
+  if (!Number.isFinite(cardWidth) || cardWidth <= 0 || Math.abs(deltaX) < cardWidth * 0.5) return null
+  if (deltaX < 0) return 'skip'
+  return canShowInterest ? 'interest' : null
+}
+
 const CURATED_ENTRY_MODES = new Set([
   'curated',
   'publica_aprovacao',

@@ -49,10 +49,33 @@ export const PARTICIPANT_TABS = [
 
 export const PARTICIPANT_TAB_IDS = PARTICIPANT_TABS.map(tab => tab.id)
 
+export const PARTICIPANT_ROUTE_BY_TAB = Object.freeze({
+  discover: 'discover',
+  map: 'map',
+  matches: 'events',
+  profile: 'profile',
+})
+
+export const PARTICIPANT_TAB_BY_ROUTE = Object.freeze(
+  Object.fromEntries(Object.entries(PARTICIPANT_ROUTE_BY_TAB).map(([tab, route]) => [route, tab])),
+)
+
 export function isParticipantTab(tabId) {
   return PARTICIPANT_TAB_IDS.includes(tabId)
 }
 
 export function resolveParticipantTab(tabId) {
   return PARTICIPANT_TABS.find(tab => tab.id === tabId) || PARTICIPANT_TABS[0]
+}
+
+export function safeParticipantReturnPath(value, fallback = '/descobrir') {
+  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
+    ? value
+    : fallback
+}
+
+export function resolveSessionBackAction(historyState = {}) {
+  return typeof historyState.returnTo === 'string'
+    ? { type: 'back' }
+    : { type: 'replace', to: '/descobrir' }
 }

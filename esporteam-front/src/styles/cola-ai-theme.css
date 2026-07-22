@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 
 /*
  * Cola Aí brand foundation
@@ -12,7 +12,8 @@
  */
 
 :root {
-  --cola-ai-font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --cola-ai-font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --cola-ai-font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
 
   /* Core brand */
   --cola-ai-blue: #353bab;
@@ -45,11 +46,13 @@
   --glass-border-shadow: rgba(48, 48, 144, 0.14);
   --glass-highlight: rgba(255, 255, 255, 0.88);
   --glass-blur: 22px;
+  --glass-blur-thin: 12px;
   --glass-saturate: 145%;
   --glass-shadow-soft: 0 10px 28px rgba(48, 48, 144, 0.09), 0 1px 5px rgba(61, 61, 61, 0.07);
 
   /* Adopt the brand typeface across the current interface. */
   --font-sans: var(--cola-ai-font-sans);
+  --font-mono: var(--cola-ai-font-mono);
 }
 
 [data-theme="dark"] {

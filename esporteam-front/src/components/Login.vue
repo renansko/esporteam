@@ -1,10 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import { inject, ref } from 'vue'
 import { useAppStore } from '../stores/app'
+import { routerKey } from 'vue-router'
 import Icon from './Icon.vue'
+import UiButton from './ui/UiButton.vue'
 import { firstValidationError, isValidField } from '../services/validation'
 
 const store = useAppStore()
+const router = inject(routerKey, null)
 const email = ref('')
 const password = ref('')
 const submitted = ref(false)
@@ -43,6 +46,11 @@ function submit() {
 
 function clearError(key) {
   store.clearLoginFieldError(key)
+}
+
+function openRegistration() {
+  if (router) router.push('/cadastro')
+  else store.setAuthView('register')
 }
 </script>
 
@@ -115,14 +123,14 @@ function clearError(key) {
           {{ store.loginError }}
         </div></Transition>
 
-        <button class="btn btn-primary auth-submit" type="submit" :disabled="store.loginLoading">
+        <UiButton class="btn btn-primary auth-submit" type="submit" variant="primary" :busy="store.loginLoading">
           {{ store.loginLoading ? 'Entrando...' : 'Entrar' }}
           <Icon name="chevron" />
-        </button>
+        </UiButton>
 
         <div class="auth-switch">
           <span>Ainda nao tem conta?</span>
-          <button type="button" class="link" @click="store.setAuthView('register')">
+          <button type="button" class="link" @click="openRegistration">
             Criar conta
           </button>
         </div>

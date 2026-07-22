@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+import { changeMapZoom, createLongPressGesture, focusMapSelection } from '../features/participant/mapInteraction.js'
 
 const props = defineProps({
   sessions: { type: Array, default: () => [] },
@@ -18,7 +19,7 @@ const emit = defineEmits(['select', 'create-session', 'location-select', 'select
 const mapElement = ref(null)
 const mapAriaLabel = computed(() => props.selectable
   ? 'Mapa para escolher o local da Sessão Esportiva'
-  : 'Mapa real de Sessões Esportivas próximas. Toque em um ponto vazio para criar uma Sessão Esportiva')
+  : 'Mapa real de Sessões Esportivas próximas. Mantenha pressionado um ponto vazio por meio segundo para criar uma Sessão Esportiva')
 const locationStatus = ref(props.selectable
   ? 'Localizando você para escolher o ponto da sessão…'
   : props.sessions.length
@@ -31,6 +32,14 @@ let currentLocationMarker
 let selectedLocationMarker
 let currentLocation = [-27.5949, -48.5482]
 let disposed = false
+const longPressGesture = createLongPressGesture({
+  delay: 500,
+  movementTolerance: 10,
+  onConfirm: location => {
+    emit('create-session', location)
+    locationStatus.value = 'Local selecionado. Complete os dados da Sessão Esportiva.'
+  },
+})
 
 function numberValue(...values) {
   const value = values.find(item => Number.isFinite(Number(item)))
@@ -87,7 +96,7 @@ function drawSessions() {
     const coordinates = sessionCoordinates(session, index)
     const selected = String(session.id) === String(props.selectedSessionId)
     bounds.push(coordinates)
-    L.circleMarker(coordinates, {
+    const marker = L.circleMarker(coordinates, {
       radius: selected ? 12 : 10,
       color: '#FFFFFF',
       weight: 3,
@@ -98,6 +107,16 @@ function drawSessions() {
       .bindTooltip(`${session.modalityLabel} · ${session.timeCueLabel}`, { permanent: selected, direction: 'top', offset: [0, -10] })
       .on('click', () => emit('select', session.id))
       .addTo(sessionLayer)
+    marker.getElement()?.setAttribute('role', 'button')
+    marker.getElement()?.setAttribute('tabindex', '0')
+    marker.getElement()?.setAttribute('aria-label', session.listAriaLabel || `${session.title}, ${session.timeCueLabel}`)
+    marker.getElement()?.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        emit('select', session.id)
+      }
+    })
+    if (selected) nextTick(() => focusMapSelection(marker))
   })
 
   if (bounds.length > 1) map.fitBounds(bounds, { padding: [38, 38], maxZoom: 15 })
@@ -124,7 +143,27 @@ function handleMapClick(event) {
     emit('location-select', location)
     return
   }
-  emit('create-session', location)
+}
+
+function clearLongPress() {
+  longPressGesture.cancel()
+}
+
+function beginLongPress(event) {
+  if (props.selectable || event.button > 0 || event.target.closest?.('button, .leaflet-interactive, .leaflet-control')) return
+  const latlng = map?.mouseEventToLatLng(event)
+  if (latlng) longPressGesture.start(
+    { x: event.clientX, y: event.clientY },
+    { latitude: latlng.lat, longitude: latlng.lng },
+  )
+}
+
+function moveLongPress(event) {
+  longPressGesture.move({ x: event.clientX, y: event.clientY })
+}
+
+function zoom(delta) {
+  changeMapZoom(map, delta)
 }
 
 function syncSelectable(selectable) {
@@ -189,6 +228,12 @@ onMounted(async () => {
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
   }).addTo(map)
   syncSelectable(props.selectable)
+  const container = map.getContainer()
+  container.addEventListener('pointerdown', beginLongPress)
+  container.addEventListener('pointermove', moveLongPress)
+  container.addEventListener('pointerup', clearLongPress)
+  container.addEventListener('pointercancel', clearLongPress)
+  container.addEventListener('pointerleave', clearLongPress)
   drawSelectedLocation()
   locateParticipant()
 })
@@ -208,6 +253,13 @@ watch(() => props.selectedLocation, () => {
 }, { deep: true })
 onBeforeUnmount(() => {
   disposed = true
+  clearLongPress()
+  const container = map?.getContainer()
+  container?.removeEventListener('pointerdown', beginLongPress)
+  container?.removeEventListener('pointermove', moveLongPress)
+  container?.removeEventListener('pointerup', clearLongPress)
+  container?.removeEventListener('pointercancel', clearLongPress)
+  container?.removeEventListener('pointerleave', clearLongPress)
   map?.off('click', handleMapClick)
   selectedLocationMarker?.remove()
   map?.remove()
@@ -217,8 +269,12 @@ onBeforeUnmount(() => {
 
 <template>
   <div :class="['nearby-real-map', 'nearby-map', { 'nearby-real-map--selecting': selectable && !selectedLocation }]">
-    <div ref="mapElement" class="nearby-real-map-canvas" :aria-label="mapAriaLabel"></div>
-    <p class="nearby-location-status">{{ locationStatus }}</p>
+    <div ref="mapElement" class="nearby-real-map-canvas" role="application" :aria-label="mapAriaLabel"></div>
+    <div class="nearby-map-zoom glass-surface" aria-label="Controles de zoom">
+      <button type="button" aria-label="Aumentar zoom" @click="zoom(1)">+</button>
+      <button type="button" aria-label="Diminuir zoom" @click="zoom(-1)">−</button>
+    </div>
+    <p class="nearby-location-status" aria-live="polite">{{ locationStatus }}</p>
     <button v-if="selectable && !selectedLocation" class="nearby-map-cancel" type="button" @click="emit('selection-cancel')">Cancelar</button>
   </div>
 </template>

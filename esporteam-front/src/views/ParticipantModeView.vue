@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import ParticipantShell from '../components/ParticipantShell.vue'
 import { useDiscoverySessions } from '../composables/useDiscoverySessions'
@@ -9,8 +10,11 @@ import { useParticipantMatches } from '../composables/useParticipantMatches'
 import { useSportProfileEditor } from '../composables/useSportProfileEditor'
 import { useTeacherProfileEditor } from '../composables/useTeacherProfileEditor'
 import { useOneOffSessionPublication } from '../composables/useOneOffSessionPublication'
+import { PARTICIPANT_ROUTE_BY_TAB, resolveSessionBackAction, safeParticipantReturnPath } from '../features/participant/shell'
 
 const store = useAppStore()
+const route = useRoute()
+const router = useRouter()
 const activeSportProfile = computed(() => store.activeSportProfile)
 const activeTeacherProfile = computed(() => store.teacherProfile)
 const oneOffPublication = useOneOffSessionPublication()
@@ -40,6 +44,7 @@ const {
   discoverySessionCards,
   discoverySessionsLoading,
   discoverySessionsError,
+  discoverySessionsNotice,
   discoverySessionFilters,
   hasDiscoverySessionFilters,
   setDiscoverySessionFilters,
@@ -94,6 +99,27 @@ function reloadParticipantSessions() {
   loadNearbySportSessions(store.activeSportProfile, discoverySessionFilters)
 }
 
+async function openSessionDetail(card) {
+  const sessionId = card?.session?.id ?? card?.id
+  if (!sessionId) return openSportSessionDetail(card)
+  const returnTo = route.name === 'session'
+    ? safeParticipantReturnPath(window.history.state?.returnTo)
+    : route.fullPath
+  await router.push({ name: 'session', params: { id: sessionId }, state: { returnTo } })
+}
+
+function closeSessionDetailRoute() {
+  const action = resolveSessionBackAction(window.history.state)
+  closeSportSessionDetail()
+  if (action.type === 'back') router.back()
+  else router.replace(action.to)
+}
+
+function navigateParticipantTab(tabId) {
+  const routeName = PARTICIPANT_ROUTE_BY_TAB[tabId]
+  if (routeName && route.name !== routeName) router.push({ name: routeName })
+}
+
 function reloadDiscoverySessions() {
   loadCompatibleSportSessions(store.activeSportProfile)
 }
@@ -122,6 +148,19 @@ onMounted(() => {
   reloadParticipantSessions()
   loadParticipantMatches()
 })
+
+watch(() => route.meta.participantTab, (tab) => {
+  if (tab) store.setParticipantTab(tab)
+}, { immediate: true })
+
+watch(() => [route.name, route.params.id], ([name, sessionId]) => {
+  if (name === 'session' && sessionId) {
+    if (!window.history.state?.returnTo) store.setParticipantTab('discover')
+    openSportSessionDetail({ id: sessionId }, { useMockFallback: false })
+  } else if (isSportSessionDetailOpen.value) {
+    closeSportSessionDetail()
+  }
+}, { immediate: true })
 
 watch(() => store.activeSportProfile?.id, () => {
   reloadParticipantSessions()
@@ -159,6 +198,7 @@ function acceptBioSuggestion(suggestion) {
     :discovery-cards="discoverySessionCards"
     :discovery-loading="discoverySessionsLoading"
     :discovery-error="discoverySessionsError"
+    :discovery-notice="discoverySessionsNotice"
     :discovery-filters="discoverySessionFilters"
     :has-discovery-filters="hasDiscoverySessionFilters"
     :discovery-action-loading="discoveryActionLoading"
@@ -194,23 +234,24 @@ function acceptBioSuggestion(suggestion) {
     @apply-discovery-filters="applyDiscoveryFilters"
     @retry-discovery="reloadDiscoverySessions"
     @retry-nearby-sessions="reloadNearbySessions"
-    @select-discovery-card="openSportSessionDetail"
+    @select-discovery-card="openSessionDetail"
     @skip-discovery-session="skipCurrentSession"
     @undo-discovery-action="undoDiscoveryAction"
     @show-interest-in-discovery-session="showInterestInCurrentSession"
-    @close-sport-session-detail="closeSportSessionDetail"
+    @close-sport-session-detail="closeSessionDetailRoute"
     @select-nearby-session="clearNearbyParticipationFeedback"
     @close-nearby-session-summary="clearNearbyParticipationFeedback"
     @submit-nearby-session-participation="submitNearbySessionParticipation"
     @submit-sport-session-participation="submitSportSessionParticipation"
     @set-participant-match-filter="setMatchFilter"
-    @select-participant-match="openSportSessionDetail"
+    @select-participant-match="openSessionDetail"
     @retry-participant-matches="loadParticipantMatches"
     @save-sport-profile="saveProfile"
     @update-teacher-profile-field="updateTeacherProfileField"
     @update-teacher-hourly-price="updateTeacherHourlyPrice"
     @start-one-off-publication="startOneOffPublication"
     @one-off-published="handleOneOffPublished"
+    @navigate-participant-tab="navigateParticipantTab"
     @logout="store.logout"
     @apply-bio-suggestion="applyBioSuggestion"
     @accept-bio-suggestion="acceptBioSuggestion"

@@ -46,6 +46,7 @@ export function useDiscoverySessions({ initialCards = [], joinSession = joinSpor
   const discoverySessionCards = ref(validDiscoveryCards(initialCards))
   const discoverySessionsLoading = ref(false)
   const discoverySessionsError = ref(null)
+  const discoverySessionsNotice = ref(null)
   const discoverySessionFilters = reactive(createDefaultDiscoverySessionFilters())
   const discoveryHistory = ref([])
   const discoveryActionLoading = ref(false)
@@ -53,7 +54,8 @@ export function useDiscoverySessions({ initialCards = [], joinSession = joinSpor
   const discoveryActionFeedback = ref(null)
   const canUndoDiscovery = computed(() => discoveryHistory.value.length > 0)
   const hasDiscoverySessionFilters = computed(() => (
-    discoverySessionFilters.sportSlug !== DEFAULT_DISCOVERY_SESSION_FILTERS.sportSlug
+    discoverySessionFilters.sportSlugs.length > 0
+    || discoverySessionFilters.sportSlug !== DEFAULT_DISCOVERY_SESSION_FILTERS.sportSlug
     || discoverySessionFilters.level !== DEFAULT_DISCOVERY_SESSION_FILTERS.level
     || discoverySessionFilters.goal !== DEFAULT_DISCOVERY_SESSION_FILTERS.goal
     || discoverySessionFilters.distanceKm !== DEFAULT_DISCOVERY_SESSION_FILTERS.distanceKm
@@ -154,6 +156,7 @@ export function useDiscoverySessions({ initialCards = [], joinSession = joinSpor
 
   async function loadCompatibleSportSessions(activeSportProfile, nextFilters = discoverySessionFilters) {
     discoverySessionsLoading.value = true
+    discoverySessionsNotice.value = null
 
     try {
       const params = { ...nextFilters }
@@ -161,6 +164,9 @@ export function useDiscoverySessions({ initialCards = [], joinSession = joinSpor
 
       const cards = await listCompatibleSportSessions(params, {
         useMockFallback: !activeSportProfile?.id,
+        onPartialFailure: ({ failed, total }) => {
+          discoverySessionsNotice.value = `Resultados de ${total - failed} de ${total} Modalidades. Algumas não puderam ser atualizadas.`
+        },
       })
       discoverySessionsError.value = null
       replaceDiscoverySessionCards(cards)
@@ -176,6 +182,7 @@ export function useDiscoverySessions({ initialCards = [], joinSession = joinSpor
     discoverySessionCards,
     discoverySessionsLoading,
     discoverySessionsError,
+    discoverySessionsNotice,
     discoverySessionFilters,
     hasDiscoverySessionFilters,
     setDiscoverySessionFilters,

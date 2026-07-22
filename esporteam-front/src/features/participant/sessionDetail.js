@@ -31,7 +31,7 @@ export function createSportSessionDetailView(detail, {
   const canSubmitParticipation = !participationState.status
     && (isOpen || (isCurated && ['pedir_vaga', 'request_approval', 'request_participation'].includes(detail.nextAction)))
   const primaryActionLabel = participationState.status === 'confirmed'
-    ? 'Confirmado'
+    ? 'Cancelar participação'
     : participationState.status === 'pending'
       ? 'Aguardando aprovacao'
       : participationState.status === 'refused'
@@ -70,6 +70,9 @@ export function createSportSessionDetailView(detail, {
     participationState,
     approvalNotice: isCurated
       ? 'O Anfitriao da Sessao revisa os pedidos antes de confirmar sua participacao.'
+      : '',
+    cancellationNotice: participationState.status === 'confirmed'
+      ? 'O cancelamento ainda não é suportado pelo servidor.'
       : '',
     canSubmitParticipation,
     primaryActionLabel,

@@ -1,5 +1,8 @@
 <script setup>
 import { computed } from 'vue'
+import UiButton from './ui/UiButton.vue'
+import UiFormFooter from './ui/UiFormFooter.vue'
+import UiStepper from './ui/UiStepper.vue'
 
 const props = defineProps({ publication: { type: Object, required: true } })
 const emit = defineEmits(['published'])
@@ -37,14 +40,14 @@ async function publish() {
       </div>
       <details class="publication-optional">
         <summary>Mais opções</summary>
-        <label>Capacidade (opcional)<input v-model="draft.capacity" type="number" min="1" /></label>
+        <label>Capacidade (opcional)<UiStepper v-model="draft.capacity" :min="1" :max="100" label="Capacidade da Sessão Esportiva" /></label>
         <label>Descrição (opcional)<textarea v-model="draft.description" maxlength="2000" /></label>
         <label>Entrada<select v-model="draft.entry_mode"><option value="publica_direta">Entrada direta</option><option value="publica_aprovacao">Com aprovação</option><option value="convite">Somente convite</option></select></label>
       </details>
       <small>O ponto exato fica protegido e só é mostrado a participantes confirmados.</small>
     </section>
     <p v-if="publication.error.value" class="publication-error" role="alert">{{ publication.error.value }}</p>
-    <footer class="publication-actions"><button class="publication-submit" type="button" :disabled="!publication.canReview.value || publication.loading.value" @click="publish">{{ publication.loading.value ? 'Publicando…' : 'Criar sessão' }}</button></footer>
+    <UiFormFooter class="publication-actions"><UiButton class="publication-submit" variant="primary" :busy="publication.loading.value" :disabled="!publication.canReview.value" @click="publish">{{ publication.loading.value ? 'Publicando…' : 'Criar sessão' }}</UiButton></UiFormFooter>
   </section>
 </template>
 

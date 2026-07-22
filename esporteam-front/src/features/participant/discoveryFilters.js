@@ -1,4 +1,5 @@
 export const DEFAULT_DISCOVERY_SESSION_FILTERS = Object.freeze({
+  sportSlugs: [],
   sportSlug: '',
   level: '',
   goal: '',
@@ -50,7 +51,7 @@ export const DISCOVERY_PARTICIPATION_TYPE_OPTIONS = [
 ]
 
 export function createDefaultDiscoverySessionFilters() {
-  return { ...DEFAULT_DISCOVERY_SESSION_FILTERS }
+  return { ...DEFAULT_DISCOVERY_SESSION_FILTERS, sportSlugs: [] }
 }
 
 export function discoveryFilterOptionLabel(options, value) {

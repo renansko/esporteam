@@ -231,9 +231,16 @@ assert.deepEqual(normalizeDiscoverySessionFilters({
   level: 'iniciante',
   goal: 'treino',
   distance_km: 20,
-  weekday: 'sabado',
+  weekday: 6,
   starts_at: '08:00',
   ends_at: '10:00',
+})
+
+assert.deepEqual(normalizeDiscoverySessionFilters({
+  distanceKm: 50,
+  startsAt: '23:56',
+}), {
+  distance_km: 50,
 })
 
 const originalGet = esporteamApi.get
@@ -303,6 +310,38 @@ try {
 
   assert.equal(openCards.length, 1)
   assert.equal(openCards[0].id, 'open-card')
+
+  const fallbackRequests = []
+  esporteamApi.get = async (url, config) => {
+    fallbackRequests.push({ url, params: config.params })
+
+    if (url === '/discovery') return { data: { data: [] } }
+
+    return {
+      data: {
+        data: [
+          {
+            id: 'registered-session',
+            title: 'Sessao cadastrada',
+            entry_mode: 'publica_direta',
+            sport: 'Corrida',
+          },
+        ],
+      },
+    }
+  }
+
+  const registeredFallbackCards = await listCompatibleSportSessions({
+    distanceKm: 50,
+    participationType: 'open',
+  }, { useMockFallback: false })
+
+  assert.deepEqual(fallbackRequests, [
+    { url: '/discovery', params: { distance_km: 50, mode: 'sessions' } },
+    { url: '/sessions', params: { distance_km: 50 } },
+  ])
+  assert.equal(registeredFallbackCards.length, 1)
+  assert.equal(registeredFallbackCards[0].id, 'registered-session')
 
   esporteamApi.get = async (url, config) => {
     requested = { url, params: config.params }

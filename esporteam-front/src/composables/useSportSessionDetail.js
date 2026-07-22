@@ -57,7 +57,7 @@ export function useSportSessionDetail({
     participationFeedbackTone: sportSessionParticipationFeedbackTone.value,
   }))
 
-  async function openSportSessionDetail(card) {
+  async function openSportSessionDetail(card, { useMockFallback = true } = {}) {
     selectedSessionCard.value = card
     sportSessionDetail.value = null
     sportSessionDetailError.value = null
@@ -74,7 +74,7 @@ export function useSportSessionDetail({
     try {
       sportSessionDetail.value = await fetchDetail(sessionId, {
         fallbackPayload: card?.session ?? card,
-        useMockFallback: true,
+        useMockFallback,
       })
       return sportSessionDetail.value
     } catch (err) {

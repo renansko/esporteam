@@ -37,21 +37,76 @@ function present(value) {
   return value !== undefined && value !== null && value !== ''
 }
 
+const WEEKDAY_BY_SLUG = Object.freeze({
+  domingo: 0,
+  segunda: 1,
+  terca: 2,
+  quarta: 3,
+  quinta: 4,
+  sexta: 5,
+  sabado: 6,
+})
+
+function normalizeDiscoveryWeekday(value) {
+  if (!present(value)) return null
+  if (typeof value === 'number') return value
+
+  const numericWeekday = Number(value)
+  if (Number.isInteger(numericWeekday) && numericWeekday >= 0 && numericWeekday <= 6) {
+    return numericWeekday
+  }
+
+  return WEEKDAY_BY_SLUG[String(value).toLowerCase()] ?? value
+}
+
 export function normalizeDiscoverySessionFilters(filters = {}) {
+  const selectedSportSlugs = Array.isArray(filters.sportSlugs)
+    ? filters.sportSlugs.filter(Boolean)
+    : []
   const normalized = {
     sport_id: firstValue(filters.sport_id, filters.sportId, null),
-    sport_slug: firstValue(filters.sport_slug, filters.sportSlug, null),
+    sport_slug: firstValue(filters.sport_slug, filters.sportSlug, selectedSportSlugs[0], null),
     level: firstValue(filters.level, null),
     goal: firstValue(filters.goal, null),
     distance_km: firstValue(filters.distance_km, filters.distanceKm, null),
-    weekday: firstValue(filters.weekday, null),
-    starts_at: firstValue(filters.starts_at, filters.startsAt, null),
-    ends_at: firstValue(filters.ends_at, filters.endsAt, null),
+  }
+
+  const weekday = firstValue(filters.weekday, null)
+  const startsAt = firstValue(filters.starts_at, filters.startsAt, null)
+  const endsAt = firstValue(filters.ends_at, filters.endsAt, null)
+
+  if (present(weekday) && present(startsAt) && present(endsAt)) {
+    normalized.weekday = normalizeDiscoveryWeekday(weekday)
+    normalized.starts_at = startsAt
+    normalized.ends_at = endsAt
   }
 
   return Object.fromEntries(
     Object.entries(normalized).filter(([, value]) => present(value)),
   )
+}
+
+export function mergeDiscoveryRankingRounds(resultSets = []) {
+  const queues = resultSets.map(items => Array.isArray(items) ? [...items] : [])
+  const merged = []
+  const seen = new Set()
+  let remaining = queues.some(queue => queue.length)
+
+  while (remaining) {
+    remaining = false
+    for (const queue of queues) {
+      const card = queue.shift()
+      if (!card) continue
+      remaining = remaining || queue.length > 0
+      const id = card.session?.id ?? card.id
+      const key = id == null ? null : String(id)
+      if (key && seen.has(key)) continue
+      if (key) seen.add(key)
+      merged.push(card)
+    }
+  }
+
+  return merged
 }
 
 function isCuratedSession(card) {
@@ -362,13 +417,19 @@ export async function fetchActiveSportProfile({ useMockFallback = true } = {}) {
   }
 }
 
-export async function listCompatibleSportSessions(params = {}, { useMockFallback = true } = {}) {
+async function requestCompatibleSportSessions(params, { useMockFallback }) {
   const discoveryParams = normalizeDiscoverySessionFilters(params)
   const participationType = firstValue(params.participationType, params.participation_type, 'all')
 
   try {
     const { data } = await esporteamApi.get('/discovery', { params: { ...discoveryParams, mode: 'sessions' } })
-    return normalizeDiscoveryCards(data?.data ?? data)
+    const discoveryCards = normalizeDiscoveryCards(data?.data ?? data)
+      .filter(card => matchesParticipationType(card, participationType))
+
+    if (discoveryCards.length) return discoveryCards
+
+    const { data: registeredData } = await esporteamApi.get('/sessions', { params: discoveryParams })
+    return normalizeDiscoveryCards(registeredData?.data ?? registeredData)
       .filter(card => matchesParticipationType(card, participationType))
   } catch (err) {
     if (useMockFallback) {
@@ -377,6 +438,26 @@ export async function listCompatibleSportSessions(params = {}, { useMockFallback
     }
     throw err
   }
+}
+
+export async function listCompatibleSportSessions(params = {}, {
+  useMockFallback = true,
+  onPartialFailure = () => {},
+  requestSessions = requestCompatibleSportSessions,
+} = {}) {
+  const sportSlugs = Array.isArray(params.sportSlugs)
+    ? [...new Set(params.sportSlugs.filter(Boolean))]
+    : []
+  if (!sportSlugs.length) return requestSessions(params, { useMockFallback })
+
+  const settled = await Promise.allSettled(sportSlugs.map(sportSlug => (
+    requestSessions({ ...params, sportSlugs: [], sportSlug }, { useMockFallback })
+  )))
+  const successful = settled.filter(result => result.status === 'fulfilled')
+  const failed = settled.filter(result => result.status === 'rejected')
+  if (!successful.length) throw failed[0]?.reason ?? new Error('discovery_all_modalities_failed')
+  if (failed.length) onPartialFailure({ failed: failed.length, total: settled.length })
+  return mergeDiscoveryRankingRounds(successful.map(result => result.value))
 }
 
 export async function listParticipantSportSessions({ useMockFallback = true } = {}) {

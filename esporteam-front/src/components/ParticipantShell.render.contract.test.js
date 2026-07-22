@@ -63,8 +63,9 @@ try {
       ],
     }, { participantTab: 'discover' })
 
-  assert.match(html, /class="discovery-deck"/)
+  assert.match(html, /class="discovery-deck[^"]*"/)
   assert.match(html, /class="session-card discovery-action-card"/)
+  assert.doesNotMatch(html, /class="discovery-empty-state"/)
   assert.match(html, /Filtros/)
   assert.match(html, /aria-label="Sessao Esportiva Corrida orientada no parque/)
   assert.match(html, /class="session-entry-badge session-entry-badge-curated"/)
@@ -273,7 +274,7 @@ try {
   assert.doesNotMatch(nearbyMapHtml, /\+ Criar sessão/)
   assert.match(nearbyMapHtml, /Corrida/)
   assert.match(nearbyMapHtml, /08:00/)
-  assert.match(nearbyMapHtml, /Resumo da Sessao Esportiva/)
+  assert.match(nearbyMapHtml, /Sessão Esportiva selecionada/)
   assert.match(nearbyMapHtml, /Vou participar/)
   assert.match(nearbyMapHtml, /Ver detalhes/)
   assert.doesNotMatch(nearbyMapHtml, /Modalidade a definir/)
@@ -303,6 +304,8 @@ try {
 
   const nearbyMapSource = await readFile(new URL('./NearbySessionsMap.vue', import.meta.url), 'utf8')
   assert.match(nearbyMapSource, /watch\(\(\) => props\.selectable/)
+  assert.match(nearbyMapSource, /createLongPressGesture/)
+  assert.match(nearbyMapSource, /delay: 500/)
   assert.match(nearbyMapSource, /emit\('create-session', location\)/)
   assert.match(nearbyMapSource, /bubblingMouseEvents: false/)
 
@@ -342,7 +345,7 @@ try {
   assert.equal((publicationHtml.match(/nearby-real-map-canvas/g) || []).length, 1)
   assert.match(publicationHtml, /Modalidade/)
   assert.match(publicationHtml, /Cadastre uma Modalidade no seu Perfil Esportivo/)
-  assert.match(publicationHtml, /class="publication-submit"/)
+  assert.match(publicationHtml, /class="[^"]*publication-submit[^"]*"/)
   assert.doesNotMatch(publicationHtml, /ID da modalidade|latitude|longitude|-27\.59690|-48\.54940|adult_eligibility/i)
 
   const nearbyListHtml = await renderShell({
@@ -409,7 +412,7 @@ try {
     nearbySessions: [],
   })
 
-  assert.match(defaultEmptyHtml, /Mapa e Lista preparados/)
+  assert.match(defaultEmptyHtml, /Nenhuma Sessão Esportiva por aqui ainda/)
   assert.doesNotMatch(defaultEmptyHtml, /Abra o mapa/)
   assert.doesNotMatch(defaultEmptyHtml, /segunda chance/i)
 

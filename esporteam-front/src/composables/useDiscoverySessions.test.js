@@ -60,7 +60,7 @@ try {
   assert.deepEqual(requestedParams, {
     sport_slug: 'corrida',
     distance_km: 20,
-    weekday: 'sabado',
+    weekday: 6,
     starts_at: '08:00',
     ends_at: '10:00',
     mode: 'sessions',
@@ -83,7 +83,18 @@ try {
   esporteamApi.get = () => new Promise(resolve => { resolveRetry = resolve })
   const retry = deck.loadCompatibleSportSessions({ id: 'sport-profile-1' })
   assert.equal(deck.discoverySessionsError.value.title, 'Descoberta sem atualizacao')
-  resolveRetry({ data: { data: [] } })
+  resolveRetry({
+    data: {
+      data: [{
+        id: 'retry-card',
+        session: {
+          id: 'retry-session',
+          title: 'Sessao atualizada',
+          entry_mode: 'publica_direta',
+        },
+      }],
+    },
+  })
   await retry
   assert.equal(deck.discoverySessionsError.value, null)
 } finally {

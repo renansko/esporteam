@@ -30,6 +30,7 @@ for (const token of [
 assert.match(css, /:where\(button:not\(:disabled\), a\[href\], \[role="tab"\], \[role="button"\]\):not\(\.leaflet-container \*\)/)
 assert.match(css, /:active \{\s*transform: scale\(var\(--motion-press-scale\)\)/)
 assert.match(css, /\.motion-page > \.motion-group \{ animation: motion-page-assemble/)
+assert.doesNotMatch(css, /\.motion-page > \.motion-group \{[^}]*\bboth\s*;/)
 assert.match(css, /--motion-stagger: 40ms/)
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*--motion-stagger: 0ms/)
 assert.match(css, /\.motion-sheet-enter-active\s+\.bottom-sheet/)

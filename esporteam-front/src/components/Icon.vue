@@ -1,65 +1,106 @@
 <script setup>
 import { computed } from 'vue'
+import IconArrowBackUp from '@tabler/icons-vue/dist/esm/icons/IconArrowBackUp.mjs'
+import IconArrowUp from '@tabler/icons-vue/dist/esm/icons/IconArrowUp.mjs'
+import IconBallBasketball from '@tabler/icons-vue/dist/esm/icons/IconBallBasketball.mjs'
+import IconBallFootball from '@tabler/icons-vue/dist/esm/icons/IconBallFootball.mjs'
+import IconBallTennis from '@tabler/icons-vue/dist/esm/icons/IconBallTennis.mjs'
+import IconBallVolleyball from '@tabler/icons-vue/dist/esm/icons/IconBallVolleyball.mjs'
+import IconBarbell from '@tabler/icons-vue/dist/esm/icons/IconBarbell.mjs'
+import IconBike from '@tabler/icons-vue/dist/esm/icons/IconBike.mjs'
+import IconBolt from '@tabler/icons-vue/dist/esm/icons/IconBolt.mjs'
+import IconBulb from '@tabler/icons-vue/dist/esm/icons/IconBulb.mjs'
+import IconCalendarCheck from '@tabler/icons-vue/dist/esm/icons/IconCalendarCheck.mjs'
+import IconCards from '@tabler/icons-vue/dist/esm/icons/IconCards.mjs'
+import IconCheck from '@tabler/icons-vue/dist/esm/icons/IconCheck.mjs'
+import IconChevronDown from '@tabler/icons-vue/dist/esm/icons/IconChevronDown.mjs'
+import IconChevronRight from '@tabler/icons-vue/dist/esm/icons/IconChevronRight.mjs'
+import IconClock from '@tabler/icons-vue/dist/esm/icons/IconClock.mjs'
+import IconDotsVertical from '@tabler/icons-vue/dist/esm/icons/IconDotsVertical.mjs'
+import IconEdit from '@tabler/icons-vue/dist/esm/icons/IconEdit.mjs'
+import IconExternalLink from '@tabler/icons-vue/dist/esm/icons/IconExternalLink.mjs'
+import IconFilter from '@tabler/icons-vue/dist/esm/icons/IconFilter.mjs'
+import IconGripVertical from '@tabler/icons-vue/dist/esm/icons/IconGripVertical.mjs'
+import IconInbox from '@tabler/icons-vue/dist/esm/icons/IconInbox.mjs'
+import IconLink from '@tabler/icons-vue/dist/esm/icons/IconLink.mjs'
+import IconLogout from '@tabler/icons-vue/dist/esm/icons/IconLogout.mjs'
+import IconMail from '@tabler/icons-vue/dist/esm/icons/IconMail.mjs'
+import IconMap from '@tabler/icons-vue/dist/esm/icons/IconMap.mjs'
+import IconPlus from '@tabler/icons-vue/dist/esm/icons/IconPlus.mjs'
+import IconRoute from '@tabler/icons-vue/dist/esm/icons/IconRoute.mjs'
+import IconSearch from '@tabler/icons-vue/dist/esm/icons/IconSearch.mjs'
+import IconSettings from '@tabler/icons-vue/dist/esm/icons/IconSettings.mjs'
+import IconShare from '@tabler/icons-vue/dist/esm/icons/IconShare.mjs'
+import IconShieldCheck from '@tabler/icons-vue/dist/esm/icons/IconShieldCheck.mjs'
+import IconSparkles from '@tabler/icons-vue/dist/esm/icons/IconSparkles.mjs'
+import IconSwimming from '@tabler/icons-vue/dist/esm/icons/IconSwimming.mjs'
+import IconTrophy from '@tabler/icons-vue/dist/esm/icons/IconTrophy.mjs'
+import IconUser from '@tabler/icons-vue/dist/esm/icons/IconUser.mjs'
+import IconUsers from '@tabler/icons-vue/dist/esm/icons/IconUsers.mjs'
+import IconWalk from '@tabler/icons-vue/dist/esm/icons/IconWalk.mjs'
+import IconX from '@tabler/icons-vue/dist/esm/icons/IconX.mjs'
+import IconYoga from '@tabler/icons-vue/dist/esm/icons/IconYoga.mjs'
 
 const props = defineProps({
   name: { type: String, required: true },
   size: { type: [Number, String], default: 16 },
-  stroke: { type: [Number, String], default: 1.6 },
+  stroke: { type: [Number, String], default: 1.8 },
   fill: { type: String, default: 'none' },
 })
 
-const PATHS = {
-  inbox:       { d: ['M2 3h12v6h-3l-1 2H6l-1-2H2z', 'M2 9v4h12V9'] },
-  cards:       { d: ['M4 3.5h8a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 12 13.5H4A1.5 1.5 0 0 1 2.5 12V5A1.5 1.5 0 0 1 4 3.5z', 'M5.5 2.5h6', 'M5.5 6h5', 'M5.5 8.5h4'] },
-  map:         { d: ['M2.5 4.5l3.5-1.5 4 1.5 3.5-1.5v8.5l-3.5 1.5-4-1.5-3.5 1.5z', 'M6 3v8.5', 'M10 4.5V13'] },
-  calendarCheck: { d: ['M4 2v2', 'M12 2v2', 'M2.5 5h11', 'M4 3h8a1.5 1.5 0 0 1 1.5 1.5V12A1.5 1.5 0 0 1 12 13.5H4A1.5 1.5 0 0 1 2.5 12V4.5A1.5 1.5 0 0 1 4 3z', 'M5.5 9l1.5 1.5 3.5-3.5'] },
-  user:        { d: ['M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M2.5 14a5.5 5.5 0 0 1 11 0'] },
-  lock:        { d: ['M4.5 7V5.5a3.5 3.5 0 0 1 7 0V7', 'M3.5 7h9v6.5h-9z', 'M8 9.5v1.5'] },
-  logout:      { d: ['M8 2.5H3v11h5', 'M9 5l3 3-3 3', 'M5 8h7'] },
-  ideas:       { d: ['M8 1.5v1.5', 'M3.5 3.5l1 1', 'M12.5 3.5l-1 1', 'M1.5 8H3', 'M13 8h1.5', 'M5.5 11.5h5', 'M6 13.5h4', 'M8 4a3 3 0 0 0-2 5.2c.4.4.5.8.5 1.3h3c0-.5.1-.9.5-1.3A3 3 0 0 0 8 4z'] },
-  competitors: { d: ['M3 13V6', 'M8 13V3', 'M13 13V8', 'M1.5 13.5h13'] },
-  roadmap:     { d: ['M2 3h3v3H2z', 'M6.5 3h3v3h-3z', 'M11 3h3v3h-3z', 'M2 10h3v3H2z', 'M6.5 10h3v3h-3z'] },
-  settings:    { d: ['M6.5 1.5h3l.5 1.7 1.5.8 1.6-.4 1.4 2.6-1.2 1.2v1.7l1.2 1.2-1.4 2.6-1.6-.4-1.5.8-.5 1.7h-3l-.5-1.7-1.5-.8-1.6.4L1.5 9.8 2.7 8.6V6.9L1.5 5.7 2.9 3.1l1.6.4 1.5-.8z', 'M8 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z'] },
-  search:      { d: ['M11 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z', 'M10 10l3 3'] },
-  plus:        { d: ['M8 3v10', 'M3 8h10'] },
-  sparkles:    { d: ['M5 2v3', 'M3.5 3.5h3', 'M11 8v3', 'M9.5 9.5h3', 'M7 10l1.5 3.5 3.5 1.5-3.5 1.5L7 20l-1.5-3.5L2 15l3.5-1.5z'], stroke: 1.4 },
-  check:       { d: ['M3 8l3 3 7-7'] },
-  x:           { d: ['M3.5 3.5l9 9', 'M12.5 3.5l-9 9'] },
-  chevron:     { d: ['M5 3l5 5-5 5'] },
-  chevronDown: { d: ['M3 5l5 5 5-5'] },
-  arrowUp:     { d: ['M8 13V3', 'M3 8l5-5 5 5'] },
-  drag:        { d: ['M6 4h.01', 'M10 4h.01', 'M6 8h.01', 'M10 8h.01', 'M6 12h.01', 'M10 12h.01'], stroke: 2.6 },
-  vote:        { d: ['M8 13V3', 'M3 8l5-5 5 5'] },
-  edit:        { d: ['M11 2.5l2.5 2.5L6 12.5H3.5V10z'] },
-  share:       { d: ['M5 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0z', 'M15 4a2 2 0 1 1-4 0 2 2 0 0 1 4 0z', 'M15 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0z', 'M5 8l6-3', 'M5 8l6 3'] },
-  link:        { d: ['M7 9l2-2', 'M9 5l1-1a2.83 2.83 0 0 1 4 4l-1 1', 'M2 11l1-1a2.83 2.83 0 1 1 4 4l-1 1', 'M5 6l-1 1a2.83 2.83 0 0 0 4 4l1-1', 'M11 9l1 1'] },
-  filter:      { d: ['M2 3h12l-4.5 6v4l-3 1V9z'] },
-  mail:        { d: ['M2 4h12v8H2z', 'M2 5l6 4 6-4'] },
-  bolt:        { d: ['M9 1L3 9h4l-1 6 6-8H8z'] },
-  back:        { d: ['M8 3L3 8l5 5', 'M3 8h11'] },
-  external:    { d: ['M6 3H3v10h10v-3', 'M9 3h4v4', 'M8 8l5-5'] },
-  clock:       { d: ['M13.5 8a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z', 'M8 4.5V8l2.5 1.5'] },
-  sportDefault: { d: ['M8 2.5l4.5 2v3.8c0 2.8-1.9 4.5-4.5 5.2-2.6-.7-4.5-2.4-4.5-5.2V4.5z', 'M5.5 7.5h5', 'M8 5v5'] },
-  sportTennis: { d: ['M9.7 2.3a3.5 3.5 0 1 1-5 5 3.5 3.5 0 0 1 5-5z', 'M7.2 7.8l-4 4', 'M2.6 11.4l2 2', 'M5.4 3.4l3.2 3.2', 'M4.2 4.9l2.5 2.5'] },
-  sportVolleyball: { d: ['M13.5 8a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z', 'M4.8 3.8c2.5.2 4.3 1.6 5 4.2', 'M8.5 2.7c-1.3 1.9-1.2 4 .1 6', 'M3.1 9.4c2.1-1 4.3-.8 6.5.7'] },
-  sportRunning: { d: ['M9.5 3.2a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z', 'M7.6 5.2l-2.1 2.1 2.2 1.4 1.5 3.8', 'M8 6.4l2.3 1.2 1.7-.9', 'M6.8 8.7l-1.5 3.8', 'M8.8 12.5h3.2'] },
-  sportSoccer: { d: ['M13.5 8a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z', 'M8 5.2l2.1 1.5-.8 2.4H6.7l-.8-2.4z', 'M8 5.2V2.7', 'M5.9 6.7L3.5 5.9', 'M10.1 6.7l2.4-.8', 'M6.7 9.1l-1.5 2', 'M9.3 9.1l1.5 2'] },
-  sportBasketball: { d: ['M13.5 8a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z', 'M2.9 6.1c2.9 1.3 6 1.3 10.2 0', 'M3.7 11.1c2.1-2.9 5.2-5.2 8.5-6.2', 'M7.4 2.6c.9 3.7.9 7.2 0 10.8'] },
-  sportBike: { d: ['M5.8 10.3a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0z', 'M15.8 10.3a2.8 2.8 0 1 1-5.6 0 2.8 2.8 0 0 1 5.6 0z', 'M3 10.3l3-5h3l2.7 5', 'M6 5.3l2 5h3.7', 'M8.2 3.5h2.4'] },
-  sportDumbbell: { d: ['M1.5 6v4', 'M3.5 5v6', 'M5.5 7.5h5', 'M10.5 5v6', 'M12.5 6v4', 'M14.5 7v2'] },
-  sportSwim: { d: ['M4 6.5c1.8-1 3.2-1 5 0s3.2 1 5 0', 'M2 10c1.8-1 3.2-1 5 0s3.2 1 5 0 2.2-.5 3-1', 'M2 13c1.8-1 3.2-1 5 0s3.2 1 5 0 2.2-.5 3-1', 'M7.4 4.2a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z'] },
-  sportYoga: { d: ['M9.2 3a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z', 'M8 5.2v3.4', 'M5.2 7.3L8 8.6l2.8-1.3', 'M8 8.6l-2.6 3.2H3', 'M8 8.6l2.6 3.2H13'] },
-  sportFight: { d: ['M5.5 3.5h3A2.5 2.5 0 0 1 11 6v2.5H5V4a.5.5 0 0 1 .5-.5z', 'M5 8.5h6v2A2.5 2.5 0 0 1 8.5 13H7.5A2.5 2.5 0 0 1 5 10.5z', 'M3.5 6.5H5', 'M11 6.5h1.5'] },
+const ICONS = {
+  inbox: IconInbox,
+  cards: IconCards,
+  map: IconMap,
+  calendarCheck: IconCalendarCheck,
+  user: IconUser,
+  lock: IconShieldCheck,
+  logout: IconLogout,
+  ideas: IconBulb,
+  competitors: IconUsers,
+  roadmap: IconRoute,
+  settings: IconSettings,
+  search: IconSearch,
+  plus: IconPlus,
+  sparkles: IconSparkles,
+  check: IconCheck,
+  x: IconX,
+  chevron: IconChevronRight,
+  chevronDown: IconChevronDown,
+  arrowUp: IconArrowUp,
+  drag: IconGripVertical,
+  vote: IconArrowUp,
+  edit: IconEdit,
+  share: IconShare,
+  link: IconLink,
+  filter: IconFilter,
+  mail: IconMail,
+  bolt: IconBolt,
+  back: IconArrowBackUp,
+  external: IconExternalLink,
+  clock: IconClock,
+  sportDefault: IconTrophy,
+  sportTennis: IconBallTennis,
+  sportVolleyball: IconBallVolleyball,
+  sportRunning: IconWalk,
+  sportSoccer: IconBallFootball,
+  sportBasketball: IconBallBasketball,
+  sportBike: IconBike,
+  sportDumbbell: IconBarbell,
+  sportSwim: IconSwimming,
+  sportYoga: IconYoga,
+  sportFight: IconTrophy,
 }
 
-const icon = computed(() => PATHS[props.name] || { d: [] })
-const strokeWidth = computed(() => icon.value.stroke ?? props.stroke)
+const component = computed(() => ICONS[props.name] || IconDotsVertical)
 </script>
 
 <template>
-  <svg :width="size" :height="size" viewBox="0 0 16 16" :fill="fill"
-       stroke="currentColor" :stroke-width="strokeWidth"
-       stroke-linecap="round" stroke-linejoin="round">
-    <path v-for="(d, i) in icon.d" :key="i" :d="d" />
-  </svg>
+  <component
+    :is="component"
+    aria-hidden="true"
+    :size="size"
+    :stroke="stroke"
+    :fill="fill"
+  />
 </template>

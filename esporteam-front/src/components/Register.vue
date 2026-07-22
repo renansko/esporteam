@@ -1,10 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import { inject, ref } from 'vue'
 import { useAppStore } from '../stores/app'
+import { routerKey } from 'vue-router'
 import Icon from './Icon.vue'
+import UiButton from './ui/UiButton.vue'
 import { firstValidationError, isValidField } from '../services/validation'
 
 const store = useAppStore()
+const router = inject(routerKey, null)
 const step = ref('intent')
 const intent = ref(null)
 const name = ref('')
@@ -42,6 +45,11 @@ function fieldMessage(key, value, options = {}, message) {
 
 function clearError(key) {
   store.clearRegisterFieldError(key)
+}
+
+function openLogin() {
+  if (router) router.push('/entrar')
+  else store.setAuthView('login')
 }
 
 function submit() {
@@ -101,7 +109,7 @@ function submit() {
             <Icon name="chevron" :size="18" />
           </button>
         </div>
-        <div class="auth-switch"><span>Já tem conta?</span><button type="button" class="link" @click="store.setAuthView('login')">Entrar</button></div>
+        <div class="auth-switch"><span>Já tem conta?</span><button type="button" class="link" @click="openLogin">Entrar</button></div>
       </section>
 
       <form v-else key="details" class="auth-card" @submit.prevent="submit">
@@ -137,8 +145,8 @@ function submit() {
         <label class="auth-attestation"><input type="checkbox" v-model="adultAttestation" required @change="touch('adult_attestation'); clearError('adult_attestation')" /> Confirmo que tenho 18 anos ou mais.</label>
         <Transition name="motion-inline"><div v-if="fieldError('adult_attestation') || (submitted && !adultAttestation)" class="field-error">{{ fieldError('adult_attestation') || 'Confirme sua maioridade para continuar.' }}</div></Transition>
         <Transition name="motion-inline"><div v-if="store.registerError && !store.registerErrors" class="field-error auth-error">{{ store.registerError }}</div></Transition>
-        <button class="btn btn-primary auth-submit" type="submit" :disabled="store.registerLoading">{{ store.registerLoading ? 'Criando...' : intent === 'teacher' ? 'Criar conta de Professor' : 'Criar conta' }}<Icon name="chevron" /></button>
-        <div class="auth-switch"><span>Já tem conta?</span><button type="button" class="link" @click="store.setAuthView('login')">Entrar</button></div>
+        <UiButton class="btn btn-primary auth-submit" type="submit" variant="primary" :busy="store.registerLoading">{{ store.registerLoading ? 'Criando...' : intent === 'teacher' ? 'Criar conta de Professor' : 'Criar conta' }}<Icon name="chevron" /></UiButton>
+        <div class="auth-switch"><span>Já tem conta?</span><button type="button" class="link" @click="openLogin">Entrar</button></div>
       </form>
       </Transition>
     </section>

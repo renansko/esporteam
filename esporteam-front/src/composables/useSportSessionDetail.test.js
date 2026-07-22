@@ -23,6 +23,7 @@ const detail = useSportSessionDetail({
   fetchDetail: async (sessionId, options) => {
     assert.equal(sessionId, 'session-open')
     assert.equal(options.fallbackPayload.id, 'session-open')
+    assert.equal(options.useMockFallback, true)
     return opened
   },
   joinSession: async (sessionId, options) => {
@@ -56,6 +57,18 @@ assert.equal(confirmedUpdates[0].id, 'session-open')
 
 detail.closeSportSessionDetail()
 assert.equal(detail.isSportSessionDetailOpen.value, false)
+
+let deepLinkFallback = true
+const deepLinkDetail = useSportSessionDetail({
+  fetchDetail: async (_sessionId, options) => {
+    deepLinkFallback = options.useMockFallback
+    throw new Error('not-found')
+  },
+})
+await deepLinkDetail.openSportSessionDetail({ id: 'missing-session' }, { useMockFallback: false })
+assert.equal(deepLinkFallback, false)
+assert.equal(deepLinkDetail.sportSessionDetail.value, null)
+assert.match(deepLinkDetail.sportSessionDetailError.value, /not-found/)
 
 const rejectedDetail = useSportSessionDetail({
   fetchDetail: async () => opened,

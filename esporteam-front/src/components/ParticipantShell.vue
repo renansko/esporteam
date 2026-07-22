@@ -2,7 +2,7 @@
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useDelayedLoading } from '../composables/useDelayedLoading'
 import { useAppStore } from '../stores/app'
-import { createSportSessionCardView } from '../features/participant/discoveryCard'
+import { createSportSessionCardView, resolveDiscoverySwipeAction } from '../features/participant/discoveryCard'
 import { createNearbySportSessionView } from '../features/participant/nearbySession'
 import {
   DISCOVERY_GOAL_OPTIONS,
@@ -21,13 +21,20 @@ import Skeleton from './Skeleton.vue'
 import NearbySessionsMap from './NearbySessionsMap.vue'
 import PublishOneOffSessionWizard from './PublishOneOffSessionWizard.vue'
 import EventConversation from './EventConversation.vue'
+import UiButton from './ui/UiButton.vue'
+import UiChip from './ui/UiChip.vue'
+import UiFormFooter from './ui/UiFormFooter.vue'
+import UiSegmented from './ui/UiSegmented.vue'
+import UiSlider from './ui/UiSlider.vue'
 import { createParticipantMatchView } from '../features/participant/matches'
 import { firstValidationError } from '../services/validation'
+import { focusMapSelection } from '../features/participant/mapInteraction.js'
 
 const props = defineProps({
   discoveryCards: { type: Array, default: null },
   discoveryLoading: { type: Boolean, default: false },
   discoveryError: { type: Object, default: null },
+  discoveryNotice: { type: String, default: null },
   discoveryFilters: { type: Object, default: () => ({}) },
   hasDiscoveryFilters: { type: Boolean, default: false },
   discoveryActionLoading: { type: Boolean, default: false },
@@ -87,6 +94,7 @@ const emit = defineEmits([
   'acceptBioSuggestion',
   'startOneOffPublication',
   'oneOffPublished',
+  'navigateParticipantTab',
 ])
 
 const store = useAppStore()
@@ -103,6 +111,7 @@ const selectedNearbySessionId = ref(
   props.nearbySelectedSessionId
     || (props.nearbySessions?.[0] ? createNearbySportSessionView(props.nearbySessions[0], 0).id : null),
 )
+const nearbyCallout = ref(null)
 const discoverySkeletonVisible = useDelayedLoading(() => props.discoveryLoading)
 const nearbySkeletonVisible = useDelayedLoading(() => props.nearbySessionsLoading)
 const matchesSkeletonVisible = useDelayedLoading(() => props.participantMatchesLoading)
@@ -138,13 +147,18 @@ watch(() => props.nearbySelectedSessionId, (sessionId) => {
   selectedNearbySessionId.value = sessionId || null
 })
 
+watch(selectedNearbySessionId, (sessionId) => {
+  if (sessionId && nearbySurface.value === 'map') nextTick(() => focusMapSelection(nearbyCallout.value))
+})
+
 const activeTab = computed(() => resolveParticipantTab(store.participantTab))
 const isDiscoverTab = computed(() => activeTab.value.id === 'discover')
 const isMatchesTab = computed(() => activeTab.value.id === 'matches')
 const isProfileTab = computed(() => activeTab.value.id === 'profile')
 const isTeacher = computed(() => Boolean(props.teacherProfileDraft))
 const participantMatchViews = computed(() => props.participantMatches.map(createParticipantMatchView))
-const now = new Date('2026-07-11T00:00:00-03:00')
+const now = new Date()
+now.setHours(0, 0, 0, 0)
 const upcomingConfirmedMatches = computed(() => participantMatchViews.value
   .filter(match => match.statusId === 'confirmed')
   .filter(match => !match.startsAtDate || match.startsAtDate >= now)
@@ -153,12 +167,16 @@ const upcomingConfirmedMatches = computed(() => participantMatchViews.value
     return a.startsAtDate - b.startsAtDate
   }))
 const agendaPreviewMatches = computed(() => upcomingConfirmedMatches.value.slice(0, 5))
+const showUpcomingConfirmedMatches = computed(() => ['all', 'confirmed'].includes(props.participantMatchFilter))
 const historyMatches = computed(() => participantMatchViews.value
   .filter(match => !upcomingConfirmedMatches.value.some(upcoming => upcoming.id === match.id)))
 const filteredHistoryMatches = computed(() => props.participantMatchFilter === 'all'
   ? historyMatches.value
   : historyMatches.value.filter(match => match.statusId === props.participantMatchFilter))
 const isMapTab = computed(() => activeTab.value.id === 'map')
+const visibleEventCount = computed(() => props.participantMatchFilter === 'all'
+  ? participantMatchViews.value.length
+  : participantMatchViews.value.filter(match => match.statusId === props.participantMatchFilter).length)
 const primaryDiscoveryCard = computed(() => (
   props.discoveryCards?.[0]
     ? createSportSessionCardView(props.discoveryCards[0])
@@ -169,6 +187,7 @@ const activeFilterSummary = computed(() => {
   if (!props.hasDiscoveryFilters) return ''
 
   const parts = [
+    ...(props.discoveryFilters.sportSlugs || []).map(slug => discoveryFilterOptionLabel(DISCOVERY_SPORT_OPTIONS, slug)),
     discoveryFilterOptionLabel(DISCOVERY_SPORT_OPTIONS, props.discoveryFilters.sportSlug),
     props.discoveryFilters.distanceKm ? `${props.discoveryFilters.distanceKm} km` : '',
     discoveryFilterOptionLabel(DISCOVERY_LEVEL_OPTIONS, props.discoveryFilters.level),
@@ -182,15 +201,37 @@ const activeFilterSummary = computed(() => {
 
   return parts.length ? `Filtros ativos: ${parts.join(' · ')}` : ''
 })
+const availabilityFilterIncomplete = computed(() => {
+  const values = [draftFilters.weekday, draftFilters.startsAt, draftFilters.endsAt]
+  return values.some(Boolean) && !values.every(Boolean)
+})
 
 function applyFilters() {
+  if (availabilityFilterIncomplete.value) return
   emit('applyDiscoveryFilters', { ...draftFilters })
   discoveryFiltersOpen.value = false
+}
+
+function toggleSportFilter(slug) {
+  if (!slug) {
+    draftFilters.sportSlugs = []
+    draftFilters.sportSlug = ''
+    return
+  }
+  const selected = new Set(draftFilters.sportSlugs || [])
+  if (selected.has(slug)) selected.delete(slug)
+  else selected.add(slug)
+  draftFilters.sportSlugs = [...selected]
+  draftFilters.sportSlug = ''
 }
 
 function clearFilters() {
   emit('applyDiscoveryFilters', createDefaultDiscoverySessionFilters())
   discoveryFiltersOpen.value = false
+}
+
+function navigateParticipantTab(tabId) {
+  emit('navigateParticipantTab', tabId)
 }
 const pointerStartX = ref(null)
 const discoveryDragX = ref(0)
@@ -211,9 +252,10 @@ function endDiscoveryPointer(event) {
   pointerStartX.value = null
   discoveryDragging.value = false
   discoveryDragX.value = 0
-  if (Math.abs(delta) < 72) return
-  if (delta < 0) emit('skipDiscoverySession')
-  else if (primaryDiscoveryCard.value?.canShowInterest) emit('showInterestInDiscoverySession')
+  const cardWidth = event.currentTarget?.getBoundingClientRect?.().width || event.currentTarget?.clientWidth || 0
+  const action = resolveDiscoverySwipeAction(delta, cardWidth, primaryDiscoveryCard.value?.canShowInterest)
+  if (action === 'skip') emit('skipDiscoverySession')
+  if (action === 'interest') emit('showInterestInDiscoverySession')
 }
 const nearbySessionViews = computed(() => (
   Array.isArray(props.nearbySessions)
@@ -369,6 +411,7 @@ async function highlightBioContext() {
           </button>
         </div>
         <p v-if="isDiscoverTab && activeFilterSummary" class="discovery-filter-summary motion-group motion-group--secondary">{{ activeFilterSummary }}</p>
+        <p v-if="isDiscoverTab && discoveryNotice" class="discovery-filter-summary discovery-partial-notice" aria-live="polite">{{ discoveryNotice }}</p>
 
         <div v-if="isDiscoverTab && discoverySkeletonVisible && !primaryDiscoveryCard && !discoveryError" class="discovery-deck discovery-deck-loading motion-group motion-group--content" aria-busy="true" aria-label="Descoberta carregando">
           <div class="session-card session-card-skeleton skeleton-surface" aria-hidden="true">
@@ -472,24 +515,13 @@ async function highlightBioContext() {
         <div v-else-if="isMapTab && nearbySessionsLoading && !nearbySessionViews.length && !nearbySessionsError" class="loading-grace" aria-busy="true"></div>
 
         <section v-else-if="isMapTab && !nearbySessionsError" class="nearby-stage motion-group motion-group--content" aria-label="Mapa e Lista de Sessoes proximas">
-          <div v-if="!oneOffPublicationOpen" class="nearby-surface-toggle" role="tablist" aria-label="Alternar entre Mapa e Lista">
-            <button
-              type="button"
-              :class="['nearby-surface-button', { active: nearbySurface === 'map' }]"
-              :aria-selected="nearbySurface === 'map'"
-              @click="nearbySurface = 'map'"
-            >
-              Mapa
-            </button>
-            <button
-              type="button"
-              :class="['nearby-surface-button', { active: nearbySurface === 'list' }]"
-              :aria-selected="nearbySurface === 'list'"
-              @click="nearbySurface = 'list'"
-            >
-              Lista
-            </button>
-          </div>
+          <UiSegmented
+            v-if="!oneOffPublicationOpen"
+            v-model="nearbySurface"
+            class="nearby-surface-toggle"
+            label="Alternar entre Mapa e Lista"
+            :options="[{ id: 'map', label: 'Mapa' }, { id: 'list', label: 'Lista' }]"
+          />
 
           <template v-if="oneOffPublicationOpen || nearbySurface === 'map'">
             <NearbySessionsMap
@@ -504,6 +536,30 @@ async function highlightBioContext() {
               @location-select="selectOneOffLocation"
               @selection-cancel="oneOffPublication?.close?.()"
             />
+            <UiButton
+              v-if="!oneOffPublicationOpen"
+              class="nearby-create-session"
+              variant="primary"
+              @click="emit('startOneOffPublication')"
+            >
+              <Icon name="plus" :size="18" /> Criar sessão
+            </UiButton>
+
+            <section
+              v-if="selectedNearbySessionView && !oneOffPublicationOpen"
+              ref="nearbyCallout"
+              class="nearby-map-callout glass-surface"
+              tabindex="-1"
+              aria-label="Sessão Esportiva selecionada"
+            >
+              <p><Icon :name="selectedNearbySessionView.modalityIcon" :size="15" /> {{ selectedNearbySessionView.modalityLabel }} · {{ selectedNearbySessionView.entryBadge.label }}</p>
+              <h2>{{ selectedNearbySessionView.title }}</h2>
+              <span>{{ selectedNearbySessionView.timeCueLabel }} · {{ selectedNearbySessionView.locationLabel }}</span>
+              <div class="nearby-map-callout-actions">
+                <button type="button" @click="emit('selectDiscoveryCard', selectedNearbySessionView.rawCard)">Ver detalhes</button>
+                <button type="button" :disabled="nearbySessionParticipationLoading || selectedNearbySessionView.summaryAction.disabled" @click="emit('submitNearbySessionParticipation', selectedNearbySessionView.rawCard)">{{ selectedNearbySessionView.summaryAction.label }}</button>
+              </div>
+            </section>
 
             <section
               v-if="!oneOffPublicationOpen && !nearbySessionViews.length"
@@ -547,7 +603,7 @@ async function highlightBioContext() {
           </section>
 
           <section
-            v-if="selectedNearbySessionView && !oneOffPublicationOpen"
+            v-if="selectedNearbySessionView && !oneOffPublicationOpen && nearbySurface === 'list'"
             class="nearby-summary-sheet"
             aria-label="Resumo da Sessao Esportiva"
           >
@@ -633,7 +689,11 @@ async function highlightBioContext() {
           @published="session => emit('oneOffPublished', session)"
         />
 
-        <section v-else-if="isDiscoverTab && !discoveryError" class="discovery-empty-state" aria-label="Nenhuma Sessao Esportiva para descobrir">
+        <section
+          v-if="isDiscoverTab && !primaryDiscoveryCard && !discoveryLoading && !discoverySkeletonVisible && !discoveryError"
+          class="discovery-empty-state"
+          aria-label="Nenhuma Sessao Esportiva para descobrir"
+        >
           <div class="discovery-empty-map" aria-hidden="true">
             <img src="/assets/session-map-preview.png" alt="" />
             <span class="discovery-empty-radius"></span>
@@ -645,24 +705,18 @@ async function highlightBioContext() {
           </div>
         </section>
 
-        <section v-else-if="isMatchesTab" class="participant-matches motion-group motion-group--content" aria-label="Agenda do Perfil Esportivo">
-          <div class="agenda-toolbar">
-            <p>{{ upcomingConfirmedMatches.length }} confirmados futuros</p>
+        <section v-if="isMatchesTab" class="participant-matches motion-group motion-group--content" aria-label="Agenda do Perfil Esportivo">
+          <div class="agenda-toolbar" aria-live="polite">
+            <p>{{ visibleEventCount }} eventos neste filtro</p>
           </div>
 
-          <div class="match-filter-chips" role="group" aria-label="Filtrar historico de participacao">
-            <button
-              v-for="filter in participantMatchFilters"
-              :key="filter.id"
-              type="button"
-              :class="['match-filter-option', { active: filter.id === participantMatchFilter }]"
-              :aria-pressed="filter.id === participantMatchFilter"
-              @click="emit('setParticipantMatchFilter', filter.id)"
-            >
-              <Icon :name="filter.id === participantMatchFilter ? 'check' : 'chevron'" :size="14" />
-              {{ filter.label }}
-            </button>
-          </div>
+          <UiSegmented
+            class="match-filter-chips"
+            :model-value="participantMatchFilter"
+            :options="participantMatchFilters"
+            label="Filtrar eventos por estado"
+            @update:model-value="emit('setParticipantMatchFilter', $event)"
+          />
 
           <div v-if="matchesSkeletonVisible && !participantMatchViews.length && !participantMatchesError" class="agenda-stack agenda-skeleton" aria-busy="true" aria-label="Agenda carregando">
             <div class="agenda-rail skeleton-surface" aria-hidden="true"><Skeleton v-for="item in 3" :key="item" variant="card" width="132px" height="112px" radius="14px" /></div>
@@ -674,7 +728,7 @@ async function highlightBioContext() {
             <div><h2>Agenda indisponivel</h2><p>{{ participantMatchesError }}</p><button class="participant-placeholder-action" type="button" @click="emit('retryParticipantMatches')">Tentar novamente</button></div>
           </div>
           <div v-else-if="participantMatchViews.length" class="agenda-stack">
-            <section v-if="agendaPreviewMatches.length" class="agenda-rail" aria-label="Resumo dos proximos eventos">
+            <section v-if="showUpcomingConfirmedMatches && agendaPreviewMatches.length" class="agenda-rail" aria-label="Resumo dos proximos eventos">
               <button
                 v-for="match in agendaPreviewMatches"
                 :key="`agenda-${match.id}`"
@@ -688,7 +742,7 @@ async function highlightBioContext() {
               </button>
             </section>
 
-            <div v-if="upcomingConfirmedMatches.length" class="match-list">
+            <div v-if="showUpcomingConfirmedMatches && upcomingConfirmedMatches.length" class="match-list">
               <article v-for="match in upcomingConfirmedMatches" :key="match.id" class="match-item match-item-confirmed">
                 <div class="match-date-block"><strong>{{ match.dayLabel }}</strong><span>{{ match.timeLabel }}</span></div>
                 <div class="match-item-main">
@@ -701,9 +755,9 @@ async function highlightBioContext() {
               </article>
             </div>
 
-            <section v-else class="participant-placeholder agenda-empty">
+            <section v-else-if="!filteredHistoryMatches.length" class="participant-placeholder agenda-empty">
               <div class="placeholder-icon"><Icon name="calendarCheck" :size="28" /></div>
-              <div><h2>Nenhum evento confirmado</h2><p>Pedidos aguardando aprovacao e eventos encerrados ficam no historico.</p></div>
+              <div><h2>Nenhum evento em {{ participantMatchFilters.find(filter => filter.id === participantMatchFilter)?.label || 'Todas' }}</h2><p>Quando uma participação mudar para este estado, ela aparecerá aqui.</p></div>
             </section>
 
             <details v-if="historyMatches.length" class="match-history">
@@ -723,10 +777,10 @@ async function highlightBioContext() {
           <div v-else class="participant-placeholder"><div class="placeholder-icon"><Icon name="calendarCheck" :size="28" /></div><div><h2>Nenhuma participacao ainda</h2><p>Explore eventos e confirme presenca para montar sua agenda.</p></div></div>
         </section>
 
-        <section v-else-if="isProfileTab" class="sport-profile-editor motion-group motion-group--content" :aria-label="isEditing ? 'Editar Perfil Esportivo' : 'Perfil Esportivo'">
+        <section v-if="isProfileTab" class="sport-profile-editor motion-group motion-group--content" :aria-label="isEditing ? 'Editar Perfil Esportivo' : 'Perfil Esportivo'">
           <div class="profile-editor-intro">
             <span class="profile-editor-icon"><Icon name="user" :size="22" /></span>
-            <div><h2>Perfil Esportivo ativo</h2><p>Estas preferencias orientam a Descoberta. Elas pertencem ao Perfil Esportivo, nao ao User de autenticacao.</p></div>
+            <div><h2>Perfil Esportivo ativo</h2><p>Participante agora · Anfitrião em breve</p><p>Estas preferências orientam a Descoberta. Elas pertencem ao Perfil Esportivo, não à conta de acesso.</p></div>
             <button v-if="!isEditing" type="button" class="profile-edit-button" @click="startEditing()"><Icon name="edit" :size="15" /> Editar</button>
           </div>
 
@@ -826,7 +880,10 @@ async function highlightBioContext() {
           <div class="profile-mode-affordance"><Icon name="sparkles" :size="17" /><span>{{ isTeacher ? 'Professor ativo · Suas configurações estão prontas para completar' : 'Participante agora · Anfitriao em breve' }}</span></div>
         </section>
 
-        <div v-else class="participant-placeholder motion-group motion-group--content">
+        <div
+          v-if="(isDiscoverTab && discoveryError) || (isMapTab && nearbySessionsError) || (!isDiscoverTab && !isMapTab && !isMatchesTab && !isProfileTab)"
+          class="participant-placeholder motion-group motion-group--content"
+        >
           <div class="placeholder-icon">
             <Icon :name="discoveryError || nearbySessionsError ? 'bolt' : activeTab.icon" :size="28" />
           </div>
@@ -864,7 +921,7 @@ async function highlightBioContext() {
           <button
             class="session-detail-close"
             type="button"
-            aria-label="Fechar detalhe da Sessao Esportiva"
+            aria-label="Voltar da Sessão Esportiva"
             @click="emit('closeSportSessionDetail')"
           >
             <Icon name="back" :size="18" />
@@ -951,6 +1008,9 @@ async function highlightBioContext() {
           <p v-if="sportSessionDetailView.approvalNotice" class="session-detail-notice">
             {{ sportSessionDetailView.approvalNotice }}
           </p>
+          <p v-if="sportSessionDetailView.cancellationNotice" class="session-detail-notice" id="session-cancellation-note">
+            {{ sportSessionDetailView.cancellationNotice }}
+          </p>
 
           <p class="session-detail-description">{{ sportSessionDetailView.description }}</p>
 
@@ -1014,23 +1074,22 @@ async function highlightBioContext() {
           </p>
         </div>
 
-        <footer v-if="sportSessionDetailView?.primaryActionLabel" class="session-detail-footer">
+        <UiFormFooter v-if="sportSessionDetailView?.primaryActionLabel" class="session-detail-footer">
           <button
             :class="['session-detail-primary', sportSessionDetailView.primaryActionToneClass]"
             type="button"
             :disabled="sportSessionParticipationLoading || !sportSessionDetailView.canSubmitParticipation"
+            :aria-describedby="sportSessionDetailView.cancellationNotice ? 'session-cancellation-note' : undefined"
             @click="emit('submitSportSessionParticipation')"
           >
             <Icon :name="sportSessionDetailView.primaryActionIcon" :size="18" />
             <span>{{
               sportSessionParticipationLoading
                 ? 'Enviando'
-                : sportSessionParticipationConfirmed
-                  ? 'Confirmado'
-                  : sportSessionDetailView.primaryActionLabel
+                : sportSessionDetailView.primaryActionLabel
             }}</span>
           </button>
-        </footer>
+        </UiFormFooter>
         </section>
       </Transition>
 
@@ -1049,14 +1108,15 @@ async function highlightBioContext() {
         @close="discoveryFiltersOpen = false"
       >
         <form id="discovery-filters" class="discovery-filters" aria-label="Filtros da Descoberta" @submit.prevent="applyFilters">
-          <fieldset><legend>Modalidade</legend><button v-for="option in DISCOVERY_SPORT_OPTIONS" :key="option.value" type="button" :class="['filter-choice', { active: draftFilters.sportSlug === option.value }]" @click="draftFilters.sportSlug = option.value">{{ option.label }}</button></fieldset>
-          <fieldset><legend>Distancia</legend><button v-for="distance in [5, 10, 20, 50]" :key="distance" type="button" :class="['filter-choice', { active: draftFilters.distanceKm === distance }]" @click="draftFilters.distanceKm = distance">{{ distance }} km</button></fieldset>
+          <fieldset><legend>Modalidades</legend><UiChip v-for="option in DISCOVERY_SPORT_OPTIONS" :key="option.value || 'all'" :selected="option.value ? draftFilters.sportSlugs.includes(option.value) : !draftFilters.sportSlugs.length" @click="toggleSportFilter(option.value)">{{ option.label }}</UiChip></fieldset>
+          <UiSlider v-model="draftFilters.distanceKm" label="Distância máxima" :min="5" :max="50" :step="5" suffix=" km" />
           <fieldset><legend>Nivel Esportivo</legend><button v-for="option in DISCOVERY_LEVEL_OPTIONS" :key="option.value" type="button" :class="['filter-choice', { active: draftFilters.level === option.value }]" @click="draftFilters.level = option.value">{{ option.label }}</button></fieldset>
           <fieldset><legend>Objetivo Esportivo</legend><button v-for="option in DISCOVERY_GOAL_OPTIONS" :key="option.value" type="button" :class="['filter-choice', { active: draftFilters.goal === option.value }]" @click="draftFilters.goal = option.value">{{ option.label }}</button></fieldset>
           <fieldset><legend>Disponibilidade</legend><button v-for="option in DISCOVERY_WEEKDAY_OPTIONS" :key="option.value" type="button" :class="['filter-choice', { active: draftFilters.weekday === option.value }]" @click="draftFilters.weekday = option.value">{{ option.label }}</button></fieldset>
           <div class="filter-time-range"><label><span>Inicio</span><input v-model="draftFilters.startsAt" type="time"></label><label><span>Fim</span><input v-model="draftFilters.endsAt" type="time"></label></div>
+          <p v-if="availabilityFilterIncomplete" class="field-error" role="alert">Escolha dia, início e fim para filtrar por Disponibilidade.</p>
           <fieldset><legend>Tipo</legend><button v-for="option in DISCOVERY_PARTICIPATION_TYPE_OPTIONS" :key="option.value" type="button" :class="['filter-choice', { active: draftFilters.participationType === option.value }]" @click="draftFilters.participationType = option.value">{{ option.label }}</button></fieldset>
-          <div class="discovery-filter-actions"><button type="button" @click="clearFilters">Limpar</button><button type="submit">Aplicar filtros</button></div>
+          <div class="discovery-filter-actions"><button type="button" @click="clearFilters">Limpar</button><button type="submit" :disabled="availabilityFilterIncomplete">Aplicar filtros</button></div>
         </form>
       </BottomSheet>
 
@@ -1077,7 +1137,7 @@ async function highlightBioContext() {
           type="button"
           :class="['participant-nav-item', { active: tab.id === store.participantTab }]"
           :aria-current="tab.id === store.participantTab ? 'page' : undefined"
-          @click="store.setParticipantTab(tab.id)"
+          @click="navigateParticipantTab(tab.id)"
         >
           <Icon :name="tab.icon" :size="22" />
           <span>{{ tab.label }}</span>
