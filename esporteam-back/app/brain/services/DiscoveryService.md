@@ -20,8 +20,8 @@ Service da Descoberta deterministica inicial. Lista cards tipados de Perfis Espo
 - `GET /api/discovery` aceita `mode=people|sessions|places`; ausencia de modo preserva `people`.
 - Exclui o Perfil Esportivo do usuario autenticado quando ele existe.
 - Exclui perfis ocultos e perfis bloqueados em qualquer direcao.
-- Filtros aceitos: modalidade por `sport_id` ou `sport_slug`, `level`, `goal`, `distance_km` e janela `weekday`/`starts_at`/`ends_at`.
+- Filtros aceitos: modalidade por `sport_id` ou `sport_slug`, `level`, `goal` e janela `weekday`/`starts_at`/`ends_at`. `distance_km` permanece aceito como preferencia de proximidade, sem excluir resultados publicos.
 - Ranking deterministico combina esporte em comum, nivel compativel, disponibilidade, distancia aproximada e completude de perfil.
-- Estados vazios retornam `empty_state` com sugestoes como ampliar distancia, remover nivel e criar sessao publica.
+- Estados vazios retornam `empty_state` com sugestoes como remover nivel e criar sessao publica.
 - Cards publicos de sessao retornam contagem total de participantes e regra de entrada por match/aprovacao, mas nao expõem capacidade, vagas restantes ou lotacao.
 - Limita o resultado a 50 cards ordenados por score, distancia, nome/horario e id.

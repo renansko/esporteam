@@ -369,11 +369,11 @@ class SportSessionService
 
         return $sessions
             ->filter(fn (SportSession $session) => $this->passesSessionLevelFilter($session, $filters['level'] ?? null))
-            ->filter(fn (SportSession $session) => $this->passesSessionDistanceFilter($session, $currentProfile, $filters))
             ->filter(fn (SportSession $session) => $this->passesSessionTimeWindowFilter($session, $filters))
             ->filter(fn (SportSession $session) => $this->passesAvailableSlotsFilter($session, $filters))
             ->map(fn (SportSession $session) => $this->withPublicSessionState($session, $currentProfile))
             ->sortBy([
+                fn (SportSession $session) => $session->distance_km ?? PHP_INT_MAX,
                 fn (SportSession $session) => $session->starts_at?->getTimestamp() ?? PHP_INT_MAX,
                 fn (SportSession $session) => $session->id,
             ])
@@ -442,7 +442,11 @@ class SportSessionService
      */
     public function participantSessionsForUser(int $userId): Collection
     {
-        $profile = $this->requireProfile($userId);
+        $profile = $this->profileForUser($userId);
+
+        if ($profile === null) {
+            return collect();
+        }
 
         return SportSession::query()
             ->with(['creator', 'sport', 'series', 'participants'])
@@ -486,7 +490,7 @@ class SportSessionService
 
         return $profiles
             ->map(fn (SportProfile $profile) => $this->recommendationCard($profile, $session, $filters))
-            ->filter(fn (array $card) => $this->passesDistanceFilter($card, $filters))
+            ->filter(fn (array $card) => $this->passesRecommendationDistanceFilter($card, $filters))
             ->sortBy([
                 ['score', 'desc'],
                 ['distance_km', 'asc'],
@@ -793,8 +797,11 @@ class SportSessionService
     private function withConversationUnreadState(SportSession $session, SportProfile $profile): SportSession
     {
         $conversationId = $session->conversation?->id;
-        if ($conversationId === null) return $session->setAttribute('conversation_unread_count', 0);
+        if ($conversationId === null) {
+            return $session->setAttribute('conversation_unread_count', 0);
+        }
         $cursor = (int) EventConversationRead::query()->where(['event_conversation_id' => $conversationId, 'sport_profile_id' => $profile->id])->value('last_read_message_id');
+
         return $session->setAttribute('conversation_unread_count', EventMessage::query()->where('event_conversation_id', $conversationId)
             ->where('author_profile_id', '!=', $profile->id)->where('id', '>', $cursor)->count());
     }
@@ -897,6 +904,7 @@ class SportSessionService
             if ($equivalent === null) {
                 $equivalent = $this->findOrCreateSeriesOccurrence($series, $localStart, $key);
                 $equivalent->participants()->syncWithoutDetaching([$series->creator_profile_id => ['status' => SessionParticipantStatus::Joined->value]]);
+
                 continue;
             }
             if ($equivalent->is_series_override || $equivalent->status !== SportSessionStatus::Open) {
@@ -916,6 +924,7 @@ class SportSessionService
                 ->where('sport_profile_id', '!=', $obsolete->creator_profile_id)->exists();
             if (! $hasExternalParticipation) {
                 $obsolete->delete();
+
                 return;
             }
             $obsolete->status = SportSessionStatus::Cancelled;
@@ -936,11 +945,14 @@ class SportSessionService
             $seriesOffset = intdiv($cursor->diffInDays(CarbonImmutable::parse($series->starts_on->toDateString(), $timezone)->startOfDay()), 7);
             if ($seriesOffset % $series->interval_weeks === 0 && in_array($cursor->isoWeekday(), $series->weekdays, true)) {
                 $ordinal++;
-                if ($this->seriesHasEndedBefore($series, $cursor, $ordinal)) break;
+                if ($this->seriesHasEndedBefore($series, $cursor, $ordinal)) {
+                    break;
+                }
                 $starts->push(CarbonImmutable::parse($cursor->toDateString().' '.$series->starts_at_local, $timezone));
             }
             $cursor = $cursor->addDay();
         }
+
         return $starts;
     }
 
@@ -1018,21 +1030,6 @@ class SportSessionService
         }
 
         return $this->levelIsInRange($level, $session->min_level, $session->max_level);
-    }
-
-    private function passesSessionDistanceFilter(SportSession $session, ?SportProfile $profile, array $filters): bool
-    {
-        if (! isset($filters['distance_km'])) {
-            return true;
-        }
-
-        if ($profile === null) {
-            return false;
-        }
-
-        $distanceKm = $this->distanceFromSession($session, $profile);
-
-        return $distanceKm !== null && $distanceKm <= (float) $filters['distance_km'];
     }
 
     private function passesSessionTimeWindowFilter(SportSession $session, array $filters): bool
@@ -1302,7 +1299,7 @@ class SportSessionService
         });
     }
 
-    private function passesDistanceFilter(array $card, array $filters): bool
+    private function passesRecommendationDistanceFilter(array $card, array $filters): bool
     {
         if (! isset($filters['distance_km'])) {
             return true;

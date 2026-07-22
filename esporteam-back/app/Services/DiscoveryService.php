@@ -24,6 +24,7 @@ class DiscoveryService
         'advanced' => 2,
         'competitive' => 3,
     ];
+
     /**
      * @return array{mode:string,cards:Collection<int,array<string,mixed>>,empty_state:?array<string,mixed>}
      */
@@ -68,7 +69,6 @@ class DiscoveryService
 
         return $profiles
             ->map(fn (SportProfile $profile) => $this->cardForProfile($profile, $currentProfile, $filters))
-            ->filter(fn (array $card) => $this->passesDistanceFilter($card, $filters))
             ->sortBy([
                 ['score', 'desc'],
                 ['distance_km', 'asc'],
@@ -102,7 +102,6 @@ class DiscoveryService
             ->map(fn (SportSession $session) => $this->cardForSession($session, $currentProfile, $filters))
             ->filter(fn (array $card) => $this->passesSessionCompatibilityGate($card['session'], $currentProfile))
             ->filter(fn (array $card) => $this->passesSessionCapacityGate($card['session']))
-            ->filter(fn (array $card) => $this->passesDistanceFilter($card, $filters))
             ->filter(fn (array $card) => $this->passesSessionAvailabilityFilter($card['session'], $filters))
             ->filter(fn (array $card) => $this->passesSessionHostLevelFilter($card['session'], $filters))
             ->filter(fn (array $card) => $this->passesSessionHostGoalFilter($card['session'], $filters))
@@ -342,15 +341,6 @@ class DiscoveryService
                 ->where('starts_at', '<', $filters['ends_at'])
                 ->where('ends_at', '>', $filters['starts_at']);
         });
-    }
-
-    private function passesDistanceFilter(array $card, array $filters): bool
-    {
-        if (! isset($filters['distance_km'])) {
-            return true;
-        }
-
-        return $card['distance_km'] !== null && $card['distance_km'] <= (float) $filters['distance_km'];
     }
 
     private function passesSessionCapacityGate(SportSession $session): bool
@@ -712,14 +702,6 @@ class DiscoveryService
     private function emptyStateFor(string $mode, array $filters): array
     {
         $suggestions = [];
-
-        if (isset($filters['distance_km'])) {
-            $suggestions[] = [
-                'action' => 'expand_distance',
-                'label' => 'Ampliar raio',
-                'params' => ['distance_km' => min(200, max(10, (float) $filters['distance_km'] * 2))],
-            ];
-        }
 
         if (isset($filters['level'])) {
             $suggestions[] = [

@@ -26,3 +26,4 @@
 | 2026-07-19 | #30 | Ações sociais da conversa: reply, menção, reações, leitura monotônica, mute e estado de não lidos. |
 | 2026-07-19 | #31 | Conversation Media: fotos privadas, processamento por scanners, variantes seguras e vínculo à mensagem. |
 | 2026-07-20 | #33 | Notification Policy, subscriptions/preferências Web Push, adapter VAPID/fake, job idempotente, service worker e lifecycle HTTP. |
+| 2026-07-22 | — | Descoberta publica preserva todos os Perfis Esportivos e Sessoes; distancia apenas prioriza proximidade; agenda sem perfil retorna vazio. |

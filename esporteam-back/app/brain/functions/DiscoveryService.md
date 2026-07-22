@@ -23,7 +23,7 @@ Lista cards de Perfis Esportivos publicos para a Descoberta. Remove o proprio pe
 - `sport_slug`: filtra por slug de modalidade ativa.
 - `level`: filtra por nivel esportivo.
 - `goal`: filtra por objetivo esportivo em `profile_sports.goals`.
-- `distance_km`: filtra por distancia aproximada entre o perfil autenticado e o candidato.
+- `distance_km`: preferencia de proximidade mantida por compatibilidade; distancia aproxima e ordena resultados, mas nao exclui Perfis Esportivos, Professores ou Sessoes publicas.
 - `weekday`, `starts_at`, `ends_at`: quando os tres existem, aplica sobreposicao basica de disponibilidade para pessoas e inicio da sessao dentro da janela para sessoes/locais.
 
 ## Ranking

@@ -60,7 +60,7 @@ O MVP precisa provar o loop principal:
 
 1. Como praticante, quero escolher meus esportes, nivel e disponibilidade, para receber recomendacoes relevantes.
 2. Como praticante, quero ver pessoas proximas que praticam o mesmo esporte, para chamar alguem para jogar ou treinar.
-3. Como praticante, quero filtrar por distancia, esporte, nivel e horario, para encontrar opcoes que realmente servem para mim.
+3. Como praticante, quero priorizar por distancia e filtrar por esporte, nivel e horario, para encontrar opcoes que realmente servem para mim sem ocultar alternativas publicas mais distantes.
 4. Como praticante, quero criar uma sessao esportiva, para convidar pessoas para uma partida, treino ou corrida.
 5. Como praticante, quero entrar em uma sessao aberta, para participar sem depender de grupos externos.
 6. Como praticante, quero convidar amigos para uma atividade, para combinar esporte rapidamente.
@@ -181,7 +181,7 @@ Acoes duplicadas devem falhar de forma previsivel: se o Perfil Esportivo ja tem 
 #### Descobrir Deck E Filtros (#3, #4, #5)
 
 - `GET /api/discovery?mode=sessions` e o feed principal para cards compativeis de Sessao Esportiva.
-- Filtros aceitos: `sport_id`, `sport_slug`, `level`, `goal`, `distance_km`, `weekday`, `starts_at`, `ends_at`.
+- Filtros aceitos: `sport_id`, `sport_slug`, `level`, `goal`, `weekday`, `starts_at`, `ends_at`. `distance_km` permanece aceito como preferencia de proximidade e nunca elimina cards publicos.
 - Cada card de sessao deve expor `type=session`, `score`, `reasons`, `distance_km`, `recommendation_reason`, `entry_rule`, `participant_count`, `vacancy_status`, `safety_actions`, `host` e `session`.
 - `session` deve trazer `id`, `creator_profile_id`, `sport_id`, `title`, `description`, `type`, `starts_at`, `location_label`, `city`, `region`, `location_label_public`, `requires_approval`, `entry_mode`, `min_level`, `max_level`, `visibility`, `status`, `participant_count`, `sport` e uma amostra de `approved_participants`.
 - `entry_rule=approval_required` mapeia para UI curada; `entry_rule=match_required` com `entry_mode=publica_direta` mapeia para UI aberta.
@@ -192,7 +192,7 @@ Acoes duplicadas devem falhar de forma previsivel: se o Perfil Esportivo ja tem 
 
 - `GET /api/discovery?mode=sessions` pode alimentar Mapa e Lista quando a UI quer cards ranqueados por compatibilidade.
 - `GET /api/sessions` pode alimentar uma lista temporal/geografica de sessoes abertas e publicas.
-- Filtros aceitos em `GET /api/sessions`: `sport_id`, `sport_slug`, `type`, `entry_mode`, `level`, `distance_km`, `weekday`, `starts_at`, `ends_at`, `has_available_slots`, `city`, `region`, `starts_after`, `starts_before`.
+- Filtros aceitos em `GET /api/sessions`: `sport_id`, `sport_slug`, `type`, `entry_mode`, `level`, `weekday`, `starts_at`, `ends_at`, `has_available_slots`, `city`, `region`, `starts_after`, `starts_before`. `distance_km` permanece aceito como preferencia de ordenacao e nao exclui sessoes publicas.
 - O front pode usar um mapa deterministico no MVP; se nao houver coordenadas, deve cair para Lista/bottom sheet com `location_label_public`, cidade, regiao e distancia quando disponivel.
 
 #### Detalhe Aberto E Curado (#6, #7)
@@ -207,6 +207,7 @@ Acoes duplicadas devem falhar de forma previsivel: se o Perfil Esportivo ja tem 
 
 - A primeira SPEC pode derivar Partidas do `GET /api/sessions` somente se o backend carregar a participacao do Perfil Esportivo autenticado; o contrato mais claro e adicionar endpoint dedicado `GET /api/profile/sessions` ou filtro `GET /api/sessions?participating=true`.
 - O payload precisa listar sessoes em que o Perfil Esportivo atuou, incluindo status de participacao normalizado, dados basicos da Sessao Esportiva e linkavel para `GET /api/sessions/{id}`.
+- Quando o `User` autenticado ainda nao possui Perfil Esportivo, `GET /api/profile/sessions` retorna `200` com `data = []`.
 - Itens `declined`/`removed` nao devem desaparecer silenciosamente; o backend deve permitir retorno historico suficiente para a aba Recusado.
 
 ### Gaps Que O Back Precisa Fechar Para Ficar 100% Consistente

@@ -196,6 +196,26 @@ it('lists only public sessions inside a requested map viewport', function () {
         ->assertJsonPath('data.0.id', $inside->id);
 });
 
+it('keeps public sessions visible with a distance preference when the viewer has no profile', function () {
+    $host = createSessionSportProfileForUser(77, 'Host');
+    $session = SportSession::query()->create([
+        'creator_profile_id' => $host->id,
+        'title' => 'Sessao publica distante',
+        'type' => 'partida',
+        'starts_at' => now()->addDay(),
+        'latitude_approx' => -23.900,
+        'longitude_approx' => -46.900,
+        'visibility' => 'public',
+        'status' => 'open',
+    ]);
+
+    actingAsWorkspace(1, ['id' => 88])
+        ->getJson('/api/sessions?distance_km=10')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $session->id);
+});
+
 it('lists public sessions by match filters without exposing vacancy counts', function () {
     $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
     $current = createSessionSportProfileForUser(88, 'Candidate');
@@ -244,7 +264,7 @@ it('lists public sessions by match filters without exposing vacancy counts', fun
         ->json('data.id');
 
     SportProfile::query()->create(['user_id' => 99, 'display_name' => 'Far host']);
-    actingAsWorkspace(1, ['id' => 99])
+    $farId = actingAsWorkspace(1, ['id' => 99])
         ->postJson('/api/sessions', [
             'sport_id' => $tennis->id,
             'title' => 'Tenis longe',
@@ -257,7 +277,8 @@ it('lists public sessions by match filters without exposing vacancy counts', fun
             'min_level' => 'beginner',
             'max_level' => 'intermediate',
         ])
-        ->assertCreated();
+        ->assertCreated()
+        ->json('data.id');
 
     actingAsWorkspace(1, ['id' => 77])
         ->postJson("/api/sessions/{$fullId}/join")
@@ -266,8 +287,9 @@ it('lists public sessions by match filters without exposing vacancy counts', fun
     $payload = actingAsWorkspace(1, ['id' => 88])
         ->getJson('/api/sessions?sport_slug=tenis&level=intermediate&distance_km=5&weekday=2&starts_at=19:00&ends_at=21:00&has_available_slots=1')
         ->assertOk()
-        ->assertJsonCount(1, 'data')
+        ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.id', $matchingId)
+        ->assertJsonPath('data.1.id', $farId)
         ->assertJsonPath('data.0.next_action', 'entrar')
         ->assertJsonPath('data.0.participant_count', 1)
         ->json('data.0');
@@ -455,7 +477,8 @@ it('returns every persisted participation state and empty history safely', funct
 
     actingAsWorkspace(1, ['id' => 99])
         ->getJson('/api/profile/sessions')
-        ->assertNotFound();
+        ->assertOk()
+        ->assertJsonCount(0, 'data');
 });
 
 it('lets eligible profiles join public direct sessions without prior match', function () {

@@ -39,7 +39,7 @@ Ele preserva `SportProfile` como identidade de participacao: callers passam `use
 - `requires_approval` continua sincronizado por compatibilidade, mas `entry_mode` e a linguagem principal do dominio.
 - Convites usam `invited`; aceite vira `approved`, recusa vira `declined`.
 - Capacidade conta `joined` e `approved`; convites `invited` reservam vagas antes do aceite.
-- `GET /api/sessions` calcula `next_action` e filtra por distancia, nivel, horario e disponibilidade interna de vagas sem expor a quantidade de vagas restantes.
+- `GET /api/sessions` calcula `next_action`, prioriza proximidade e filtra por nivel, horario e disponibilidade interna de vagas sem excluir sessoes pela distancia nem expor a quantidade de vagas restantes.
 - `GET /api/sessions/{id}` retorna detalhe somente de sessoes publicas abertas e bloqueia detalhe de anfitrioes bloqueados; carrega apenas participacao do Perfil Esportivo autenticado.
 - Nenhum fluxo de match em grupo aceita preco, taxa ou pagamento por vaga.
 - Series semanais sao regras duradouras; o modulo materializa um horizonte movel de 90 dias com chaves deterministicas. Jobs apenas chamam essa interface.

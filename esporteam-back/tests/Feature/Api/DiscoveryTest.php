@@ -53,7 +53,7 @@ it('filters discovered sport profiles by overlapping availability windows', func
         ->assertJsonPath('data.0.reasons.0', 'available');
 });
 
-it('filters discovery by sport level and distance', function () {
+it('filters discovery by sport and level while distance only ranks results', function () {
     $tennis = Sport::query()->create(['name' => 'Tenis', 'slug' => 'tenis']);
     Sport::query()->create(['name' => 'Corrida', 'slug' => 'corrida']);
 
@@ -104,14 +104,43 @@ it('filters discovery by sport level and distance', function () {
         'level' => 'intermediate',
         'goals' => ['jogar'],
     ]);
+    TeacherProfile::query()->create([
+        'sport_profile_id' => $farMatch->id,
+        'headline' => 'Professor de tenis',
+    ]);
 
     actingAsWorkspace(1, ['id' => 77])
         ->getJson('/api/discovery?sport_slug=tenis&level=intermediate&distance_km=5')
         ->assertOk()
-        ->assertJsonCount(1, 'data')
+        ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.profile.id', $nearMatch->id)
+        ->assertJsonPath('data.1.profile.id', $farMatch->id)
+        ->assertJsonPath('data.1.type', 'teacher')
         ->assertJsonPath('data.0.reasons.0', 'same_sport')
         ->assertJsonPath('data.0.reasons.1', 'compatible_level');
+});
+
+it('keeps public sessions discoverable with a distance preference when the viewer has no profile', function () {
+    $host = SportProfile::query()->create([
+        'user_id' => 88,
+        'display_name' => 'Session host',
+        'latitude_approx' => -23.900,
+        'longitude_approx' => -46.900,
+    ]);
+    $session = SportSession::query()->create([
+        'creator_profile_id' => $host->id,
+        'title' => 'Sessao publica distante',
+        'type' => 'partida',
+        'starts_at' => now()->addDay(),
+        'visibility' => 'public',
+        'status' => 'open',
+    ]);
+
+    actingAsWorkspace(1, ['id' => 77])
+        ->getJson('/api/discovery?mode=sessions&distance_km=10')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.session.id', $session->id);
 });
 
 it('ranks discovery by deterministic match signals', function () {
@@ -447,7 +476,6 @@ it('returns actionable empty state suggestions for discovery modes', function ()
         ->assertOk()
         ->assertJsonCount(0, 'data')
         ->assertJsonPath('mode', 'people')
-        ->assertJsonPath('empty_state.suggestions.0.action', 'expand_distance')
-        ->assertJsonPath('empty_state.suggestions.1.action', 'remove_level_filter')
-        ->assertJsonPath('empty_state.suggestions.2.action', 'create_public_session');
+        ->assertJsonPath('empty_state.suggestions.0.action', 'remove_level_filter')
+        ->assertJsonPath('empty_state.suggestions.1.action', 'create_public_session');
 });
