@@ -9,7 +9,7 @@ RUN apk add --no-cache \
         git \
         unzip \
         $PHPIZE_DEPS \
-    && docker-php-ext-install pdo_pgsql pgsql bcmath mbstring \
+    && docker-php-ext-install pdo_pgsql pgsql bcmath mbstring pcntl \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del $PHPIZE_DEPS \

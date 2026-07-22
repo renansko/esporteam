@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
 /*
  * Cola Aí brand foundation
  *
@@ -10,6 +12,8 @@
  */
 
 :root {
+  --cola-ai-font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
   /* Core brand */
   --cola-ai-blue: #353bab;
   --cola-ai-blue-deep: #303090;
@@ -33,4 +37,7 @@
   --cola-ai-line: color-mix(in srgb, var(--cola-ai-summit-stone) 28%, white);
   --cola-ai-action-soft: color-mix(in srgb, var(--cola-ai-blue) 10%, white);
   --cola-ai-highlight-soft: color-mix(in srgb, var(--cola-ai-lime) 18%, white);
+
+  /* Adopt the brand typeface across the current interface. */
+  --font-sans: var(--cola-ai-font-sans);
 }

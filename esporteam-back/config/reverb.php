@@ -7,6 +7,8 @@ return [
         'path' => env('REVERB_SERVER_PATH', ''), 'hostname' => env('REVERB_HOST'),
         'options' => ['tls' => []], 'max_request_size' => env('REVERB_MAX_REQUEST_SIZE', 10_000),
         'scaling' => ['enabled' => false],
+        'pulse_ingest_interval' => env('REVERB_PULSE_INGEST_INTERVAL', 15),
+        'telescope_ingest_interval' => env('REVERB_TELESCOPE_INGEST_INTERVAL', 15),
     ]],
     'apps' => ['provider' => 'config', 'apps' => [[
         'key' => env('REVERB_APP_KEY'), 'secret' => env('REVERB_APP_SECRET'), 'app_id' => env('REVERB_APP_ID'),
