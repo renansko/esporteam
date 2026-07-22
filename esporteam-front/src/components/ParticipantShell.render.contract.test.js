@@ -270,6 +270,7 @@ try {
 
   assert.match(nearbyMapHtml, /Alternar entre Mapa e Lista/)
   assert.match(nearbyMapHtml, /class="[^"]*\bnearby-map\b[^"]*"/)
+  assert.doesNotMatch(nearbyMapHtml, /\+ Criar sessão/)
   assert.match(nearbyMapHtml, /Corrida/)
   assert.match(nearbyMapHtml, /08:00/)
   assert.match(nearbyMapHtml, /Resumo da Sessao Esportiva/)
@@ -302,6 +303,8 @@ try {
 
   const nearbyMapSource = await readFile(new URL('./NearbySessionsMap.vue', import.meta.url), 'utf8')
   assert.match(nearbyMapSource, /watch\(\(\) => props\.selectable/)
+  assert.match(nearbyMapSource, /emit\('create-session', location\)/)
+  assert.match(nearbyMapSource, /bubblingMouseEvents: false/)
 
   const publicationHtml = await renderShell({
     discoveryCards: [],

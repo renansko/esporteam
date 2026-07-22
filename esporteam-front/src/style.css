@@ -40,6 +40,19 @@
   --skeleton-shimmer: rgba(255, 255, 255, 0.58);
   --skeleton-radius: 8px;
   --skeleton-duration: 1.4s;
+  /* Shared movement tokens: concise feedback and a calm page assembly. */
+  --motion-press-duration: 100ms;
+  --motion-enter-duration: 220ms;
+  --motion-page-duration: 360ms;
+  --motion-ease-out: cubic-bezier(.2, .8, .2, 1);
+  --motion-press-scale: .98;
+  --motion-enter-y: 8px;
+  --motion-enter-x: 5px;
+  --motion-stagger: 40ms;
+  --motion-sheet-offset: 16px;
+  --motion-panel-offset: 12px;
+  --motion-inline-offset: 4px;
+  --motion-reduced-duration: 120ms;
 
   --r-1: 4px; --r-2: 6px; --r-3: 10px; --r-4: 14px;
 
@@ -121,6 +134,50 @@ body {
 .skeleton-badge .skeleton-block { border-radius: 999px; }
 @keyframes skeleton-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton-block { animation: none; } }
+
+/* Semantic controls receive immediate feedback; map and drag gestures stay direct. */
+:where(button:not(:disabled), a[href], [role="tab"], [role="button"]):not(.leaflet-container *) {
+  transition: transform var(--motion-press-duration) var(--motion-ease-out), opacity var(--motion-press-duration) var(--motion-ease-out);
+}
+:where(button:not(:disabled), a[href], [role="tab"], [role="button"]):not(.leaflet-container *):active {
+  transform: scale(var(--motion-press-scale));
+}
+.session-card.is-dragging { transition: none; }
+
+/* A key on .motion-page restarts this only for an actual participant tab change. */
+.motion-page > .motion-group { animation: motion-page-assemble var(--motion-page-duration) var(--motion-ease-out) both; }
+.motion-page > .motion-group--context { animation-delay: 0ms; }
+.motion-page > .motion-group--secondary { animation-delay: var(--motion-stagger); }
+.motion-page > .motion-group--content { animation-delay: calc(var(--motion-stagger) * 2); }
+@keyframes motion-page-assemble {
+  from { opacity: 0; transform: translate(var(--motion-enter-x), var(--motion-enter-y)); }
+  to { opacity: 1; transform: translate(0, 0); }
+}
+
+/* Overlay surfaces and their backdrop enter and leave as one small transition. */
+.motion-sheet-enter-active, .motion-sheet-leave-active,
+.motion-panel-enter-active, .motion-panel-leave-active { transition: opacity var(--motion-enter-duration) var(--motion-ease-out); }
+.motion-sheet-enter-from, .motion-sheet-leave-to,
+.motion-panel-enter-from, .motion-panel-leave-to { opacity: 0; }
+.motion-sheet-enter-active .bottom-sheet, .motion-sheet-leave-active .bottom-sheet { transition: transform var(--motion-enter-duration) var(--motion-ease-out); }
+.motion-sheet-enter-from .bottom-sheet, .motion-sheet-leave-to .bottom-sheet { transform: translateY(var(--motion-sheet-offset)); }
+.motion-panel-enter-active, .motion-panel-leave-active { transition-property: opacity, transform; }
+.motion-panel-enter-from, .motion-panel-leave-to { transform: translateX(var(--motion-panel-offset)); }
+.motion-auth-enter-active, .motion-auth-leave-active,
+.motion-inline-enter-active, .motion-inline-leave-active { transition: opacity var(--motion-enter-duration) var(--motion-ease-out), transform var(--motion-enter-duration) var(--motion-ease-out); }
+.motion-auth-enter-from, .motion-auth-leave-to { opacity: 0; transform: translateY(var(--motion-enter-y)); }
+.motion-inline-enter-from, .motion-inline-leave-to { opacity: 0; transform: translateY(var(--motion-inline-offset)); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --motion-press-scale: 1; --motion-enter-x: 0px; --motion-enter-y: 0px; --motion-stagger: 0ms; }
+  .motion-page > .motion-group { animation: motion-reduced-fade var(--motion-reduced-duration) ease-out both; }
+  .motion-sheet-enter-active .bottom-sheet, .motion-sheet-leave-active .bottom-sheet { transition-property: opacity; }
+  .motion-sheet-enter-from .bottom-sheet, .motion-sheet-leave-to .bottom-sheet,
+  .motion-panel-enter-from, .motion-panel-leave-to,
+  .motion-auth-enter-from, .motion-auth-leave-to,
+  .motion-inline-enter-from, .motion-inline-leave-to { transform: none; }
+}
+@keyframes motion-reduced-fade { from { opacity: .82; } to { opacity: 1; } }
 
 /* ── Type ── */
 .h-display { font-family: var(--font-sans); font-size: 26px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 580; }
@@ -1742,14 +1799,11 @@ body {
 .discovery-action-interest { border-color: #c2d2f1; background: #e9effb; color: #2f63c7; }
 
 .nearby-stage { position: relative; margin: 12px -16px -12px; gap: 0; }
-.nearby-publish-fab { position: absolute; z-index: 650; top: 54px; right: 16px; min-height: 46px; border: 0; border-radius: 999px; padding: 0 18px; background: var(--cola-ai-action); color: #fff; font: inherit; font-weight: 800; box-shadow: 0 8px 22px color-mix(in srgb, var(--cola-ai-action) 30%, transparent); }
-.nearby-publish-fab:hover { background: var(--cola-ai-blue-deep); }
-.nearby-publish-fab:focus-visible { outline: 3px solid var(--cola-ai-action-highlight); outline-offset: 2px; }
 .nearby-surface-toggle { margin: 0 16px 12px; gap: 0; border-color: #e6e2d9; padding: 3px; background: #eeebe4; }
 .nearby-surface-button { min-height: 32px; font-weight: 400; }
 .nearby-surface-button.active { color: #201e1a; font-weight: 600; box-shadow: 0 1px 2px rgba(40, 36, 30, .08); }
-.nearby-real-map { position: relative; min-height: 300px; border: 0; border-radius: 0; }
-.nearby-real-map-canvas { width: 100%; height: 300px; background: var(--cola-ai-alpine-ice); }
+.nearby-real-map { position: relative; min-height: 420px; border: 0; border-radius: 0; }
+.nearby-real-map-canvas { width: 100%; height: 420px; background: var(--cola-ai-alpine-ice); cursor: crosshair; }
 .nearby-real-map--selecting .nearby-real-map-canvas { height: min(68vh, 640px); cursor: crosshair; }
 .nearby-map-cancel { position: absolute; z-index: 700; top: 10px; right: 12px; min-height: 38px; border: 1px solid var(--cola-ai-line); border-radius: 999px; padding: 0 14px; background: var(--cola-ai-surface); color: var(--cola-ai-action); font: inherit; font-weight: 800; box-shadow: 0 2px 8px rgba(40,36,30,.12); }
 .nearby-real-map .leaflet-tile-pane { filter: grayscale(1) contrast(.88) brightness(1.08); opacity: .88; }

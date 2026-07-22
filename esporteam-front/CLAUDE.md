@@ -16,6 +16,10 @@ A interface do `esporteam-front` deve seguir a linguagem visual liquid glass da 
 
 O vidro deve comunicar hierarquia, nao decorar tudo. Use somente estes tres niveis: `glass-surface` para paineis e cartoes, `glass-surface-strong` para barras fixas e navegacao, e `glass-pill` para controles compactos. Mantenha conteudo principal com contraste legivel e use o azul e o lime da marca como acentos. Toda superficie translucida precisa ter fundo opaco de fallback, borda clara, suporte a tema escuro e comportamento sem blur para `prefers-reduced-transparency`. Nao aplique blur a itens repetidos de listas rolaveis; aplique-o ao contêiner fixo que estabelece a hierarquia.
 
+## Movimento
+
+Use os tokens `--motion-*` de `src/style.css`; não invente durações, curvas ou deslocamentos por feature. Controles semânticos já recebem feedback curto de pressionamento. Para as páginas principais do participante, use grupos `motion-group` dentro de `motion-page`: a montagem só deve reiniciar em uma troca real de aba, nunca em filtros, atualizações de dados ou retorno de detalhe. Sheets e painéis usam as transições `motion-sheet` e `motion-panel`. Anime apenas `transform` e `opacity`, sem `transition: all`; preserve skeletons, progresso, mapa e arraste como movimentos funcionais. Em `prefers-reduced-motion`, não adicione deslocamento, escala ou stagger.
+
 ## Runtime local
 
 O frontend deste repo roda normalmente pelo Docker Compose em `../esporteam-docker/docker-compose.yml`. O container `esporteam-front` publica o Vite em `http://127.0.0.1:5173`.

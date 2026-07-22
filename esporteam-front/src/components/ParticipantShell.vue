@@ -352,9 +352,9 @@ async function highlightBioContext() {
 
       </header>
 
-      <section class="participant-content" :aria-labelledby="`${activeTab.id}-title`">
+      <section :key="activeTab.id" class="participant-content motion-page" :aria-labelledby="`${activeTab.id}-title`">
         <p class="participant-eyebrow">{{ activeTab.eyebrow }}</p>
-        <div class="participant-title-row">
+        <div class="participant-title-row motion-group motion-group--context">
           <h1 :id="`${activeTab.id}-title`">{{ activeTab.title }}</h1>
           <button
             v-if="isDiscoverTab"
@@ -368,9 +368,9 @@ async function highlightBioContext() {
             <span>Filtros</span>
           </button>
         </div>
-        <p v-if="isDiscoverTab && activeFilterSummary" class="discovery-filter-summary">{{ activeFilterSummary }}</p>
+        <p v-if="isDiscoverTab && activeFilterSummary" class="discovery-filter-summary motion-group motion-group--secondary">{{ activeFilterSummary }}</p>
 
-        <div v-if="isDiscoverTab && discoverySkeletonVisible && !primaryDiscoveryCard && !discoveryError" class="discovery-deck discovery-deck-loading" aria-busy="true" aria-label="Descoberta carregando">
+        <div v-if="isDiscoverTab && discoverySkeletonVisible && !primaryDiscoveryCard && !discoveryError" class="discovery-deck discovery-deck-loading motion-group motion-group--content" aria-busy="true" aria-label="Descoberta carregando">
           <div class="session-card session-card-skeleton skeleton-surface" aria-hidden="true">
             <div class="skeleton-card-header"><Skeleton variant="badge" width="94px" height="26px" /><Skeleton variant="text" width="48px" /></div>
             <div class="skeleton-card-main"><Skeleton variant="text" width="34%" /><Skeleton variant="title" width="78%" height="32px" /><Skeleton variant="text" width="58%" /></div>
@@ -385,7 +385,7 @@ async function highlightBioContext() {
 
         <div
           v-else-if="isDiscoverTab && primaryDiscoveryCard"
-          class="discovery-deck"
+          class="discovery-deck motion-group motion-group--content"
           aria-label="Deck Descobrir"
         >
           <div class="deck-shadow deck-shadow-back" aria-hidden="true"></div>
@@ -460,7 +460,7 @@ async function highlightBioContext() {
           </article>
         </div>
 
-        <section v-else-if="isMapTab && nearbySkeletonVisible && !nearbySessionViews.length && !nearbySessionsError" class="nearby-stage nearby-stage-skeleton" aria-busy="true" aria-label="Sessoes proximas carregando">
+        <section v-else-if="isMapTab && nearbySkeletonVisible && !nearbySessionViews.length && !nearbySessionsError" class="nearby-stage nearby-stage-skeleton motion-group motion-group--content" aria-busy="true" aria-label="Sessoes proximas carregando">
           <div class="nearby-surface-toggle skeleton-surface" aria-hidden="true"><Skeleton variant="button" height="36px" /><Skeleton variant="button" height="36px" /></div>
           <div class="nearby-map nearby-map-skeleton skeleton-surface" aria-hidden="true">
             <Skeleton class="skeleton-map-pin skeleton-map-pin-one" variant="card" width="92px" height="58px" radius="16px" />
@@ -471,8 +471,7 @@ async function highlightBioContext() {
 
         <div v-else-if="isMapTab && nearbySessionsLoading && !nearbySessionViews.length && !nearbySessionsError" class="loading-grace" aria-busy="true"></div>
 
-        <section v-else-if="isMapTab && !nearbySessionsError" class="nearby-stage" aria-label="Mapa e Lista de Sessoes proximas">
-          <button v-if="oneOffPublication && !oneOffPublicationOpen" class="nearby-publish-fab" type="button" aria-label="Criar Sessão Esportiva" @click="emit('startOneOffPublication')">+ Criar sessão</button>
+        <section v-else-if="isMapTab && !nearbySessionsError" class="nearby-stage motion-group motion-group--content" aria-label="Mapa e Lista de Sessoes proximas">
           <div v-if="!oneOffPublicationOpen" class="nearby-surface-toggle" role="tablist" aria-label="Alternar entre Mapa e Lista">
             <button
               type="button"
@@ -501,6 +500,7 @@ async function highlightBioContext() {
               :selectable="oneOffPublicationOpen"
               :selected-location="publicationSelectedLocation"
               @select="selectNearbySession"
+              @create-session="emit('startOneOffPublication', $event)"
               @location-select="selectOneOffLocation"
               @selection-cancel="oneOffPublication?.close?.()"
             />
@@ -645,7 +645,7 @@ async function highlightBioContext() {
           </div>
         </section>
 
-        <section v-else-if="isMatchesTab" class="participant-matches" aria-label="Agenda do Perfil Esportivo">
+        <section v-else-if="isMatchesTab" class="participant-matches motion-group motion-group--content" aria-label="Agenda do Perfil Esportivo">
           <div class="agenda-toolbar">
             <p>{{ upcomingConfirmedMatches.length }} confirmados futuros</p>
           </div>
@@ -723,7 +723,7 @@ async function highlightBioContext() {
           <div v-else class="participant-placeholder"><div class="placeholder-icon"><Icon name="calendarCheck" :size="28" /></div><div><h2>Nenhuma participacao ainda</h2><p>Explore eventos e confirme presenca para montar sua agenda.</p></div></div>
         </section>
 
-        <section v-else-if="isProfileTab" class="sport-profile-editor" :aria-label="isEditing ? 'Editar Perfil Esportivo' : 'Perfil Esportivo'">
+        <section v-else-if="isProfileTab" class="sport-profile-editor motion-group motion-group--content" :aria-label="isEditing ? 'Editar Perfil Esportivo' : 'Perfil Esportivo'">
           <div class="profile-editor-intro">
             <span class="profile-editor-icon"><Icon name="user" :size="22" /></span>
             <div><h2>Perfil Esportivo ativo</h2><p>Estas preferencias orientam a Descoberta. Elas pertencem ao Perfil Esportivo, nao ao User de autenticacao.</p></div>
@@ -826,7 +826,7 @@ async function highlightBioContext() {
           <div class="profile-mode-affordance"><Icon name="sparkles" :size="17" /><span>{{ isTeacher ? 'Professor ativo · Suas configurações estão prontas para completar' : 'Participante agora · Anfitriao em breve' }}</span></div>
         </section>
 
-        <div v-else class="participant-placeholder">
+        <div v-else class="participant-placeholder motion-group motion-group--content">
           <div class="placeholder-icon">
             <Icon :name="discoveryError || nearbySessionsError ? 'bolt' : activeTab.icon" :size="28" />
           </div>
@@ -854,11 +854,12 @@ async function highlightBioContext() {
 
       </section>
 
-      <section
-        v-if="sportSessionDetailOpen"
-        class="session-detail-panel"
-        aria-label="Detalhe da Sessao Esportiva"
-      >
+      <Transition name="motion-panel">
+        <section
+          v-if="sportSessionDetailOpen"
+          class="session-detail-panel"
+          aria-label="Detalhe da Sessao Esportiva"
+        >
         <header :class="['session-detail-header', sportSessionDetailView?.entryBadge?.kind === 'curated' ? 'is-curated' : 'is-open']">
           <button
             class="session-detail-close"
@@ -1030,7 +1031,8 @@ async function highlightBioContext() {
             }}</span>
           </button>
         </footer>
-      </section>
+        </section>
+      </Transition>
 
       <BottomSheet
         :open="locationEditorOpen"

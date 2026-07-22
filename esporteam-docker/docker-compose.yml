@@ -219,8 +219,10 @@ services:
       context: ../esporteam-back
       dockerfile: ../esporteam-docker/dockerfiles/back.Dockerfile
     container_name: esporteam-reverb
+    restart: unless-stopped
     working_dir: /var/www
     environment:
+      CACHE_STORE: redis
       REDIS_HOST: esporteam-redis
       REVERB_APP_ID: esporteam
       REVERB_APP_KEY: esporteam-reverb-key
@@ -250,6 +252,7 @@ services:
       DB_DATABASE: esporteam_back
       DB_USERNAME: esporteam
       DB_PASSWORD: secret
+      CACHE_STORE: redis
       REDIS_HOST: esporteam-redis
       QUEUE_CONNECTION: redis
       BROADCAST_CONNECTION: reverb

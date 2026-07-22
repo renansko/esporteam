@@ -108,8 +108,9 @@ function reloadNearbySessions() {
   loadNearbySportSessions(store.activeSportProfile, discoverySessionFilters)
 }
 
-function startOneOffPublication() {
+function startOneOffPublication(location = null) {
   oneOffPublication.begin(store.activeSportProfile)
+  if (location) oneOffPublication.selectLocation(location)
 }
 
 function handleOneOffPublished(session) {

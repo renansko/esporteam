@@ -32,6 +32,7 @@ onBeforeUnmount(() => document.body.classList.remove('bottom-sheet-open'))
 </script>
 
 <template>
+  <Transition name="motion-sheet">
   <div v-if="open" class="bottom-sheet-layer">
     <button class="bottom-sheet-backdrop" type="button" aria-label="Fechar" @click="close" />
     <section ref="dialog" class="bottom-sheet" role="dialog" aria-modal="true" :aria-label="title" tabindex="-1">
@@ -47,4 +48,5 @@ onBeforeUnmount(() => document.body.classList.remove('bottom-sheet-open'))
       </div>
     </section>
   </div>
+  </Transition>
 </template>

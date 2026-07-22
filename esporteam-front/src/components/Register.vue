@@ -82,7 +82,8 @@ function submit() {
         </div>
       </div>
 
-      <section v-if="step === 'intent'" class="auth-card auth-choice-card" aria-labelledby="register-title">
+      <Transition name="motion-auth" mode="out-in">
+      <section v-if="step === 'intent'" key="intent" class="auth-card auth-choice-card" aria-labelledby="register-title">
         <div class="auth-brand"><div class="auth-mark">C</div><div><div class="auth-name">Cola Aí</div><div class="auth-tagline">Descoberta esportiva local</div></div></div>
         <p class="auth-wizard-progress">Etapa 1 de 2</p>
         <p class="auth-eyebrow">Antes de começar</p>
@@ -103,7 +104,7 @@ function submit() {
         <div class="auth-switch"><span>Já tem conta?</span><button type="button" class="link" @click="store.setAuthView('login')">Entrar</button></div>
       </section>
 
-      <form v-else class="auth-card" @submit.prevent="submit">
+      <form v-else key="details" class="auth-card" @submit.prevent="submit">
         <button class="auth-wizard-back" type="button" @click="step = 'intent'"><Icon name="back" :size="16" /> Voltar</button>
         <div class="auth-brand"><div class="auth-mark">C</div><div><div class="auth-name">Cola Aí</div><div class="auth-tagline">Conta + Perfil Esportivo</div></div></div>
         <p class="auth-wizard-progress">Etapa 2 de 2</p>
@@ -113,32 +114,33 @@ function submit() {
 
         <label for="register-name">Nome</label>
         <input id="register-name" :class="['input', fieldClass('name', name, { required: true })]" type="text" v-model="name" autocomplete="name" autofocus required @blur="touch('name')" @input="clearError('name')" />
-        <div v-if="fieldMessage('name', name, { required: true }, 'Informe seu nome.')" class="field-error">{{ fieldMessage('name', name, { required: true }, 'Informe seu nome.') }}</div>
+        <Transition name="motion-inline"><div v-if="fieldMessage('name', name, { required: true }, 'Informe seu nome.')" class="field-error">{{ fieldMessage('name', name, { required: true }, 'Informe seu nome.') }}</div></Transition>
 
         <label for="register-email">E-mail</label>
         <input id="register-email" :class="['input', fieldClass('email', email, { type: 'email', required: true })]" type="email" v-model="email" autocomplete="email" required @blur="touch('email')" @input="clearError('email')" />
-        <div v-if="fieldMessage('email', email, { type: 'email', required: true }, 'Informe um e-mail válido.')" class="field-error">{{ fieldMessage('email', email, { type: 'email', required: true }, 'Informe um e-mail válido.') }}</div>
+        <Transition name="motion-inline"><div v-if="fieldMessage('email', email, { type: 'email', required: true }, 'Informe um e-mail válido.')" class="field-error">{{ fieldMessage('email', email, { type: 'email', required: true }, 'Informe um e-mail válido.') }}</div></Transition>
 
         <label for="register-password">Senha</label>
         <input id="register-password" :class="['input', fieldClass('password', password, { required: true })]" type="password" v-model="password" autocomplete="new-password" required @blur="touch('password')" @input="clearError('password')" />
         <div class="field-hint">Mínimo de 8 caracteres, com maiúscula, minúscula e número.</div>
-        <div v-if="fieldMessage('password', password, { required: true }, 'Informe uma senha.')" class="field-error">{{ fieldMessage('password', password, { required: true }, 'Informe uma senha.') }}</div>
+        <Transition name="motion-inline"><div v-if="fieldMessage('password', password, { required: true }, 'Informe uma senha.')" class="field-error">{{ fieldMessage('password', password, { required: true }, 'Informe uma senha.') }}</div></Transition>
 
         <label for="register-password-confirm">Confirmar senha</label>
         <input id="register-password-confirm" :class="['input', fieldClass('password_confirmation', passwordConfirmation, { required: true })]" type="password" v-model="passwordConfirmation" autocomplete="new-password" required @blur="touch('password_confirmation')" @input="clearError('password_confirmation')" />
-        <div v-if="fieldMessage('password_confirmation', passwordConfirmation, { required: true }, 'Confirme sua senha.')" class="field-error">{{ fieldMessage('password_confirmation', passwordConfirmation, { required: true }, 'Confirme sua senha.') }}</div>
+        <Transition name="motion-inline"><div v-if="fieldMessage('password_confirmation', passwordConfirmation, { required: true }, 'Confirme sua senha.')" class="field-error">{{ fieldMessage('password_confirmation', passwordConfirmation, { required: true }, 'Confirme sua senha.') }}</div></Transition>
 
         <div class="auth-grid"><div><label for="register-city">Cidade</label><input id="register-city" class="input" type="text" v-model="city" autocomplete="address-level2" /></div><div><label for="register-region">UF/região</label><input id="register-region" class="input" type="text" v-model="region" autocomplete="address-level1" /></div></div>
         <div class="field-hint">Localização aproximada; não usamos endereço residencial preciso.</div>
         <label for="register-birth-date">Data de nascimento</label>
         <input id="register-birth-date" :class="['input', fieldClass('birth_date', birthDate, { required: true })]" type="date" v-model="birthDate" required @blur="touch('birth_date')" @input="clearError('birth_date')" />
-        <div v-if="fieldMessage('birth_date', birthDate, { required: true }, 'Informe sua data de nascimento.')" class="field-error">{{ fieldMessage('birth_date', birthDate, { required: true }, 'Informe sua data de nascimento.') }}</div>
+        <Transition name="motion-inline"><div v-if="fieldMessage('birth_date', birthDate, { required: true }, 'Informe sua data de nascimento.')" class="field-error">{{ fieldMessage('birth_date', birthDate, { required: true }, 'Informe sua data de nascimento.') }}</div></Transition>
         <label class="auth-attestation"><input type="checkbox" v-model="adultAttestation" required @change="touch('adult_attestation'); clearError('adult_attestation')" /> Confirmo que tenho 18 anos ou mais.</label>
-        <div v-if="fieldError('adult_attestation') || (submitted && !adultAttestation)" class="field-error">{{ fieldError('adult_attestation') || 'Confirme sua maioridade para continuar.' }}</div>
-        <div v-if="store.registerError && !store.registerErrors" class="field-error auth-error">{{ store.registerError }}</div>
+        <Transition name="motion-inline"><div v-if="fieldError('adult_attestation') || (submitted && !adultAttestation)" class="field-error">{{ fieldError('adult_attestation') || 'Confirme sua maioridade para continuar.' }}</div></Transition>
+        <Transition name="motion-inline"><div v-if="store.registerError && !store.registerErrors" class="field-error auth-error">{{ store.registerError }}</div></Transition>
         <button class="btn btn-primary auth-submit" type="submit" :disabled="store.registerLoading">{{ store.registerLoading ? 'Criando...' : intent === 'teacher' ? 'Criar conta de Professor' : 'Criar conta' }}<Icon name="chevron" /></button>
         <div class="auth-switch"><span>Já tem conta?</span><button type="button" class="link" @click="store.setAuthView('login')">Entrar</button></div>
       </form>
+      </Transition>
     </section>
   </div>
 </template>

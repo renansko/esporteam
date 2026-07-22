@@ -105,15 +105,15 @@ function clearError(key) {
 
         <label for="login-email">Email</label>
         <input id="login-email" :class="['input', fieldClass(email, { type: 'email', required: true }, 'email')]" type="email" v-model="email" autocomplete="email" autofocus required @blur="touch('email')" @input="clearError('email')" />
-        <div v-if="emailError()" class="field-error">{{ emailError() }}</div>
+        <Transition name="motion-inline"><div v-if="emailError()" class="field-error">{{ emailError() }}</div></Transition>
 
         <label for="login-password">Senha</label>
         <input id="login-password" :class="['input', fieldClass(password, { required: true }, 'password')]" type="password" v-model="password" autocomplete="current-password" required @blur="touch('password')" @input="clearError('password')" />
-        <div v-if="passwordError()" class="field-error">{{ passwordError() }}</div>
+        <Transition name="motion-inline"><div v-if="passwordError()" class="field-error">{{ passwordError() }}</div></Transition>
 
-        <div v-if="store.loginError" class="field-error auth-error">
+        <Transition name="motion-inline"><div v-if="store.loginError" class="field-error auth-error">
           {{ store.loginError }}
-        </div>
+        </div></Transition>
 
         <button class="btn btn-primary auth-submit" type="submit" :disabled="store.loginLoading">
           {{ store.loginLoading ? 'Entrando...' : 'Entrar' }}

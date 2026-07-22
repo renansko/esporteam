@@ -13,12 +13,12 @@ const props = defineProps({
   selectable: { type: Boolean, default: false },
   selectedLocation: { type: Object, default: null },
 })
-const emit = defineEmits(['select', 'location-select', 'selection-cancel'])
+const emit = defineEmits(['select', 'create-session', 'location-select', 'selection-cancel'])
 
 const mapElement = ref(null)
 const mapAriaLabel = computed(() => props.selectable
   ? 'Mapa para escolher o local da Sessão Esportiva'
-  : 'Mapa real de Sessões Esportivas próximas')
+  : 'Mapa real de Sessões Esportivas próximas. Toque em um ponto vazio para criar uma Sessão Esportiva')
 const locationStatus = ref(props.selectable
   ? 'Localizando você para escolher o ponto da sessão…'
   : props.sessions.length
@@ -93,6 +93,7 @@ function drawSessions() {
       weight: 3,
       fillColor: selected ? '#2F63C7' : '#916412',
       fillOpacity: 1,
+      bubblingMouseEvents: false,
     })
       .bindTooltip(`${session.modalityLabel} · ${session.timeCueLabel}`, { permanent: selected, direction: 'top', offset: [0, -10] })
       .on('click', () => emit('select', session.id))
@@ -118,14 +119,18 @@ function drawSelectedLocation() {
 }
 
 function handleMapClick(event) {
-  if (!props.selectable) return
-  emit('location-select', { latitude: event.latlng.lat, longitude: event.latlng.lng })
+  const location = { latitude: event.latlng.lat, longitude: event.latlng.lng }
+  if (props.selectable) {
+    emit('location-select', location)
+    return
+  }
+  emit('create-session', location)
 }
 
 function syncSelectable(selectable) {
   if (!map) return
   map.off('click', handleMapClick)
-  if (selectable) map.on('click', handleMapClick)
+  map.on('click', handleMapClick)
   locationStatus.value = selectable
     ? publicationLocationStatus()
     : props.sessions.length
