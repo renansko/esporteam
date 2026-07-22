@@ -10,6 +10,12 @@ Organize comportamento por feature quando ele pertence a um fluxo de produto, e 
 
 Ao consumir o backend, preserve a distincao entre `User` e Perfil Esportivo: autenticacao usa usuario; descoberta e participacao usam perfil esportivo.
 
+## Direcao visual: liquid glass
+
+A interface do `esporteam-front` deve seguir a linguagem visual liquid glass da Cola Aí. Novas superficies elevadas devem reutilizar os tokens `--glass-*` e as classes compartilhadas de `src/style.css` (`glass-surface`, `glass-surface-strong` e `glass-pill`) em vez de criar valores isolados de blur, transparencia, borda ou sombra.
+
+O vidro deve comunicar hierarquia, nao decorar tudo. Use somente estes tres niveis: `glass-surface` para paineis e cartoes, `glass-surface-strong` para barras fixas e navegacao, e `glass-pill` para controles compactos. Mantenha conteudo principal com contraste legivel e use o azul e o lime da marca como acentos. Toda superficie translucida precisa ter fundo opaco de fallback, borda clara, suporte a tema escuro e comportamento sem blur para `prefers-reduced-transparency`. Nao aplique blur a itens repetidos de listas rolaveis; aplique-o ao contêiner fixo que estabelece a hierarquia.
+
 ## Runtime local
 
 O frontend deste repo roda normalmente pelo Docker Compose em `../esporteam-docker/docker-compose.yml`. O container `esporteam-front` publica o Vite em `http://127.0.0.1:5173`.
