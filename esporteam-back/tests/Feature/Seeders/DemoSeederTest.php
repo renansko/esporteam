@@ -20,8 +20,8 @@ it('seeds the complete sport discovery demo dataset idempotently', function () {
         ->where('user_id', 8001)
         ->firstOrFail();
 
-    expect(Sport::query()->count())->toBe(12)
-        ->and(Sport::query()->where('is_active', true)->count())->toBe(12)
+    expect(Sport::query()->count())->toBe(20)
+        ->and(Sport::query()->where('is_active', true)->count())->toBe(20)
         ->and(SportProfile::query()->whereBetween('user_id', [8001, 8040])->count())->toBe(40)
         ->and($practitioner->display_name)->toBe('Ana Martins')
         ->and($practitioner->bio)->toContain('ana.praticante@esporteam.test')

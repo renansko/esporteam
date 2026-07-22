@@ -12,7 +12,7 @@ async function publish() {
 </script>
 
 <template>
-  <section v-if="publication.open.value" class="publication-panel" aria-label="Criar Sessão Esportiva">
+  <section v-if="publication.open.value && publication.selectedLocation.value" class="publication-panel" aria-label="Criar Sessão Esportiva">
     <header class="publication-header">
       <div>
         <p class="publication-eyebrow">Nova Sessão Esportiva</p>

@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { publishOneOffSportSession } from '../services/sportDiscovery.js'
+import { fetchSports } from '../services/api.js'
 import { apiErrorMessage } from '../services/validation.js'
 
 function newPublicationKey() {
@@ -13,7 +14,10 @@ function localDateTime(hoursFromNow = 1) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-export function useOneOffSessionPublication({ publish = publishOneOffSportSession } = {}) {
+export function useOneOffSessionPublication({
+  loadSports = fetchSports,
+  publish = publishOneOffSportSession,
+} = {}) {
   const open = ref(false)
   const step = ref(0)
   const loading = ref(false)
@@ -35,7 +39,7 @@ export function useOneOffSessionPublication({ publish = publishOneOffSportSessio
     && draft.value.entry_mode && draft.value.visibility,
   ))
 
-  function begin(profile = {}) {
+  async function begin(profile = {}) {
     const rawSports = Array.isArray(profile.raw?.sports) ? profile.raw.sports : []
     sports.value = rawSports.map(item => ({
       id: item.sport_id ?? item.sport?.id ?? item.id,
@@ -55,6 +59,23 @@ export function useOneOffSessionPublication({ publish = publishOneOffSportSessio
     step.value = 0
     error.value = null
     open.value = true
+
+    try {
+      const catalog = await loadSports()
+      const availableSports = Array.isArray(catalog)
+        ? catalog.map(item => ({ id: item.id, name: item.name })).filter(item => item.id && item.name)
+        : []
+
+      if (availableSports.length) {
+        sports.value = availableSports
+        if (!draft.value.sport_id) {
+          draft.value.sport_id = availableSports[0].id
+          draft.value.title = `${availableSports[0].name} no mapa`
+        }
+      }
+    } catch {
+      // Mantém as Modalidades do Perfil Esportivo quando o catálogo estiver indisponível.
+    }
   }
 
   function close() { open.value = false }

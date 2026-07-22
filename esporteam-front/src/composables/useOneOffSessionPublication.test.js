@@ -3,19 +3,27 @@ import { useOneOffSessionPublication } from './useOneOffSessionPublication.js'
 
 let publishedPayload = null
 const publication = useOneOffSessionPublication({
+  loadSports: async () => [
+    { id: 7, name: 'Corrida' },
+    { id: 8, name: 'Vôlei' },
+  ],
   publish: async (payload) => {
     publishedPayload = payload
     return { id: 'session-created' }
   },
 })
 
-publication.begin({
+await publication.begin({
   primaryModality: 'Corrida',
   city: 'Florianópolis',
   region: 'SC',
   raw: { sports: [{ sport_id: 7, sport: { name: 'Corrida' } }] },
 })
 
+assert.deepEqual(publication.sports.value, [
+  { id: 7, name: 'Corrida' },
+  { id: 8, name: 'Vôlei' },
+])
 assert.equal(publication.selectedLocation.value, null)
 assert.equal(publication.canReview.value, false)
 publication.selectLocation({ latitude: -27.5969, longitude: -48.5494 })

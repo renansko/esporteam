@@ -134,6 +134,11 @@ export async function fetchSportProfile() {
   return data?.data ?? null
 }
 
+export async function fetchSports() {
+  const { data } = await esporteamApi.get('/sports')
+  return data?.data ?? []
+}
+
 export async function saveSportProfile({ displayName, city, region } = {}) {
   const payload = {
     display_name: displayName,

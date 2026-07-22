@@ -8,7 +8,7 @@ it('seeds the initial active sports idempotently', function () {
     $this->seed(DemoSeeder::class);
     $this->seed(DemoSeeder::class);
 
-    expect(Sport::query()->count())->toBe(12)
+    expect(Sport::query()->count())->toBe(20)
         ->and(Sport::query()->where('slug', 'futebol')->where('is_active', true)->exists())->toBeTrue()
         ->and(Sport::query()->where('slug', 'beach-tennis')->where('is_active', true)->exists())->toBeTrue();
 });

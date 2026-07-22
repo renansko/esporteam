@@ -277,6 +277,27 @@ try {
   assert.doesNotMatch(nearbyMapHtml, /Modalidade a definir/)
   assert.doesNotMatch(nearbyMapHtml, /Disponibilidade a definir/)
 
+  const publicationBeforeLocationHtml = await renderShell({
+    discoveryCards: [],
+    nearbySessions: [],
+    nearbySurfaceMode: 'map',
+    oneOffPublication: {
+      open: { value: true },
+      draft: { value: { latitude: '', longitude: '' } },
+      sports: { value: [] },
+      selectedLocation: { value: null },
+      canReview: { value: false },
+      loading: { value: false },
+      error: { value: '' },
+      close: () => {},
+      selectLocation: () => {},
+      publishDraft: async () => null,
+    },
+  }, { participantTab: 'map' })
+
+  assert.equal((publicationBeforeLocationHtml.match(/nearby-real-map-canvas/g) || []).length, 1)
+  assert.doesNotMatch(publicationBeforeLocationHtml, /class="publication-panel"/)
+
   const publicationHtml = await renderShell({
     discoveryCards: [],
     nearbySessions: [],

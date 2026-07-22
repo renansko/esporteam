@@ -41,12 +41,7 @@ class DemoSeeder extends Seeder
 
     private function seedSports(): array
     {
-        foreach ($this->sports() as $sport) {
-            Sport::query()->updateOrCreate(
-                ['slug' => $sport['slug']],
-                $sport,
-            );
-        }
+        $this->call(CommonSportsSeeder::class);
 
         return Sport::query()
             ->whereIn('slug', array_column($this->sports(), 'slug'))
@@ -451,16 +446,16 @@ class DemoSeeder extends Seeder
         return [
             ['name' => 'Futebol', 'slug' => 'futebol', 'category' => 'coletivo', 'is_active' => true],
             ['name' => 'Corrida', 'slug' => 'corrida', 'category' => 'endurance', 'is_active' => true],
-            ['name' => 'Tenis', 'slug' => 'tenis', 'category' => 'raquete', 'is_active' => true],
+            ['name' => 'Tênis', 'slug' => 'tenis', 'category' => 'raquete', 'is_active' => true],
             ['name' => 'Beach Tennis', 'slug' => 'beach-tennis', 'category' => 'raquete', 'is_active' => true],
-            ['name' => 'Volei', 'slug' => 'volei', 'category' => 'coletivo', 'is_active' => true],
+            ['name' => 'Vôlei', 'slug' => 'volei', 'category' => 'coletivo', 'is_active' => true],
             ['name' => 'Basquete', 'slug' => 'basquete', 'category' => 'coletivo', 'is_active' => true],
             ['name' => 'Ciclismo', 'slug' => 'ciclismo', 'category' => 'endurance', 'is_active' => true],
-            ['name' => 'Musculacao', 'slug' => 'musculacao', 'category' => 'fitness', 'is_active' => true],
+            ['name' => 'Musculação', 'slug' => 'musculacao', 'category' => 'fitness', 'is_active' => true],
             ['name' => 'Jiu-jitsu', 'slug' => 'jiu-jitsu', 'category' => 'luta', 'is_active' => true],
-            ['name' => 'Natacao', 'slug' => 'natacao', 'category' => 'aquatico', 'is_active' => true],
+            ['name' => 'Natação', 'slug' => 'natacao', 'category' => 'aquatico', 'is_active' => true],
             ['name' => 'Yoga', 'slug' => 'yoga', 'category' => 'bem-estar', 'is_active' => true],
-            ['name' => 'Funcional', 'slug' => 'funcional', 'category' => 'fitness', 'is_active' => true],
+            ['name' => 'Treino funcional', 'slug' => 'funcional', 'category' => 'fitness', 'is_active' => true],
         ];
     }
 
