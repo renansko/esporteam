@@ -275,26 +275,26 @@ class DemoSeeder extends Seeder
     private function seedSportSessions(array $profiles, array $sports): array
     {
         $sessionSpecs = [
-            ['title' => 'Pelada leve para voltar a jogar', 'sport' => 'futebol', 'type' => 'partida', 'location' => 'Arena Vila Madalena', 'entry_mode' => 'publica_direta', 'min_level' => 'beginner', 'max_level' => 'intermediate', 'weekday' => 1, 'hour' => 7],
-            ['title' => 'Corrida 5 km conversada', 'sport' => 'corrida', 'type' => 'corrida', 'location' => 'Parque Ibirapuera'],
-            ['title' => 'Racha de basquete 3x3', 'sport' => 'basquete', 'type' => 'partida', 'location' => 'Quadra Augusta'],
-            ['title' => 'Volei misto com aprovacao do anfitriao', 'sport' => 'volei', 'type' => 'encontro', 'location' => 'Ginasio Lapa', 'entry_mode' => 'publica_aprovacao', 'min_level' => 'beginner', 'max_level' => 'advanced', 'weekday' => 3, 'hour' => 18],
-            ['title' => 'Treino de saque no tenis', 'sport' => 'tenis', 'type' => 'treino', 'location' => 'Centro Esportivo Pinheiros'],
-            ['title' => 'Beach tennis iniciantes', 'sport' => 'beach-tennis', 'type' => 'encontro', 'location' => 'Arena Moema'],
-            ['title' => 'Pedal urbano curto', 'sport' => 'ciclismo', 'type' => 'encontro', 'location' => 'Praca Panamericana'],
-            ['title' => 'Funcional ao ar livre', 'sport' => 'funcional', 'type' => 'aula_aberta', 'location' => 'Parque Agua Branca'],
-            ['title' => 'Musculacao em dupla', 'sport' => 'musculacao', 'type' => 'treino', 'location' => 'Academia Saude'],
-            ['title' => 'Roda de jiu-jitsu fundamentos', 'sport' => 'jiu-jitsu', 'type' => 'treino', 'location' => 'Dojo Perdizes'],
-            ['title' => 'Natacao tecnica livre', 'sport' => 'natacao', 'type' => 'treino', 'location' => 'Piscina Sumare'],
-            ['title' => 'Yoga no fim de tarde', 'sport' => 'yoga', 'type' => 'encontro', 'location' => 'Praca Por do Sol'],
-            ['title' => 'Futebol society competitivo', 'sport' => 'futebol', 'type' => 'partida', 'location' => 'Arena Pompeia'],
-            ['title' => 'Corrida de subida leve', 'sport' => 'corrida', 'type' => 'corrida', 'location' => 'Minhocao'],
-            ['title' => 'Basquete feminino aberto', 'sport' => 'basquete', 'type' => 'partida', 'location' => 'Quadra Roosevelt'],
-            ['title' => 'Volei de praia adaptado', 'sport' => 'volei', 'type' => 'encontro', 'location' => 'Arena Beach Center'],
-            ['title' => 'Tenis duplas rotativas', 'sport' => 'tenis', 'type' => 'partida', 'location' => 'Clube Jardim Europa'],
-            ['title' => 'Pedal ate o parque', 'sport' => 'ciclismo', 'type' => 'encontro', 'location' => 'Metro Vila Mariana'],
-            ['title' => 'Funcional para corredores', 'sport' => 'funcional', 'type' => 'aula_aberta', 'location' => 'Parque Villa-Lobos'],
-            ['title' => 'Beach tennis intermediario', 'sport' => 'beach-tennis', 'type' => 'partida', 'location' => 'Arena Pinheiros'],
+            ['title' => 'Pelada leve para voltar a jogar', 'sport' => 'futebol', 'type' => 'partida', 'location' => 'Campo do DCE - UFSC', 'entry_mode' => 'publica_direta', 'min_level' => 'beginner', 'max_level' => 'intermediate', 'weekday' => 1, 'hour' => 7],
+            ['title' => 'Corrida 5 km conversada', 'sport' => 'corrida', 'type' => 'corrida', 'location' => 'Praça da Trindade'],
+            ['title' => 'Racha de basquete 3x3', 'sport' => 'basquete', 'type' => 'partida', 'location' => 'Centro de Desportos da UFSC'],
+            ['title' => 'Vôlei misto com aprovação do anfitrião', 'sport' => 'volei', 'type' => 'encontro', 'location' => 'Ginásio do CDS - UFSC', 'entry_mode' => 'publica_aprovacao', 'min_level' => 'beginner', 'max_level' => 'advanced', 'weekday' => 3, 'hour' => 18],
+            ['title' => 'Treino de saque no tênis', 'sport' => 'tenis', 'type' => 'treino', 'location' => 'Quadras da UFSC'],
+            ['title' => 'Beach tennis para iniciantes', 'sport' => 'beach-tennis', 'type' => 'encontro', 'location' => 'Arena Trindade'],
+            ['title' => 'Pedal urbano curto', 'sport' => 'ciclismo', 'type' => 'encontro', 'location' => 'Praça Santos Dumont'],
+            ['title' => 'Funcional ao ar livre', 'sport' => 'funcional', 'type' => 'aula_aberta', 'location' => 'Parque Ecológico do Córrego Grande'],
+            ['title' => 'Musculação em dupla', 'sport' => 'musculacao', 'type' => 'treino', 'location' => 'Academia do CDS - UFSC'],
+            ['title' => 'Roda de jiu-jitsu fundamentos', 'sport' => 'jiu-jitsu', 'type' => 'treino', 'location' => 'Centro de Desportos da UFSC'],
+            ['title' => 'Natação técnica livre', 'sport' => 'natacao', 'type' => 'treino', 'location' => 'Piscina do CDS - UFSC'],
+            ['title' => 'Yoga no fim de tarde', 'sport' => 'yoga', 'type' => 'encontro', 'location' => 'Praça da Trindade'],
+            ['title' => 'Futebol society competitivo', 'sport' => 'futebol', 'type' => 'partida', 'location' => 'Campo do DCE - UFSC'],
+            ['title' => 'Corrida de subida leve', 'sport' => 'corrida', 'type' => 'corrida', 'location' => 'Parque Ecológico do Córrego Grande'],
+            ['title' => 'Basquete feminino aberto', 'sport' => 'basquete', 'type' => 'partida', 'location' => 'Quadra da UFSC'],
+            ['title' => 'Vôlei de praia adaptado', 'sport' => 'volei', 'type' => 'encontro', 'location' => 'Arena Trindade'],
+            ['title' => 'Tênis em duplas rotativas', 'sport' => 'tenis', 'type' => 'partida', 'location' => 'Quadras da UFSC'],
+            ['title' => 'Pedal até o parque', 'sport' => 'ciclismo', 'type' => 'encontro', 'location' => 'Avenida Madre Benvenuta'],
+            ['title' => 'Funcional para corredores', 'sport' => 'funcional', 'type' => 'aula_aberta', 'location' => 'Parque Ecológico do Córrego Grande'],
+            ['title' => 'Beach tennis intermediário', 'sport' => 'beach-tennis', 'type' => 'partida', 'location' => 'Arena Trindade'],
         ];
         $locations = $this->locations();
         $sessions = [];
@@ -476,14 +476,14 @@ class DemoSeeder extends Seeder
     private function locations(): array
     {
         return [
-            ['city' => 'Sao Paulo', 'region' => 'SP', 'latitude' => -23.55052, 'longitude' => -46.63331],
-            ['city' => 'Sao Paulo', 'region' => 'SP', 'latitude' => -23.56139, 'longitude' => -46.65645],
-            ['city' => 'Sao Paulo', 'region' => 'SP', 'latitude' => -23.58742, 'longitude' => -46.65763],
-            ['city' => 'Sao Paulo', 'region' => 'SP', 'latitude' => -23.54318, 'longitude' => -46.72054],
-            ['city' => 'Sao Paulo', 'region' => 'SP', 'latitude' => -23.52719, 'longitude' => -46.67809],
-            ['city' => 'Sao Paulo', 'region' => 'SP', 'latitude' => -23.59891, 'longitude' => -46.67678],
-            ['city' => 'Sao Paulo', 'region' => 'SP', 'latitude' => -23.56620, 'longitude' => -46.70186],
-            ['city' => 'Sao Paulo', 'region' => 'SP', 'latitude' => -23.52272, 'longitude' => -46.62529],
+            ['city' => 'Florianopolis', 'region' => 'SC', 'latitude' => -27.59763, 'longitude' => -48.52034],
+            ['city' => 'Florianopolis', 'region' => 'SC', 'latitude' => -27.60046, 'longitude' => -48.51859],
+            ['city' => 'Florianopolis', 'region' => 'SC', 'latitude' => -27.59603, 'longitude' => -48.51767],
+            ['city' => 'Florianopolis', 'region' => 'SC', 'latitude' => -27.59424, 'longitude' => -48.52490],
+            ['city' => 'Florianopolis', 'region' => 'SC', 'latitude' => -27.59111, 'longitude' => -48.50866],
+            ['city' => 'Florianopolis', 'region' => 'SC', 'latitude' => -27.60213, 'longitude' => -48.51439],
+            ['city' => 'Florianopolis', 'region' => 'SC', 'latitude' => -27.58899, 'longitude' => -48.51602],
+            ['city' => 'Florianopolis', 'region' => 'SC', 'latitude' => -27.60466, 'longitude' => -48.52466],
         ];
     }
 
